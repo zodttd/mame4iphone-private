@@ -1,0 +1,88 @@
+
+MAME4ALL 1.4 (04/09/2008)
+-------------------------
+Cambios por Headoverheels:
+- Corregida la prioridad de los gráficos del Xain'd Sleena.
+- Añadidos 7 nuevos romsets de MAME 0.37b7:
+  + Batsugun Special Ver. (batugnsp)
+  + Exerizer (Japan) (bootleg) (exerizrb)
+  + Mahou Daisakusen (Japan) (mahoudai)
+  + Pipi & Bibis / Whoopee (Japan) [bootleg ?] (pipibibi)
+  + Shippu Mahou Daisakusen (Japan) (shippumd)
+  + Sky Fox (skyfox)
+  + Truxton II / Tatsujin II / Tatsujin Oh (Japan) (tatsujn2)
+
+Cambios por Slaanesh:
+Uso de Cyclone para juegos con el procesador M68010.
+Esto produce una gran mejora en la velocidad de juegos como Gauntlet, Marble Madness y otros juegos de Atari.
+
+Cambios por Franxis:
+Corregida la frecuencia de las CPUs del Raiden (reducida de 20 a 10 MHz). Aun así todavía es lento.
+
+MAME4ALL 1.3 (05/04/2008)
+-------------------------
+Cambios por Headoverheels:
+- Añadidos nuevos juegos de Gaelco (MAME 0.37b7): Big Karnak (bigkarnk) y Biomechanical Toy (biomtoy).
+- Añadidos nuevos juegos de SunA 8 bit (MAME 0.37b15): Hard Head (hardhead), Hard Head (Bootleg) (hardhedb) y Rough Ranger (rranger).
+- Optimizaciones en Xain'd Sleena.
+- Corregido el bug en NEC CPU que causaba relentizaciones en Raiden (MAME 0.37b15).
+- Corregidos algunos fallos en la emulación de I86/NEC CPU, incluyendo los problemas de los efectos de raster en Geostorm y el bug de los 99 créditos en Lethal Thunder (MAME 0.66).
+
+Cambios por Franxis:
+- Soporte para cheats.
+- Soporte de auto-fire. Gracias al código de AGAWA Koji.
+- Corregido el Jackal.
+
+Cambios por Slaanesh:
+- Optimizaciones en Commando (ahora usa tilemaps).
+
+MAME4ALL 1.2 (18/03/2008)
+-------------------------
+Corregidos los siguientes fallos:
+- Corregido el problema de ejecución de juegos aleatorios.
+- Los problemas aleatorios en el control mediante joypads USB debería de desaparecer.
+- Los cuatro jugadores se pueden controlar con el joypad integrado de la GP2X.
+- Los creditos y start de los cuatro jugadores se pueden controlar con el joypad de la GP2X (ver leeme.txt).
+- Corregido el problema con los juegos de Namco System 1.
+- Mejorada la visualización de los juegos vectoriales usando antialias y filtro translúcido.
+- Corregida la orientación de pantalla en los juegos Dodonpachi y Dangun Feveron.
+
+MAME4ALL 1.1 (16/03/2008)
+-------------------------
+Corregidos los siguientes fallos:
+- Mejorada la compatibilidad del DrZ80 (Neo·Geo games, Bubble Bobble, Tokio, etc).
+- Soporte para High Scores. Gracias a PalMAME por el fichero hiscore.dat.
+- Corregida la visualización en los juegos vectoriales.
+- Corregida la orientación de video en la versión bootleg de Bubble Bobble (Bobble Bobble).
+- Bubble Bobble ya puede jugarse al 100% con el core DrZ80. Recomiendo usar las versiones bootleg
+  (Bobble Bobble and Super Bubble Bobble) ya que la emulación es más rápida que con el juego original.
+- Nuevos y geniales skins para el menu obra de Pedator.
+
+MAME4ALL 1.0 (11/03/2008)
+-------------------------
+Las siguientes características se han cambiado en relación la primera versión mostrada en la feria RetroMadrid 2008:
+- No mas cuelgues.
+- Ficheros de configuración por juego.
+- El volumen de sonido se puede cambiar en los modos de video rotados(VolUp ó VolDown + START).
+- El volumen de sonido no se resetea al salir del modo pausa.
+- Añadida la documentación del emulador.
+
+MAME4ALL Private Beta (08/03/2008)
+----------------------------------
+El emulador se han mostrado por primera vez en la feria RetroMadrid 2008 (www.retromadrid.es):
+- Basado en MAME 0.37b5.
+- Soporte para 2240 romsets.
+- Compatible con GP2X F100 y F200.
+- Soporte para hasta 4 joypads USB.
+- Uso completo de las 64 MB de RAM.
+- Reloj GP2X: 66 a 300 MHz.
+- Resolución de video: auto, 8 bit y 16 bit.
+- Modos de video: standard, scaled, 4:3, rotated, border y TATE.
+- Opciones de sonido: 11 a 44 KHz (mono y stereo).
+- Underclock y overclock soportado.
+- Cores en ASM: Cyclone y DRZ80.
+- Compatible con TV-Out (PAL y NTSC).
+- RAM tweaks integradas.
+- Solo un ejecutable (basado en linea de comandos) junto con un frontend separado para seleccionar los juegos.
+- Acceso al GUI original del MAME.
+- Mejor rendimiento que en el port anterior en casi todos los juegos.

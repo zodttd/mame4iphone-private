@@ -13,39 +13,38 @@
 
 - (void)awakeFromNib {
 	self.navigationItem.hidesBackButton = YES;
-	self.navigationItem.prompt = @"Disabled. More information at: www.zodttd.com";
+	self.navigationItem.prompt = @"www.zodttd.com";
 	
 	adNotReceived = 0;
 	
 	browseArray = [[NSMutableArray alloc] init];
 	
-	currentPath = [[NSString alloc] initWithString:@"/var/mobile/Media/ROMs/MAME/"];
+	currentPath = [[NSString alloc] initWithString:[NSString stringWithCString:get_documents_path("/")]];
 	[ self refreshData:currentPath ];
 }
 
 - (void)refreshData:(NSString*)path 
 {
+  NSString* prevPath;
 	[browseArray removeAllObjects];
-	
-	return; // NOT CURRENTLY USED
-	
+	prevPath = [[NSString alloc] initWithString:path];
 	[currentPath release];
 	
-	if([[path substringWithRange:NSMakeRange([path length]-1,1)] compare:@"/"] == NSOrderedSame)
+	if([[prevPath substringWithRange:NSMakeRange([prevPath length]-1,1)] compare:@"/"] == NSOrderedSame)
 	{
-		currentPath = [[NSString alloc] initWithFormat:@"%@",path];
+		currentPath = [[NSString alloc] initWithFormat:@"%@",prevPath];
 	}
 	else
 	{
-		currentPath = [[NSString alloc] initWithFormat:@"%@/",path];
+		currentPath = [[NSString alloc] initWithFormat:@"%@/",prevPath];
 	}
 	
 	int i;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSInteger entries = [[fileManager directoryContentsAtPath: currentPath] count];
+  NSInteger entries = [[fileManager directoryContentsAtPath: currentPath] count];
 	
 	for ( i = 0; i < entries; i++ ) 
-    {
+  {
 		if([[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-4,4)] caseInsensitiveCompare:@".svs"] != NSOrderedSame)
 		{
 			continue;
@@ -65,7 +64,7 @@
 		
 		[fileManager fileExistsAtPath:dummyString isDirectory:&isDir];
 		
-		NSLog(@"isDir %d", isDir);
+		//NSLog(@"isDir %d", isDir);
 		
 		if(!isDir)
 		{
@@ -78,63 +77,69 @@
 		}
 		
 		[ dummyString release ];
-    }
+  }
 	
 	[self setupIndexedData];
 	[tableview reloadData];
 	
 	self.navigationItem.prompt = currentPath;
+  [prevPath release];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 	UITableViewCell			*cell;
 	
+#ifdef WITH_ADS
 	if(indexPath.section < 1) 
 	{
 		cell = [tableview dequeueReusableCellWithIdentifier:@"adCell"];
-		if(adNotReceived)
+		/*
+		if(cell != nil)
 		{
-			if(cell != nil)
-			{
-				[cell release];
-				cell = nil;
-			}
-			
-			adNotReceived = 0;
+			[cell release];
+			cell = nil;
 		}
+    */
+    
 		if(cell == nil)
 		{
 			cell = [[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:@"adCell"];
-			// Request an AdMob ad for this table view cell
-			adMobView = [AdMobView requestAdWithDelegate:self];
-			[cell.contentView addSubview:adMobView];
+			// Request an ad for this table view cell
+		  altAds = [SOApp.delegate getAdViewWithIndex:0];
+			[cell.contentView addSubview:altAds];
 		}
 		else
 		{
-			[adMobView requestFreshAd];
+		  altAds = [SOApp.delegate getAdViewWithIndex:0];
+			[cell.contentView addSubview:altAds];
 		}
 		
 		cell.text = @"";
 	}
 	else
+#endif
 	{
 		cell = [tableview dequeueReusableCellWithIdentifier:@"labelCell"];
 		if (cell == nil) 
 		{
 			cell = [[[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:@"labelCell"] autorelease];
 		}
+#ifdef WITH_ADS
 		NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section - 1];
-		NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];	
-		cell.text = [[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"];
+#else
+		NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section];
+#endif
+		NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];
+		cell.accessoryType = UITableViewCellAccessoryNone;
 		
-		if( [[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"directory"] compare:@"1"] == NSOrderedSame)
-		{
-			cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;	
-		}
-		else
-		{
-			cell.accessoryType = UITableViewCellAccessoryNone;				
-		}
+		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 320, 44)];
+		label.numberOfLines = 1;
+		label.adjustsFontSizeToFitWidth = YES;
+		label.minimumFontSize = 9.0f;
+		label.lineBreakMode = UILineBreakModeMiddleTruncation;
+		label.text = [[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"];
+		[cell.contentView addSubview:label];
+		[label release];		
 	}
 	
 	// Set up the cell
@@ -143,12 +148,18 @@
 
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+#ifdef WITH_ADS
 	if( indexPath.section < 1 )
 	{
 		return;
 	}
-	
+#endif
+
+#ifdef WITH_ADS
 	NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section - 1];
+#else
+	NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section];
+#endif
 	NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];
 	
 	NSMutableString *listingsPath = [[NSMutableString alloc] initWithString:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"path"]];
@@ -169,53 +180,75 @@
 		return;
 	}
 	
-	[SOApp.recentView addRecent:NULL withId:NULL withTunein:NULL 
-	 withBookmark:NULL withPath:listingsPath withFile:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"file"] 
+	[SOApp.recentView addRecent:listingsPath withFile:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"file"] 
 	 withDir:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"directory"]];
 	
-	[SOApp.nowPlayingView setCurrentStation:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"]
-	 withTitle:NULL 
-	 withId:NULL 
-	 withTunein:NULL 
-	 withPath:listingsPath 
+	[SOApp.nowPlayingView setCurrentStation:listingsPath 
 	 withFile:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"file"] 
 	 withDir:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"directory"]];
 	
 	[SOApp.nowPlayingView startEmu:cListingsPath];
 	[SOApp.delegate switchToNowPlaying];
-	[tabBar didMoveToWindowNowPlaying];
+	//[tabBar didMoveToWindowNowPlaying];
 	
 	[listingsPath release];
 }
 
 // Override if you support editing the list
-/*
- - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
- 
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath { 
  if (editingStyle == UITableViewCellEditingStyleDelete) {
- // Delete the row from the data source
- [tableview deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:YES];
- }	
- if (editingStyle == UITableViewCellEditingStyleInsert) {
- // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
- }	
+	 // Delete the row from the data source
+#ifdef WITH_ADS
+	 if( indexPath.section < 1 )
+	 {
+		 return;
+	 }
+#endif
+
+#ifdef WITH_ADS
+	 NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section - 1];
+#else
+	 NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section];
+#endif
+	 NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];
+	 
+	 NSMutableString *listingsPath = [[NSMutableString alloc] initWithString:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"path"]];
+	 if([[listingsPath substringWithRange:NSMakeRange([listingsPath length]-1,1)] compare:@"/"] == NSOrderedSame)
+	 {
+		 [listingsPath appendString:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"]];
+	 }
+	 else
+	 {
+		 [listingsPath stringByAppendingPathComponent:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"]];
+	 }
+	 char *cListingsPath = (char*)[listingsPath UTF8String];
+
+	 remove(cListingsPath);
+	 
+	 [listingsPath release];
+	 
+	 [ self refreshData:currentPath ];
  }
- */
+}
 
 
 // Override if you support conditional editing of the list
 /*
- - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
+- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
  // Return NO if you do not want the specified item to be editable.
- return YES;
- }
- */
-
+	if( indexPath.section < 1 )
+	{
+		return NO;
+	}
+	return NO;
+}
+*/
 // Override if you support rearranging the list
 /*
  - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
- }
- */
+
+}
+*/
 
 // Override if you support conditional rearranging of the list
 /*
@@ -265,7 +298,11 @@
 	if(displayList==nil) {
 		return 1;
 	} else {
+#ifdef WITH_ADS
 		return [displayList count] + 1;
+#else
+		return [displayList count];
+#endif
 	}
 }
 
@@ -274,23 +311,33 @@
 		return 1;
 	}
 	
+#ifdef WITH_ADS
 	if(section < 1)
 	{
 		return 1;
 	}
+#endif
 	// Number of rows is the number of names in the region dictionary for the specified section
+#ifdef WITH_ADS
 	NSDictionary *letterDictionary = [displayList objectAtIndex:section - 1];
+#else
+	NSDictionary *letterDictionary = [displayList objectAtIndex:section];
+#endif
 	NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];
 	return [zonesForLetter count];
 }
 
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+#ifdef WITH_ADS
 	if(section < 1)
 	{
 		return @"";
 	}
 	NSDictionary *sectionDictionary = [displayList objectAtIndex:section - 1];
+#else
+	NSDictionary *sectionDictionary = [displayList objectAtIndex:section];
+#endif
 	return [sectionDictionary valueForKey:@"letter"];
 }
 
@@ -310,10 +357,11 @@
 #endif
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+#ifdef WITH_ADS
 	if(indexPath.section < 1) {
-		return 48.0; // this is the height of the AdMob ad
+		return 55.0; // this is the height of the ad
 	}
-	
+#endif
 	return 44.0; // this is the generic cell height
 }
 
@@ -376,37 +424,6 @@
 - (void)setCurrentlyPlaying:(NSString*) str
 {	
 	[SOApp.nowPlayingView setCurrentlyPlaying:str];
-}
-
-
-#pragma mark -
-#pragma mark AdMobDelegate methods
-
-- (NSString *)publisherId {
-	return @"a148e086678b92c"; // this should be prefilled; if not, get it from www.admob.com
-}
-
-- (UIColor *)adBackgroundColor {
-	return [UIColor colorWithRed:0 green:0 blue:0 alpha:1]; // this should be prefilled; if not, provide a UIColor
-}
-
-- (UIColor *)adTextColor {
-	return [UIColor colorWithRed:1 green:1 blue:1 alpha:1]; // this should be prefilled; if not, provide a UIColor
-}
-
-- (BOOL)mayAskForLocation {
-	return NO; // this should be prefilled; if not, see AdMobProtocolDelegate.h for instructions
-}
-
-- (void)didReceiveAd:(AdMobView *)adView {
-	NSLog(@"AdMob: Did receive ad");
-}
-
-- (void)didFailToReceiveAd:(AdMobView *)adView {
-	NSLog(@"AdMob: Did fail to receive ad");
-	adNotReceived = 1;
-	//[self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
-	[tableview reloadData];
 }
 
 @end

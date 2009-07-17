@@ -26,7 +26,7 @@
 /* Audio Resources */
 #define AUDIO_BUFFERS 12
 
-extern void app_MuteSound(void);
+extern "C" void app_MuteSound(void);
 
 typedef struct AQCallbackStruct {
     AudioQueueRef queue;
@@ -37,13 +37,13 @@ typedef struct AQCallbackStruct {
 
 typedef unsigned char byte;
 
-unsigned short *BaseAddress;
+extern unsigned short *screenbuffer;
 
-int audioBufferSize = 0;
+int audioBufferSize = 44100*2;
 AQCallbackStruct in;
 int soundInit = 0;
 struct timeval ptv;
-float __audioVolume = 0.0;
+float __audioVolume = 1.0;
 
 
 unsigned long 			gp2x_dev[3];
@@ -87,30 +87,8 @@ int master_volume;
 
 unsigned long gp2x_joystick_read(int n)
 {
-  	unsigned long res=0;
-	if( INIT_FAILED == Cmd_iControlPad(CMD_STATUS) )
-	{
-		res = gp2x_pad_status;
-	}
-	else
-	{
-		unsigned short ipadkeys = Cmd_iControlPad(CMD_READKEYPAD);
-		int i;
-		const unsigned short checkkeys[11] =   { CP_DOWN,      CP_UP,        CP_LEFT,        CP_RIGHT,
-												 CP_X,         CP_Y,         CP_A,           CP_B,
-												 CP_START,     CP_SELECT,    CP_L_SHOULDER };
-		const unsigned long mappedkeys[11] =  { GP2X_DOWN,	GP2X_UP,    GP2X_LEFT,    GP2X_RIGHT,
-												GP2X_X,     GP2X_Y,  GP2X_A,        GP2X_B,
-												GP2X_START,      GP2X_SELECT,        GP2X_L };
-		
-		for(i = 0; i < 11; i++)
-		{
-			if(ipadkeys & checkkeys[i])
-			{
-				res |= mappedkeys[i];
-			}
-		}
-	}
+  unsigned long res=0;
+	res = gp2x_pad_status;
 		
 	/* GP2X F200 Push Button */
 	if ((res & GP2X_VOL_UP) && (res & GP2X_VOL_DOWN))
@@ -167,8 +145,8 @@ void gp2x_init(int ticks_per_second, int bpp, int rate, int bits, int stereo, in
 {
   	gp2x_ticks_per_second=1000; 
 
-	gp2x_screen15=BaseAddress;
-	gp2x_screen8=(unsigned char *)BaseAddress;	
+	gp2x_screen15=screenbuffer;
+	gp2x_screen8=(unsigned char *)screenbuffer;	
 	gp2x_nflip=0;
 
 	gp2x_set_video_mode(bpp,320,240);
@@ -467,14 +445,14 @@ void app_CloseSound(void) {
 }
 
 
-void app_MuteSound(void) {
+extern "C" void app_MuteSound(void) {
 	if( soundInit == 1 )
 	{
 		app_CloseSound();
 	}
 }
 
-void app_DemuteSound(void) {
+extern "C" void app_DemuteSound(void) {
 	if( soundInit == 0 )
 	{
 		app_OpenSound(1, 44100);
@@ -487,12 +465,10 @@ void gp2x_sound_thread_start(int len)
 	audioBufferSize = len;
 	fprintf(stderr,"audio buffer size %d \n", audioBufferSize);
 	gp2x_sound_thread_mute();
-	app_DemuteSound();
 }
 
 void gp2x_sound_thread_stop(void)
 {
-	app_MuteSound();
 }
 
 void gp2x_sound_set_rate(int rate)

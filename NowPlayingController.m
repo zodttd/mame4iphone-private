@@ -9,28 +9,77 @@
 #import "SOApplication.h"
 #import <pthread.h>
 
+#define IPHONE_MENU_DISABLED            0
+#define IPHONE_MENU_MAIN                1
+#define IPHONE_MENU_SAVE_CURRENT        2
+#define IPHONE_MENU_SAVE_NEW            3
+#define IPHONE_MENU_TOGGLE_CHEAT_LOAD   4
+#define IPHONE_MENU_QUIT_LOAD           5
+#define IPHONE_MENU_TOGGLE_CHEAT        6
+#define IPHONE_MENU_QUIT                7
+#define IPHONE_MENU_MAIN_LOAD           8
+
 char romfile[1024];
-char *ourArgs[255];
-char ourArgsStr[8][64];
+char ourArgsStr[16][256];
+char* ourArgs[255];
 int ourArgsCnt = 0;
+unsigned short* screenbuffer;
+int iphone_touches = 0;
+int iphone_menu = IPHONE_MENU_DISABLED;
+long long iphone_last_upd_ticks = 0;
+int iphone_controller_opacity = 100;
+int iphone_is_landscape = 0;
+pthread_t sound_tid;
 
 enum  { GP2X_UP=0x1,       GP2X_LEFT=0x4,       GP2X_DOWN=0x10,  GP2X_RIGHT=0x40,
 	GP2X_START=1<<8,   GP2X_SELECT=1<<9,    GP2X_L=1<<10,    GP2X_R=1<<11,
 	GP2X_A=1<<12,      GP2X_B=1<<13,        GP2X_X=1<<14,    GP2X_Y=1<<15,
-GP2X_VOL_UP=1<<23, GP2X_VOL_DOWN=1<<22, GP2X_PUSH=1<<27, GP2X_ESC=1<<28 };
+GP2X_VOL_UP=1<<23, GP2X_VOL_DOWN=1<<22, GP2X_PUSH=1<<27 };
+
+unsigned long global_enable_audio = 1;
 
 extern float __audioVolume;
-extern unsigned short *BaseAddress;
+extern unsigned short BaseAddress[240*160];
 extern unsigned long gp2x_pad_status;
 extern int __emulation_run;
+extern int __emulation_saving;
+extern int __emulation_paused;
 extern int tArgc;
 extern char** tArgv;
 extern pthread_t main_tid;
+extern unsigned char gamepak_filename[512];
+extern char test_print_buffer[128];
+extern unsigned short* videobuffer;
 
+extern void save_state(char *savestate_filename, unsigned short *screen_capture);
 extern void set_save_state(void);
 extern int iphone_main (int argc, char **argv);
+extern void toggle_cheat(unsigned char cheat_num);
+extern int check_cheat(unsigned char cheat_num);
+extern unsigned char* name_cheat(unsigned char cheat_num);
 
-void *app_Thread_Start(void *args)
+static ScreenView *sharedInstance = nil;
+
+void updateScreen()
+{
+  //usleep(100);
+  sched_yield();
+	//[sharedInstance performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:NO];
+}
+
+void* sound_Thread_Start(void* args)
+{
+  if(global_enable_audio)
+  {
+    app_DemuteSound();
+  }
+	while(__emulation_run)
+	{
+    usleep(1000000);
+	}
+}
+
+void* app_Thread_Start(void* args)
 {
 	__emulation_run = 1;
 	iphone_main(ourArgsCnt, ourArgs);
@@ -46,6 +95,7 @@ void *app_Thread_Start(void *args)
 	}
 */
 	__emulation_run = 0;
+	__emulation_saving = 0;
 	return NULL;
 }
 
@@ -59,11 +109,20 @@ void *app_Thread_Start(void *args)
     	int pitch = w * 2, allocSize = 2 * w * h;
     	char *pixelFormat = "565L";
 		
+  		self.opaque = YES;
+  		self.clearsContextBeforeDrawing = NO;
+  		self.userInteractionEnabled = NO;
+  		self.multipleTouchEnabled = NO;
+  		self.contentMode = UIViewContentModeTopLeft;
+
+  		[[self layer] setMagnificationFilter:kCAFilterNearest];
+  		[[self layer] setMinificationFilter:kCAFilterNearest];
+		
 		dict = CFDictionaryCreateMutable(kCFAllocatorDefault, 0,
 										 &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 		CFDictionarySetValue(dict, kCoreSurfaceBufferGlobal, kCFBooleanTrue);
 		CFDictionarySetValue(dict, kCoreSurfaceBufferMemoryRegion,
-							 @"PurpleGFXMem");
+							 @"IOSurfaceMemoryRegion");
 		CFDictionarySetValue(dict, kCoreSurfaceBufferPitch,
 							 CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &pitch));
 		CFDictionarySetValue(dict, kCoreSurfaceBufferWidth,
@@ -85,10 +144,41 @@ void *app_Thread_Start(void *args)
 		affineTransform = CGAffineTransformConcat( affineTransform, CGAffineTransformMakeRotation(90));
 		self.transform = affineTransform;
 		*/
-		screenLayer.frame = CGRectMake(0.0f, 0.0f, 320.0f, 238.0f);
-		[screenLayer setMagnificationFilter: 0];
+		if(!iphone_is_landscape)
+		{
+			if([SOApp.optionsView getCurrentScaling])
+			{
+				screenLayer.frame = CGRectMake(0.0f, 0.0f, 318.0f, 238.0f);
+				[ screenLayer setOpaque: YES ];
+			}
+			else
+			{
+				screenLayer.frame = CGRectMake(0.0f, 0.0f, 318.0f, 238.0f);
+				[ screenLayer setOpaque: YES ];				
+			}
+		}
+		else
+		{
+			if([SOApp.optionsView getCurrentScaling])
+			{
+				CGAffineTransform transform = CGAffineTransformMakeRotation(M_PI / 2.0f); // = CGAffineTransformMakeTranslation(1.0, 1.0);
+				[screenLayer setAffineTransform:transform];
+				screenLayer.frame = CGRectMake(0.0f, 0.0f, 320.0f, 480.0f);
+				//[screenLayer setCenter:CGPointMake(240.0f,160.0f)];
+				[ screenLayer setOpaque:YES ];
+			}
+			else
+			{
+				CGAffineTransform transform = CGAffineTransformMakeRotation(M_PI / 2.0f); // = CGAffineTransformMakeTranslation(1.0, 1.0);
+				[screenLayer setAffineTransform:transform];
+				screenLayer.frame = CGRectMake(40.0f, 80.0f, 320.0f, 480.0f);
+				//[screenLayer setCenter:CGPointMake(240.0f,160.0f)];
+				[ screenLayer setOpaque:YES ];				
+			}
+		}
+		[screenLayer setMinificationFilter:kCAFilterNearest];
+		[screenLayer setMagnificationFilter:kCAFilterNearest];
 		screenLayer.contents = (id)_screenSurface;
-		[ screenLayer setOpaque: YES ];
 		[[self layer] addSublayer:screenLayer];
 		
 		/*
@@ -100,22 +190,29 @@ void *app_Thread_Start(void *args)
 		 [self.layer addSublayer: screenLayer];
 		 */
     	CoreSurfaceBufferUnlock(_screenSurface);
+
+		screenbuffer = CoreSurfaceBufferGetBaseAddress(_screenSurface);
+		//[NSThread setThreadPriority:0.0];
+		[NSThread detachNewThreadSelector:@selector(updateScreen) toTarget:self withObject:nil];
 		
-		BaseAddress = CoreSurfaceBufferGetBaseAddress(_screenSurface);
-		
-		timer = [NSTimer scheduledTimerWithTimeInterval:0.0275f
+    iphone_last_upd_ticks = 0;
+		/*
+		timer = [NSTimer scheduledTimerWithTimeInterval:(1.0f / 10.0f)
 												 target:self
 											   selector:@selector(updateScreen)
 											   userInfo:nil
 												repeats:YES];
+		*/
 	}
     
+	sharedInstance = self;
+	
 	return self;
 }
 
 - (void)dealloc
 {
-	[timer invalidate];
+	//[timer invalidate];
 	[ screenLayer release ];
 	[ super dealloc ];
 }
@@ -125,99 +222,271 @@ void *app_Thread_Start(void *args)
 	return _screenSurface;
 }
 
+
 - (void)drawRect:(CGRect)rect
 {
+	//memcpy(screenbuffer, BaseAddress, 240*160*2);
+	//memcpy(screenbuffer, BaseAddress, 240*160*2);
+}
+
+- (void)dummy
+{
+	
 }
 
 - (void)updateScreen
 {
-	static unsigned long long last_upd_ticks = 0;
-	//NSLog(@"CoreSurfaceBufferGetBaseAddress(screenSurface): 0x%x", CoreSurfaceBufferGetBaseAddress(_screenSurface));
-	if(last_upd_ticks != 0)
-	{
-		struct timeval current_time;
-		gettimeofday(&current_time, NULL);
-		unsigned long long current_ticks = 
-		((unsigned long long)current_time.tv_sec * 1000000ll) + current_time.tv_usec;
-		
-		if((current_ticks - last_upd_ticks) > 19667)
+  [NSThread setThreadPriority:1.0];
+#if 1
+/*  if(iphone_touches == 1)
+  {
+		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+  }
+  else if(iphone_touches >= 2)
+  {
+		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+  }
+  else*/
+  {
+		//[self setNeedsDisplay];
+		  NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+		while(__emulation_run)
+		{
+		  [self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:NO];
+      usleep(16666);
+      sched_yield();
+		}
+    [pool release];
+		/*[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+  */
+  }
+#else
+	struct timeval current_time;
+  long long current_ticks;
+	gettimeofday(&current_time, NULL);
+	current_ticks = ((long long)current_time.tv_sec * 1000ll) + ((long long)current_time.tv_usec / 1000ll);
+	
+	if(iphone_last_upd_ticks > 0)
+	{		
+		if((current_ticks - iphone_last_upd_ticks) >= (iphone_touches > 1 ? 40 : 33))
 		{
 			[self setNeedsDisplay];
-			struct timeval new_time;
-			gettimeofday(&new_time, NULL);
-			last_upd_ticks = ((unsigned long long)new_time.tv_sec * 1000000ll) + new_time.tv_usec;
+			iphone_last_upd_ticks = current_ticks;
 		}
 	}
 	else
 	{
 		[self setNeedsDisplay];
-		struct timeval new_time;
-		gettimeofday(&new_time, NULL);
-		last_upd_ticks = ((unsigned long long)new_time.tv_sec * 1000000ll) + new_time.tv_usec;
+		iphone_last_upd_ticks = current_ticks;
 	}
-	
-	//[ self setNeedsDisplay ];
-	//if(iphone_can_draw)
-	//{
-	//  [ self setNeedsDisplay ];
-	//  iphone_can_draw = 0;
-	//}
+#endif
 }
 
 @end
 
 @implementation NowPlayingController
 
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+	// the user clicked one of the OK/Cancel buttons
+	if(__emulation_run)
+	{
+	  if(iphone_menu == IPHONE_MENU_MAIN)
+	  {
+      if(buttonIndex == 0)
+	    {
+        iphone_menu = IPHONE_MENU_QUIT_LOAD;
+	    }
+	    else
+	    {
+        iphone_menu = IPHONE_MENU_DISABLED;
+	    }
+	  }
+	  
+	  if(iphone_menu == IPHONE_MENU_QUIT_LOAD)
+	  {
+      iphone_menu = IPHONE_MENU_QUIT;
+			UIActionSheet *alert = [[UIActionSheet alloc] initWithTitle:@"Are you sure?" delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Yes",@"No", nil];
+			[alert showInView:screenView];
+			[alert release];
+      return;
+	  }
+
+	  if(iphone_menu == IPHONE_MENU_QUIT)
+	  {			
+  		if (buttonIndex == 0)
+  		{
+  		  [SOApp.delegate switchToBrowse];
+  			[tabBar didMoveToWindow];
+  	    
+  			__emulation_saving = 0;
+  			__emulation_run = 0;
+  			//pthread_join(main_tid, NULL);
+  			[screenView removeFromSuperview];
+  			[screenView release];
+  			[controllerImageView removeFromSuperview];
+  			[controllerImageView release];
+  			__emulation_run = 0;
+  			__emulation_saving = 0;
+    		if(global_enable_audio)
+        {
+          app_MuteSound();
+        }
+#ifdef WITH_ADS
+  			[SOApp.delegate unpauseAdViews];
+#endif
+  		}
+  		iphone_menu = IPHONE_MENU_DISABLED;
+	  }
+	  else
+	  {
+      iphone_menu = IPHONE_MENU_DISABLED;
+	  }
+	}
+	else
+	{
+		if (buttonIndex == 0)
+		{
+      iphone_is_landscape = 0;
+			global_enable_audio = 1;
+			[ self getControllerCoords:0 ];
+			[ self fixRects ];
+			numFingers = 0;
+			__emulation_run = 1;
+			screenView = [ [ScreenView alloc] initWithFrame: CGRectMake(0, 0, 320, 480)];
+			[self.view addSubview: screenView];
+			controllerImageView = [ [ UIImageView alloc ] initWithImage:[UIImage imageNamed:[NSString stringWithFormat:@"controller_hs%d.png", [SOApp.optionsView getCurrentSkin]]]];
+			controllerImageView.frame = CGRectMake(0.0f, 240.0f, 320.0f, 240.0f); // Set the frame in which the UIImage should be drawn in.
+			controllerImageView.userInteractionEnabled = NO;
+			controllerImageView.multipleTouchEnabled = NO;
+			controllerImageView.clearsContextBeforeDrawing = NO;
+			[controllerImageView setOpaque:YES];
+			[controllerImageView setAlpha:((float)iphone_controller_opacity / 100.0f)];
+			[self.view addSubview: controllerImageView]; // Draw the image in self.view.
+		}
+		else if (buttonIndex == 1)
+		{
+		  iphone_is_landscape = 0;
+			global_enable_audio = 0;
+			[ self getControllerCoords:0 ];
+			[ self fixRects ];
+			numFingers = 0;
+			__emulation_run = 1;
+			screenView = [ [ScreenView alloc] initWithFrame: CGRectMake(0, 0, 320, 480)];
+			[self.view addSubview: screenView];
+			controllerImageView = [ [ UIImageView alloc ] initWithImage:[UIImage imageNamed:[NSString stringWithFormat:@"controller_hs%d.png", [SOApp.optionsView getCurrentSkin]]]];
+			controllerImageView.frame = CGRectMake(0.0f, 240.0f, 320.0f, 240.0f); // Set the frame in which the UIImage should be drawn in.
+			controllerImageView.userInteractionEnabled = NO;
+			controllerImageView.multipleTouchEnabled = NO;
+			controllerImageView.clearsContextBeforeDrawing = NO;
+			[controllerImageView setOpaque:YES];
+			[controllerImageView setAlpha:((float)iphone_controller_opacity / 100.0f)];
+			[self.view addSubview: controllerImageView]; // Draw the image in self.view.
+		}
+		else if (buttonIndex == 2)
+		{
+		  iphone_is_landscape = 1;
+			global_enable_audio = 1;
+			[ self getControllerCoords:1 ];
+			[ self fixRects ];
+			numFingers = 0;
+			__emulation_run = 1;
+			screenView = [ [ScreenView alloc] initWithFrame: CGRectMake(0, 0, 320, 480)];
+			[self.view addSubview: screenView];
+			controllerImageView = [ [ UIImageView alloc ] initWithImage:[UIImage imageNamed:[NSString stringWithFormat:@"controller_fs%d.png", [SOApp.optionsView getCurrentSkin]]]];
+			controllerImageView.frame = CGRectMake(0.0f, 0.0f, 320.0f, 480.0f); // Set the frame in which the UIImage should be drawn in.
+			controllerImageView.userInteractionEnabled = NO;
+			controllerImageView.multipleTouchEnabled = NO;
+			controllerImageView.clearsContextBeforeDrawing = NO;
+			[controllerImageView setOpaque:YES];
+			[controllerImageView setAlpha:((float)iphone_controller_opacity / 100.0f)];
+			[self.view addSubview: controllerImageView]; // Draw the image in self.view.
+		}
+		else
+		{
+		  iphone_is_landscape = 1;
+			global_enable_audio = 0;
+			[ self getControllerCoords:1 ];
+			[ self fixRects ];
+			numFingers = 0;
+			__emulation_run = 1;
+			screenView = [ [ScreenView alloc] initWithFrame: CGRectMake(0, 0, 320, 480)];
+			[self.view addSubview: screenView];
+			controllerImageView = [ [ UIImageView alloc ] initWithImage:[UIImage imageNamed:[NSString stringWithFormat:@"controller_fs%d.png", [SOApp.optionsView getCurrentSkin]]]];
+			controllerImageView.frame = CGRectMake(0.0f, 0.0f, 320.0f, 480.0f); // Set the frame in which the UIImage should be drawn in.
+			[controllerImageView setOpaque:YES];
+			[controllerImageView setAlpha:((float)iphone_controller_opacity / 100.0f)];
+			controllerImageView.userInteractionEnabled = NO;
+			controllerImageView.multipleTouchEnabled = NO;
+			controllerImageView.clearsContextBeforeDrawing = NO;
+			[self.view addSubview: controllerImageView]; // Draw the image in self.view.				
+		}
+#ifdef WITH_ADS		
+    [SOApp.delegate pauseAdViews];
+#endif
+		pthread_create(&main_tid, NULL, app_Thread_Start, NULL);
+		
+		struct sched_param    param;
+    param.sched_priority = 63;
+    if(pthread_setschedparam(main_tid, SCHED_RR, &param) != 0)
+    {
+      fprintf(stderr, "Error setting pthread priority\n");
+    }
+    
+    if(global_enable_audio)
+    {
+      app_DemuteSound();
+    }
+    //[NSThread detachNewThreadSelector:@selector(runSound) toTarget:self withObject:nil];  
+	}
+}
+
+- (void)runSound
+{
+  //[NSThread setThreadPriority:1.0];
+  sound_Thread_Start(NULL);
+}
+
+- (void)runProgram
+{
+	__emulation_run = 1;
+	iphone_main(ourArgsCnt, ourArgs);
+	__emulation_run = 0;
+	__emulation_saving = 0;	
+}
+
 - (void)startEmu:(char*)path {
-	int i=0;
+	int i = 0;
+	
+  iphone_menu = IPHONE_MENU_DISABLED;
 	
 	ourArgsCnt = 0;
 	/* faked executable path */
-	ourArgs[ourArgsCnt]="/var/mobile/Media/ROMs/MAME/mame"; ourArgsCnt++;
+	ourArgs[ourArgsCnt]=get_documents_path("mame4iphone"); ourArgsCnt++;
 	
-	/* playgame */
 	sprintf(romfile, "%s", strrchr(path, '/') + 1);
 	char* trimrom = strrchr(romfile, '.');
 	if(trimrom)
 		trimrom[0] = '\0';
 	
 	ourArgs[ourArgsCnt]=romfile; ourArgsCnt++;
-		
-	/* gp2x_video_depth */
-	/*
-	if (gp2x_video_depth==8)
-	{
-		ourArgs[ourArgsCnt]="-depth"; ourArgsCnt++;
-		ourArgs[ourArgsCnt]="8"; ourArgsCnt++;
-	}
-	if (gp2x_video_depth==16)
-	{
-		ourArgs[ourArgsCnt]="-depth"; ourArgsCnt++;
-		ourArgs[ourArgsCnt]="16"; ourArgsCnt++;
-	}
-	*/
-	/*
-	if ((gp2x_video_aspect>=8) && (gp2x_video_aspect<=15))
-	{
-		ourArgs[ourArgsCnt]="-rotatecontrols"; ourArgsCnt++;
-	}
-	*/
 	
-	//ourArgs[ourArgsCnt]="-nothrottle"; ourArgsCnt++;
-
-	if(__audioVolume == 0.0)
-	{
-		ourArgs[ourArgsCnt]="-soundcard"; ourArgsCnt++;
-		ourArgs[ourArgsCnt]="0"; ourArgsCnt++;
-	}
+	ourArgs[ourArgsCnt]="-soundcard"; ourArgsCnt++;
+	ourArgs[ourArgsCnt]="0"; ourArgsCnt++;
 	
 	ourArgs[ourArgsCnt]="-depth"; ourArgsCnt++;
 	ourArgs[ourArgsCnt]="16"; ourArgsCnt++;
 
 	/* gp2x_frameskip */
-	//ourArgs[ourArgsCnt]="-frameskip"; ourArgsCnt++;
-	//sprintf(ourArgsStr[i],"%d",5);
-	//ourArgs[ourArgsCnt]=ourArgsStr[i]; i++; ourArgsCnt++;
+	ourArgs[ourArgsCnt]="-frameskip"; ourArgsCnt++;
+	sprintf(ourArgsStr[i],"auto");
+	ourArgs[ourArgsCnt]=ourArgsStr[i]; i++; ourArgsCnt++;
 	
 	ourArgs[ourArgsCnt]="-samplerate"; ourArgsCnt++;
 	ourArgs[ourArgsCnt]="44100"; ourArgsCnt++;
@@ -233,12 +502,12 @@ void *app_Thread_Start(void *args)
 	sprintf(ourArgsStr[i],"%d",100-(80));
 	ourArgs[ourArgsCnt]=ourArgsStr[i]; i++; ourArgsCnt++;
 	
-	ourArgs[ourArgsCnt]="-cheat"; ourArgsCnt++;
-	ourArgs[ourArgsCnt]=NULL;
-	
+	ourArgs[ourArgsCnt]="-cheat"; ourArgsCnt++;	
 	
 	ourArgs[ourArgsCnt]="-romdir"; ourArgsCnt++;
 	ourArgs[ourArgsCnt]="/var/mobile/Media/ROMs/MAME/roms"; ourArgsCnt++;
+	
+	ourArgs[ourArgsCnt]=NULL;
 	
 	for (i=0; i<ourArgsCnt; i++)
 	{
@@ -246,38 +515,11 @@ void *app_Thread_Start(void *args)
 	}
 	fprintf(stderr, "\n");
 	
-	pthread_create(&main_tid, NULL, app_Thread_Start, NULL);	
-/*
-	char romfile[1024];
-	tArgc = 4;
-	tArgv = (char**) malloc (sizeof(*tArgv) * (tArgc+1));
+	self.view.frame = CGRectMake(0.0f, 0.0f, 320.0f, 480.0f);
 	
-	if (tArgv == NULL) 
-	{
-		return;
-	}
-	
-	tArgv[0] = (char*)malloc(strlen("/Applications/mame4iphone.app/mame4iphone") + 1);
-	sprintf(tArgv[0], "/Applications/mame4iphone.app/mame4iphone");
-	
-	sprintf(romfile, "%s", strrchr(path, '/') + 1);
-	char* trimrom = strrchr(romfile, '.');
-	if(trimrom)
-		trimrom[0] = '\0';
-	
-	tArgv[1] = (char*)malloc(strlen(romfile) + 1);
-	sprintf(tArgv[1], "%s",romfile);
-	
-	tArgv[2] = (char*)malloc(strlen("-romdir") + 1);
-	sprintf(tArgv[2], "-romdir");
-	tArgv[3] = (char*)malloc(strlen("/var/mobile/Media/ROMs/MAME") + 1);
-	sprintf(tArgv[3], "/var/mobile/Media/ROMs/MAME");
-		
-	fprintf(stderr, "Loading %s\n", romfile);
-	tArgv[tArgc] = NULL;
-	
-	pthread_create(&main_tid, NULL, app_Thread_Start, NULL);	
-*/
+	UIActionSheet *alert = [[UIActionSheet alloc] initWithTitle:@"Choose Your Screen Orientation & Sound Options" delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Portrait & Sound", @"Portrait & No Sound", @"Landscape & Sound", @"Landscape & No Sound", nil];
+	[alert showInView:self.view];
+	[alert release];
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -291,12 +533,25 @@ void *app_Thread_Start(void *args)
 	//[ self setTapDelegate: self ];
 	//[ self setGestureDelegate: self ];
 	//[ self setMultipleTouchEnabled: YES ];
-	[ self getControllerCoords ];
+	[ self getControllerCoords:0 ];
 	[ self fixRects ];
 	numFingers = 0;
+	iphone_touches = 0;
 	self.navigationItem.hidesBackButton = YES;
-	screenView = [ [ScreenView alloc] initWithFrame: CGRectMake(0, 0, 320, 238) ];
-	[self.view addSubview: screenView];
+	
+  self.view.opaque = YES;
+	self.view.clearsContextBeforeDrawing = NO;
+	self.view.userInteractionEnabled = YES;
+	self.view.multipleTouchEnabled = YES;
+	self.view.contentMode = UIViewContentModeTopLeft;
+	
+	[[self.view layer] setMagnificationFilter:kCAFilterNearest];
+	[[self.view layer] setMinificationFilter:kCAFilterNearest];
+	[NSThread setThreadPriority:1.0];
+}
+
+- (void)drawRect:(CGRect)rect
+{
 }
 
 - (void)fixRects {
@@ -331,204 +586,351 @@ void *app_Thread_Start(void *args)
 */
 }
 
-/* Big thanks to iPhysics author nop144666 for the initial multitouch code! */
-- (void)dumpEvent:(myGSEvent*)event {
-	int i;
+- (void)runMenu
+{
+  NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+  __emulation_paused = 1;
+  iphone_menu = IPHONE_MENU_MAIN_LOAD;
+  while(iphone_menu != IPHONE_MENU_DISABLED)
+  {
+    if(iphone_menu == IPHONE_MENU_MAIN_LOAD)
+    {
+      iphone_menu = IPHONE_MENU_MAIN;
+      [NSThread detachNewThreadSelector:@selector(runMainMenu) toTarget:self withObject:nil];
+		}
+		else
+		{
+      usleep(1000000);
+		}
+	}
+	__emulation_paused = 0;
+  [pool release];
+}
 
-	gp2x_pad_status = 0;
-	//NSLog(@"MouseEvent: %d, fingerCount: %hd, numPoints: %hhd, pos: %f, %f", event->mouseEvent, event->fingerCount, event->numPoints, event->x, event->y);
+- (void)runMainMenu
+{
+  NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+	UIActionSheet *alert = [[UIActionSheet alloc] initWithTitle:@"Choose an option from the menu. Press cancel to go back." delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Quit To Menu",@"Cancel", nil];
+	[alert showInView:screenView];
+	[alert release];
+  [pool release];
+}
+
+#define MyCGRectContainsPoint(rect, point)						\
+	(((point.x >= rect.origin.x) &&								\
+		(point.y >= rect.origin.y) &&							\
+		(point.x <= rect.origin.x + rect.size.width) &&			\
+		(point.y <= rect.origin.y + rect.size.height)) ? 1 : 0)
+
+#if 1
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {	
+	int i;
+	//Get all the touches.
+	NSSet *allTouches = [event allTouches];
+	int touchcount = [allTouches count];
 	
-	for (i = 0; i < event->fingerCount; i++) {
-		//NSLog(@"  Point %d: %f, %f", i, event->points[i].x, event->points[i].y);
-		struct CGPoint point;
-		point.x = event->points[i].x;
-		point.y = event->points[i].y;
+	gp2x_pad_status = 0;
+	
+  iphone_touches = touchcount;
+			
+	for (i = 0; i < touchcount; i++) 
+	{
+		UITouch *touch = [[allTouches allObjects] objectAtIndex:i];
 		
-		if (CGRectContainsPoint(UpLeft, point)) {
-            gp2x_pad_status |= GP2X_UP | GP2X_LEFT;
-		} 
-		else if (CGRectContainsPoint(DownLeft, point)) {
-            gp2x_pad_status |= GP2X_DOWN | GP2X_LEFT;
+		if(touch == nil)
+		{
+			return;
 		}
-		else if (CGRectContainsPoint(UpRight, point)) {
-            gp2x_pad_status |= GP2X_UP | GP2X_RIGHT;
-		}
-		else if (CGRectContainsPoint(DownRight, point)) {
-            gp2x_pad_status |= GP2X_DOWN | GP2X_RIGHT;
-		}
-		else if (CGRectContainsPoint(Up, point)) {
-            gp2x_pad_status |= GP2X_UP;
-		}
-		else if (CGRectContainsPoint(Down, point)) {
-            gp2x_pad_status |= GP2X_DOWN;
-		}
-		else if (CGRectContainsPoint(Left, point)) {
-            gp2x_pad_status |= GP2X_LEFT;
-		}
-		else if (CGRectContainsPoint(Right, point)) {
-            gp2x_pad_status |= GP2X_RIGHT;
-		}
-		else if (CGRectContainsPoint(Select, point)) {
-            gp2x_pad_status |= GP2X_SELECT;
-		}
-		else if (CGRectContainsPoint(Start, point)) {
-            gp2x_pad_status |= GP2X_START;
-		}
-		else if (CGRectContainsPoint(ButtonUpLeft, point)) {
-            gp2x_pad_status |= GP2X_A | GP2X_Y;
-		}
-		else if (CGRectContainsPoint(ButtonDownLeft, point)) {
-            gp2x_pad_status |= GP2X_A | GP2X_X;
-		}
-		else if (CGRectContainsPoint(ButtonUpRight, point)) {
-            gp2x_pad_status |= GP2X_Y | GP2X_B;
-		}
-		else if (CGRectContainsPoint(ButtonDownRight, point)) {
-            gp2x_pad_status |= GP2X_X | GP2X_B;
-		}
-		else if (CGRectContainsPoint(ButtonUp, point)) {
-            gp2x_pad_status |= GP2X_Y;
-		}
-		else if (CGRectContainsPoint(ButtonDown, point)) {
-            gp2x_pad_status |= GP2X_X;
-		}
-		else if (CGRectContainsPoint(ButtonLeft, point)) {
-            gp2x_pad_status |= GP2X_A;
-		}
-		else if (CGRectContainsPoint(ButtonRight, point)) {
-            gp2x_pad_status |= GP2X_B;
-		}
-		else if (CGRectContainsPoint(LPad, point)) {
-            gp2x_pad_status |= GP2X_L;
-		}
-		else if (CGRectContainsPoint(RPad, point)) {
-            gp2x_pad_status |= GP2X_R;
-		}
-		else if (CGRectContainsPoint(LPad2, point)) {
-            gp2x_pad_status |= GP2X_VOL_DOWN;
-		}
-		else if (CGRectContainsPoint(RPad2, point)) {
-            gp2x_pad_status |= GP2X_VOL_UP;
-		}
-		else if (CGRectContainsPoint(Menu, point)) {
-			__emulation_run = 0;
-			gp2x_pad_status |= GP2X_ESC;
-			[SOApp.delegate switchToBrowse];
-			[tabBar didMoveToWindow];
+		
+		/*if(touch.phase == UITouchPhaseBegan)
+		{
+			NSLog([NSString stringWithFormat:@"%s", test_print_buffer]);
+		}*/
+		if( touch.phase == UITouchPhaseBegan		||
+			touch.phase == UITouchPhaseMoved		||
+			touch.phase == UITouchPhaseStationary	)
+		{
+			struct CGPoint point;
+			point = [touch locationInView:self.view];
+			
+			if (MyCGRectContainsPoint(ButtonUp, point)) {
+				gp2x_pad_status |= GP2X_Y;
+			}
+			else if (MyCGRectContainsPoint(ButtonDown, point)) {
+				gp2x_pad_status |= GP2X_X;
+			}
+			else if (MyCGRectContainsPoint(ButtonLeft, point)) {
+				gp2x_pad_status |= GP2X_A;
+			}
+			else if (MyCGRectContainsPoint(ButtonRight, point)) {
+				gp2x_pad_status |= GP2X_B;
+			}
+			else if (MyCGRectContainsPoint(ButtonUpLeft, point)) {
+				gp2x_pad_status |= GP2X_Y | GP2X_A;
+			}
+			else if (MyCGRectContainsPoint(ButtonDownLeft, point)) {
+				gp2x_pad_status |= GP2X_X | GP2X_A;
+			}
+			else if (MyCGRectContainsPoint(ButtonUpRight, point)) {
+				gp2x_pad_status |= GP2X_Y | GP2X_B;
+			}			
+			else if (MyCGRectContainsPoint(ButtonDownRight, point)) {
+				gp2x_pad_status |= GP2X_X | GP2X_B;
+			} 
+			else if (MyCGRectContainsPoint(Select, point)) {
+				gp2x_pad_status |= GP2X_SELECT;
+			}
+			else if (MyCGRectContainsPoint(Start, point)) {
+				gp2x_pad_status |= GP2X_START;
+			}
+			else if (MyCGRectContainsPoint(Up, point)) {
+				gp2x_pad_status |= GP2X_UP;
+			}			
+			else if (MyCGRectContainsPoint(Down, point)) {
+				gp2x_pad_status |= GP2X_DOWN;
+			}			
+			else if (MyCGRectContainsPoint(Left, point)) {
+				gp2x_pad_status |= GP2X_LEFT;
+			}			
+			else if (MyCGRectContainsPoint(Right, point)) {
+				gp2x_pad_status |= GP2X_RIGHT;
+			}			
+			else if (MyCGRectContainsPoint(UpLeft, point)) {
+				gp2x_pad_status |= GP2X_UP | GP2X_LEFT;
+			}			
+			else if (MyCGRectContainsPoint(UpRight, point)) {
+				gp2x_pad_status |= GP2X_UP | GP2X_RIGHT;
+			}			
+			else if (MyCGRectContainsPoint(DownLeft, point)) {
+				gp2x_pad_status |= GP2X_DOWN | GP2X_LEFT;
+			}			
+			else if (MyCGRectContainsPoint(DownRight, point)) {
+				gp2x_pad_status |= GP2X_DOWN | GP2X_RIGHT;
+			}
+			else if (MyCGRectContainsPoint(LPad, point)) {
+				gp2x_pad_status |= GP2X_L;
+			}
+			else if (MyCGRectContainsPoint(RPad, point)) {
+				gp2x_pad_status |= GP2X_R;
+			}			
+			else if (MyCGRectContainsPoint(LPad2, point)) {
+				gp2x_pad_status |= GP2X_VOL_DOWN;
+			}
+			else if (MyCGRectContainsPoint(RPad2, point)) {
+				gp2x_pad_status |= GP2X_VOL_UP;
+			}			
+			else if (MyCGRectContainsPoint(Menu, point)) {
+				if(touch.phase == UITouchPhaseBegan || touch.phase == UITouchPhaseStationary)
+				{
+					if(__emulation_run)
+					{
+            [NSThread detachNewThreadSelector:@selector(runMenu) toTarget:self withObject:nil];
+					}
+					else
+					{
+  					[SOApp.delegate switchToBrowse];
+  					[tabBar didMoveToWindow];
+					}
+				}
+			}
 		}
 	}
 }
 
-- (void)gestureChanged:(myGSEvent*)event {
-	//NSLog(@"gestureChanged:");
-	[self dumpEvent: event];
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
+	[self touchesBegan:touches withEvent:event];
 }
 
-- (void)gestureEnded:(myGSEvent*)event {
-	//NSLog(@"gestureEnded:");
-	[self dumpEvent: event];
+- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
+	[self touchesBegan:touches withEvent:event];
+  iphone_touches = 0;
 }
 
-- (void)gestureStarted:(myGSEvent*)event {
-	//NSLog(@"gestureStarted:");
-	[self dumpEvent: event];
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+	[self touchesBegan:touches withEvent:event];
+  iphone_touches = 0;
 }
-
-- (void)mouseDown:(myGSEvent*)event {
-	//NSLog(@"mouseDown:");
-	[self dumpEvent: event];
-}
-
-- (void)mouseDragged:(myGSEvent*)event {
-	//NSLog(@"mouseDragged:");
-	[self dumpEvent: event];
-}
-
-- (void)mouseEntered:(myGSEvent*)event {		
-	//NSLog(@"mouseEntered:");
-	[self dumpEvent: event];
-}
-
-- (void)mouseExited:(myGSEvent*)event {		
-	//NSLog(@"mouseExited:");
-	[self dumpEvent: event];
-}
-
-- (void)mouseMoved:(myGSEvent*)event {
-	//NSLog(@"mouseMoved:");
-	[self dumpEvent: event];
-}
-
-- (void)mouseUp:(myGSEvent*)event {
-	//NSLog(@"mouseUp:");
-	[self dumpEvent: event];
-}
-
+#endif
+/*
 - (void)view:(UIView *)view handleTapWithCount:(int)count event:(myGSEvent *)event {
 	//NSLog(@"handleTapWithCount: %d", count);
 	[self dumpEvent: event];
 }
-
+*/
+/*
 - (double)viewTouchPauseThreshold:(UIView *)view {
-	return 0.5;
+	NSLog(@"TouchPause!");
+	return 0.0;
+}
+*/
+
+#if 0
+- (void)mouseEvent:(myGSEvent*)event {
+	int i;
+	int touchcount = event->fingerCount;
+	
+	gp2x_pad_status = 0;
+	
+	for (i = 0; i < touchcount; i++) 
+	{
+		struct CGPoint point = CGPointMake(event->points[i].x, event->points[i].y);
+		
+		if (MyCGRectContainsPoint(Left, point)) {
+			gp2x_pad_status |= GP2X_LEFT;
+		}
+		else if (MyCGRectContainsPoint(Right, point)) {
+			gp2x_pad_status |= GP2X_RIGHT;
+		}
+		else if (MyCGRectContainsPoint(Up, point)) {
+			gp2x_pad_status |= GP2X_UP;
+		}
+		else if (MyCGRectContainsPoint(Down, point)) {
+			gp2x_pad_status |= GP2X_DOWN;
+		}
+		else if (MyCGRectContainsPoint(A, point)) {
+			gp2x_pad_status |= GP2X_B;
+		}
+		else if (MyCGRectContainsPoint(B, point)) {
+			gp2x_pad_status |= GP2X_X;
+		}
+		else if (MyCGRectContainsPoint(AB, point)) {
+			gp2x_pad_status |= GP2X_B | GP2X_X;
+		}			
+		else if (MyCGRectContainsPoint(UpLeft, point)) {
+			gp2x_pad_status |= GP2X_UP | GP2X_LEFT;
+		} 
+		else if (MyCGRectContainsPoint(DownLeft, point)) {
+			gp2x_pad_status |= GP2X_DOWN | GP2X_LEFT;
+		}
+		else if (MyCGRectContainsPoint(UpRight, point)) {
+			gp2x_pad_status |= GP2X_UP | GP2X_RIGHT;
+		}
+		else if (MyCGRectContainsPoint(DownRight, point)) {
+			gp2x_pad_status |= GP2X_DOWN | GP2X_RIGHT;
+		}			
+		else if (MyCGRectContainsPoint(LPad, point)) {
+			gp2x_pad_status |= GP2X_L;
+		}
+		else if (MyCGRectContainsPoint(RPad, point)) {
+			gp2x_pad_status |= GP2X_R;
+		}			
+		else if (MyCGRectContainsPoint(Select, point)) {
+			gp2x_pad_status |= GP2X_SELECT;
+		}
+		else if (MyCGRectContainsPoint(Start, point)) {
+			gp2x_pad_status |= GP2X_START;
+		}
+		else if (MyCGRectContainsPoint(Menu, point)) {
+			//if(touch.phase == UITouchPhaseBegan || touch.phase == UITouchPhaseStationary)
+			{
+				[SOApp.delegate switchToBrowse];
+				[tabBar didMoveToWindow];
+				if(__emulation_run)
+				{
+					UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Save Game State" message:@"Save Game State?" delegate:self cancelButtonTitle:nil otherButtonTitles:@"Save Game!",@"Don't Save?", nil];
+					[alert show];
+					[alert release];
+				}
+			}
+		}
+	}
 }
 
+- (void)mouseDown:(myGSEvent*)event {
+	//NSLog(@"mouseDown:");
+	[self mouseEvent: event];
+}
+
+- (void)mouseDragged:(myGSEvent*)event {
+	//NSLog(@"mouseDragged:");
+	[self mouseEvent: event];
+}
+
+- (void)mouseEntered:(myGSEvent*)event {		
+	//NSLog(@"mouseEntered:");
+	[self mouseEvent: event];
+}
+
+- (void)mouseExited:(myGSEvent*)event {		
+	//NSLog(@"mouseExited:");
+	[self mouseEvent: event];
+}
+
+- (void)mouseMoved:(myGSEvent*)event {
+	//NSLog(@"mouseMoved:");
+	[self mouseEvent: event];
+}
+
+- (void)mouseUp:(myGSEvent*)event {
+	[self mouseEvent: event];
+}
+#endif
+
+/*
 - (BOOL)isFirstResponder {
 	return YES;
 }
+*/
 
-- (void)getControllerCoords {
+- (void)getControllerCoords:(int)orientation {
     char string[256];
-    FILE *fp;	
-    fp = fopen("/Applications/mame4iphone.app/controller_hs1.txt", "r");
-    if (fp) 
+    FILE *fp;
+	
+	if(!orientation)
+	{
+		fp = fopen([[NSString stringWithFormat:@"%scontroller_hs%d.txt", get_resource_path("/"), [SOApp.optionsView getCurrentSkin]] UTF8String], "r");
+  }
+	else
+	{
+		fp = fopen([[NSString stringWithFormat:@"%scontroller_fs%d.txt", get_resource_path("/"), [SOApp.optionsView getCurrentSkin]] UTF8String], "r");
+	}
+	
+	if (fp) 
 	{
 		int i = 0;
-        while(fgets(string, 256, fp) != NULL && i < 23) {
+    while(fgets(string, 256, fp) != NULL && i < 24) 
+    {
 			char* result = strtok(string, ",");
 			int coords[4];
 			int i2 = 1;
 			while( result != NULL && i2 < 5 )
 			{
 				coords[i2 - 1] = atoi(result);
-				if(i2 - 1 == 1)
-				{
-					coords[1] += 240;
-				}
 				result = strtok(NULL, ",");
 				i2++;
 			}
 			
 			switch(i)
 			{
-				case 0:    DownLeft   	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 1:    Down   	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 2:    DownRight    = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 3:    Left  	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 4:    Right  	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 5:    UpLeft     	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 6:    Up     	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 7:    UpRight  	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 8:    Select = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 9:    Start  = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 10:   LPad   = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 11:   RPad   = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 12:   Menu   = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 13:   ButtonDownLeft   	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 14:   ButtonDown   	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 15:   ButtonDownRight    	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 16:   ButtonLeft  		= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 17:   ButtonRight  	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 18:   ButtonUpLeft     	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 19:   ButtonUp     	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 20:   ButtonUpRight  	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 21:   LPad2   = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
-				case 22:   RPad2   = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 0:    DownLeft   	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 1:    Down   	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 2:    DownRight    = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 3:    Left  	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 4:    Right  	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 5:    UpLeft     	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 6:    Up     	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 7:    UpRight  	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 8:    Select = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 9:    Start  = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 10:   LPad   = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 11:   RPad   = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 12:   Menu   = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 13:   ButtonDownLeft   	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 14:   ButtonDown   	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 15:   ButtonDownRight    	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 16:   ButtonLeft  		= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 17:   ButtonRight  	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 18:   ButtonUpLeft     	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 19:   ButtonUp     	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 20:   ButtonUpRight  	= CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 21:   LPad2   = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+    		case 22:   RPad2   = CGRectMake( coords[0], coords[1], coords[2], coords[3] ); break;
+        case 23:   iphone_controller_opacity = coords[0]; break;
 			}
-           	i++;
-        }
-        fclose(fp);
+      i++;
     }
+    fclose(fp);
+  }
 }
 
 /*
@@ -557,38 +959,24 @@ void *app_Thread_Start(void *args)
 
 
 - (void)dealloc {
-	if(currentTitle)
-		[ currentTitle release ];
-	if(currentId)
-		[ currentId release ];
-	if(currentTunein)
-		[ currentTunein release ];
 	if(currentPath)
 		[ currentPath release ];
 	if(currentFile)
 		[ currentFile release ];
 	if(currentDir)
 		[ currentDir release ];
-
+	
 	[super dealloc];
 }
 
 - (void)volumeChanged:(id)sender
 {
+#if 0
 	__audioVolume = volumeSlider.value;
+#endif
 }
 
-- (void)setCurrentlyPlaying:(NSString*) str
-{
-}
-
-- (void)setCurrentStation:(NSString*)theStation withTitle:(NSString*)theTitle withId:(NSString*)theId withTunein:(NSString*)theTunein withPath:(NSString*)thePath withFile:(NSString*)theFile withDir:(NSString*)theDir {
-	if(currentTitle)
-	{	[ currentTitle release ]; currentTitle = NULL; }
-	if(currentId)
-	{	[ currentId release ]; currentId = NULL; }
-	if(currentTunein)
-	{	[ currentTunein release ]; currentTunein = NULL; }
+- (void)setCurrentStation:(NSString*)thePath withFile:(NSString*)theFile withDir:(NSString*)theDir {
 	if(currentPath)
 	{	[ currentPath release ]; currentPath = NULL; }
 	if(currentFile)
@@ -596,18 +984,6 @@ void *app_Thread_Start(void *args)
 	if(currentDir)
 	{	[ currentDir release ]; currentDir = NULL; }
 	
-	if(theTitle)
-	{
-		currentTitle = [[NSString alloc] initWithString: theTitle];	
-	}
-	if(theId)
-	{
-		currentId = [[NSString alloc] initWithString: theId];	
-	}
-	if(theTunein)
-	{
-		currentTunein = [[NSString alloc] initWithString: theTunein];	
-	}
 	if(thePath)
 	{
 		currentPath = [[NSString alloc] initWithString: thePath];	
@@ -622,17 +998,22 @@ void *app_Thread_Start(void *args)
 	}
 }
 
+#if 0
 - (void)setBookmark:(id)sender 
 {
-	if(currentTunein && currentId && currentTitle)
+	if(__emulation_run)
 	{
-		[SOApp.bookmarksView addBookmark:currentTitle withId:currentId withTunein:currentTunein withBookmark:NULL withPath:NULL withFile:NULL withDir:NULL];
-		[SOApp.delegate switchToBookmarks];
-		[tabBar didMoveToWindowBookmarks];
-	}
-	else if(currentPath && currentFile && currentDir)
+		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Save Game State" message:@"Save Game State?" delegate:self cancelButtonTitle:@"Dont Save?" otherButtonTitles:@"Save Game!", nil];
+		[alert show];
+		[alert release];
+		__emulation_saving = 1;
+		__emulation_run = 0;
+		pthread_join(main_tid, NULL);
+		[screenView release];
+	}	
+	if(currentPath && currentFile && currentDir)
 	{
-		[SOApp.bookmarksView addBookmark:NULL withId:NULL withTunein:NULL withBookmark:NULL withPath:currentPath withFile:currentFile withDir:currentDir];
+		[SOApp.bookmarksView addBookmark:currentPath withFile:currentFile withDir:currentDir];
 		[SOApp.delegate switchToBookmarks];
 		[tabBar didMoveToWindowBookmarks];		
 	}
@@ -641,6 +1022,25 @@ void *app_Thread_Start(void *args)
 		[SOApp.delegate switchToBookmarks];
 		[tabBar didMoveToWindowBookmarks];
 	}
+}
+#endif
+
+- (void)setSaveState:(id)sender 
+{
+#if 0
+	if(__emulation_run)
+	{
+		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Save Game State" message:@"Save Game State?" delegate:self cancelButtonTitle:@"Dont Save?" otherButtonTitles:@"Save Game!", nil];
+		[alert show];
+		[alert release];
+		__emulation_saving = 1;
+		__emulation_run = 0;
+		pthread_join(main_tid, NULL);
+		[screenView release];
+	}	
+	[SOApp.delegate switchToBrowse];
+	[tabBar didMoveToWindow];	
+#endif
 }
 
 @end

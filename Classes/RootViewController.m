@@ -13,6 +13,8 @@ int				tArgc;
 char**			tArgv;
 pthread_t		main_tid;
 int				__emulation_run = 0;
+int				__emulation_saving = 0;
+int       __emulation_paused = 0;
 
 @implementation RootViewController
 
@@ -30,41 +32,50 @@ int				__emulation_run = 0;
 */	
 	browseArray = [[NSMutableArray alloc] init];
 	
-	currentPath = [[NSString alloc] initWithString:@"/var/mobile/Media/ROMs/MAME/roms/"];
+	currentPath = [[NSString alloc] initWithCString:get_documents_path("roms/")]; // initWithString:@"/var/mobile/Media/ROMs/GBA/"];
+	
+	NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:1.00f
+											 target:self
+										   selector:@selector(initRootData)
+										   userInfo:nil
+											repeats:NO];
+}
+
+- (void)initRootData
+{
 	[ self refreshData:currentPath ];
 }
 
 - (void)refreshData:(NSString*)path 
 {
+  NSString* prevPath;
 	[browseArray removeAllObjects];
-	
+	prevPath = [[NSString alloc] initWithString:path];
 	[currentPath release];
-	
-	if([[path substringWithRange:NSMakeRange([path length]-1,1)] compare:@"/"] == NSOrderedSame)
+	if([[prevPath substringWithRange:NSMakeRange([prevPath length]-1,1)] compare:@"/"] == NSOrderedSame)
 	{
-		currentPath = [[NSString alloc] initWithFormat:@"%@",path];
+    currentPath = [[NSString alloc] initWithFormat:@"%@",prevPath];
 	}
 	else
 	{
-		currentPath = [[NSString alloc] initWithFormat:@"%@/",path];
+		currentPath = [[NSString alloc] initWithFormat:@"%@/",prevPath];
 	}
-	
+
 	int i;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSInteger entries = [[fileManager directoryContentsAtPath: currentPath] count];
+  NSInteger entries = [[fileManager directoryContentsAtPath: currentPath] count];
 	
-	for ( i = 0; i < entries; i++ ) 
-    {
-		/*if([[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-12,12)] caseInsensitiveCompare:@"scph1001.bin"] == NSOrderedSame ||
-		   ([[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-4,4)] caseInsensitiveCompare:@".bin"] != NSOrderedSame &&
-		   [[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-4,4)] caseInsensitiveCompare:@".iso"] != NSOrderedSame &&
-		   [[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-4,4)] caseInsensitiveCompare:@".ccd"] != NSOrderedSame &&
-		   [[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-2,2)] caseInsensitiveCompare:@".z"] != NSOrderedSame &&
-		   [[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-4,4)] caseInsensitiveCompare:@".znx"] != NSOrderedSame &&
-		   [[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-4,4)] caseInsensitiveCompare:@".img"] != NSOrderedSame ))
+  for ( i = 0; i < entries; i++ ) 
+  {
+    /*
+		if(([[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-4,4)] caseInsensitiveCompare:@".bin"] != NSOrderedSame &&
+		   [[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-4,4)] caseInsensitiveCompare:@".gba"] != NSOrderedSame &&
+		   [[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-4,4)] caseInsensitiveCompare:@".zip"] != NSOrderedSame ) || 
+		   [[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-12,12)] caseInsensitiveCompare:@"gba_bios.bin"] == NSOrderedSame)
 		{
 			continue;
-		}*/
+		}
+		*/
 		//checks if directory
 		BOOL isDir = FALSE;
 		NSMutableString* dummyString;
@@ -80,7 +91,7 @@ int				__emulation_run = 0;
 		
 		[fileManager fileExistsAtPath:dummyString isDirectory:&isDir];
 		
-		NSLog(@"isDir %d", isDir);
+		//NSLog(@"isDir %d", isDir);
 		
 		if(isDir)
 		{
@@ -102,12 +113,12 @@ int				__emulation_run = 0;
 		}
 		
 		[ dummyString release ];
-    }
-	
+  }
+
 	[self setupIndexedData];
-	[self.tableView reloadData];
-	
-	self.navigationItem.prompt = currentPath;
+  [self.tableView reloadData];
+  self.navigationItem.prompt = currentPath;
+  [prevPath release];
 }
 
 - (void)backClicked:(id)sender
@@ -121,43 +132,46 @@ int				__emulation_run = 0;
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 	UITableViewCell			*cell;
 	
+#ifdef WITH_ADS
 	if(indexPath.section < 1) 
 	{
 		cell = [self.tableView dequeueReusableCellWithIdentifier:@"adCell"];
-		if(adNotReceived)
+		/*
+		if(cell != nil)
 		{
-			if(cell != nil)
-			{
-				[cell release];
-				cell = nil;
-			}
-			
-			adNotReceived = 0;
+			[cell release];
+			cell = nil;
 		}
+    */
 		if(cell == nil)
 		{
 			cell = [[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:@"adCell"];
-			// Request an AdMob ad for this table view cell
-			adMobView = [AdMobView requestAdWithDelegate:self];
-			[cell.contentView addSubview:adMobView];
+			// Request an ad for this table view cell
+			altAds = [SOApp.delegate getAdViewWithIndex:1];
+      [cell.contentView addSubview:altAds];
 		}
 		else
 		{
-			[adMobView requestFreshAd];
+		  altAds = [SOApp.delegate getAdViewWithIndex:1];
+			[cell.contentView addSubview:altAds];
 		}
 		
 		cell.text = @"";
 	}
 	else
+#endif
 	{
 		cell = [self.tableView dequeueReusableCellWithIdentifier:@"labelCell"];
 		if (cell == nil) 
 		{
 			cell = [[[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:@"labelCell"] autorelease];
 		}
+#ifdef WITH_ADS
 		NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section - 1];
+#else
+		NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section];
+#endif
 		NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];	
-		cell.text = [[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"];
 		
 		if( [[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"directory"] compare:@"1"] == NSOrderedSame)
 		{
@@ -167,6 +181,16 @@ int				__emulation_run = 0;
 		{
 			cell.accessoryType = UITableViewCellAccessoryNone;				
 		}
+		
+		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 320, 44)];
+		label.numberOfLines = 1;
+		label.adjustsFontSizeToFitWidth = YES;
+		label.minimumFontSize = 9.0f;
+		label.lineBreakMode = UILineBreakModeMiddleTruncation;
+		label.text = [[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"];
+		[cell.contentView addSubview:label];
+		[label release];
+		
 	}
 	
 	// Set up the cell
@@ -175,12 +199,18 @@ int				__emulation_run = 0;
 
 
  - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+#ifdef WITH_ADS
 	 if( indexPath.section < 1 )
 	 {
 		 return;
 	 }
-	 
+#endif
+
+#ifdef WITH_ADS
 	 NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section - 1];
+#else
+	 NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section];
+#endif
 	 NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];
 	 
 	 NSMutableString *listingsPath = [[NSMutableString alloc] initWithString:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"path"]];
@@ -192,7 +222,7 @@ int				__emulation_run = 0;
 	 {
 		 [listingsPath stringByAppendingPathComponent:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"]];
 	 }
-	char *cListingsPath = (char*)[listingsPath UTF8String];
+	 char *cListingsPath = (char*)[listingsPath UTF8String];
 	 
 	 if( [[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"directory"] compare:@"1"] == NSOrderedSame )
 	 {
@@ -201,22 +231,17 @@ int				__emulation_run = 0;
 		 return;
 	 }
 	 
-	 [SOApp.recentView addRecent:NULL withId:NULL withTunein:NULL 
-								withBookmark:NULL withPath:listingsPath withFile:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"file"] 
+	 [SOApp.recentView addRecent:listingsPath withFile:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"file"] 
 								withDir:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"directory"]];
 	 
-	 [SOApp.nowPlayingView setCurrentStation:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"]
-	  withTitle:NULL 
-	  withId:NULL 
-	  withTunein:NULL 
-	  withPath:listingsPath 
+	 [SOApp.nowPlayingView setCurrentStation:listingsPath 
 	  withFile:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"file"] 
 	  withDir:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"directory"]];
 	 
 	 [SOApp.nowPlayingView startEmu:cListingsPath];
 	 
 	[SOApp.delegate switchToNowPlaying];
-	[tabBar didMoveToWindowNowPlaying];
+	//[tabBar didMoveToWindowNowPlaying];
 
 	[listingsPath release];
 }
@@ -298,7 +323,11 @@ int				__emulation_run = 0;
 	if(displayList==nil) {
 		return 1;
 	} else {
+#ifdef WITH_ADS
 		return [displayList count] + 1;
+#else
+		return [displayList count];
+#endif
 	}
 }
 
@@ -306,24 +335,32 @@ int				__emulation_run = 0;
 	if(displayList==nil) {
 		return 1;
 	}
-	
+#ifdef WITH_ADS
 	if(section < 1)
 	{
 		return 1;
 	}
 	// Number of rows is the number of names in the region dictionary for the specified section
 	NSDictionary *letterDictionary = [displayList objectAtIndex:section - 1];
+#else
+	// Number of rows is the number of names in the region dictionary for the specified section
+	NSDictionary *letterDictionary = [displayList objectAtIndex:section];
+#endif
 	NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];
 	return [zonesForLetter count];
 }
 
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+#ifdef WITH_ADS
 	if(section < 1)
 	{
 		return @"";
 	}
 	NSDictionary *sectionDictionary = [displayList objectAtIndex:section - 1];
+#else
+	NSDictionary *sectionDictionary = [displayList objectAtIndex:section];
+#endif
 	return [sectionDictionary valueForKey:@"letter"];
 }
 
@@ -343,10 +380,11 @@ int				__emulation_run = 0;
 #endif
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+#ifdef WITH_ADS
 	if(indexPath.section < 1) {
-		return 48.0; // this is the height of the AdMob ad
+		return 55.0; // this is the height of the ad
 	}
-	
+#endif
 	return 44.0; // this is the generic cell height
 }
 
@@ -404,36 +442,6 @@ int				__emulation_run = 0;
 - (void)setCurrentlyPlaying:(NSString*) str
 {	
 	[SOApp.nowPlayingView setCurrentlyPlaying:str];
-}
-
-#pragma mark -
-#pragma mark AdMobDelegate methods
-
-- (NSString *)publisherId {
-	return @"a148e086678b92c"; // this should be prefilled; if not, get it from www.admob.com
-}
-
-- (UIColor *)adBackgroundColor {
-	return [UIColor colorWithRed:0 green:0 blue:0 alpha:1]; // this should be prefilled; if not, provide a UIColor
-}
-
-- (UIColor *)adTextColor {
-	return [UIColor colorWithRed:1 green:1 blue:1 alpha:1]; // this should be prefilled; if not, provide a UIColor
-}
-
-- (BOOL)mayAskForLocation {
-	return NO; // this should be prefilled; if not, see AdMobProtocolDelegate.h for instructions
-}
-
-- (void)didReceiveAd:(AdMobView *)adView {
-	NSLog(@"AdMob: Did receive ad");
-}
-
-- (void)didFailToReceiveAd:(AdMobView *)adView {
-	NSLog(@"AdMob: Did fail to receive ad");
-	adNotReceived = 1;
-	//[self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
-	[self.tableView reloadData];
 }
 
 @end

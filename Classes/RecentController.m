@@ -51,56 +51,19 @@
 
 - (NSString*)getDocumentsDirectory
 {
-	/*
+#ifdef APPSTORE_BUILD
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	NSString *documentsDirectory = [paths objectAtIndex: 0];
 	return documentsDirectory;
-	*/
+#else
 	return @"/Applications/mame4iphone.app";
+#endif
 }
 
-- (void)addRecent:(NSString*)thisServer withId:(NSString*)thisId withTunein:(NSString*)thisTunein withBookmark:(NSString*)thisBookmark withPath:(NSString*)thisPath withFile:(NSString*)thisFile withDir:(NSString*)thisDir {
-	if(thisServer && thisId && thisTunein)
+- (void)addRecent:(NSString*)thisPath withFile:(NSString*)thisFile withDir:(NSString*)thisDir {
+	if(thisPath && thisFile && thisDir)
 	{
 		[recentArray addObject:[NSDictionary dictionaryWithObjectsAndKeys:
-							NSLocalizedString(thisServer, @""), @"title",
-							NSLocalizedString(thisId, @""), @"id",
-							NSLocalizedString(thisTunein, @""), @"tunein",
-							@"", @"bookmark",
-							@"", @"path",
-							@"", @"file",
-							@"", @"directory",
-							nil]];
-		if([recentArray count] > 7)
-		{
-			[recentArray removeObjectAtIndex:1];
-		}
-		[tableview reloadData];
-	}
-	else if(thisBookmark)
-	{
-		[recentArray addObject:[NSDictionary dictionaryWithObjectsAndKeys:
-								   @"", @"title",
-								   @"", @"id",
-								   @"", @"tunein",
-								   thisBookmark, @"bookmark",
-								   @"", @"path",
-								   @"", @"file",
-								   @"", @"directory",								   
-								   nil]];
-		if([recentArray count] > 7)
-		{
-			[recentArray removeObjectAtIndex:1];
-		}
-		[tableview reloadData];		
-	}
-	else if(thisPath && thisFile && thisDir)
-	{
-		[recentArray addObject:[NSDictionary dictionaryWithObjectsAndKeys:
-								@"", @"title",
-								@"", @"id",
-								@"", @"tunein",
-								@"", @"bookmark",
 								thisPath, @"path",
 								thisFile, @"file",
 								thisDir, @"directory",								   
@@ -188,79 +151,88 @@
 // *** Tablesource stuffs.
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
 	// Number of sections is the number of region dictionaries
-	
+#ifdef WITH_ADS
 	if(recentArray==nil) {
 		return 1;
 	} else {
 		return 2;
 	}
+#else
+  return 1;
+#endif
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 	if(recentArray==nil) {
 		return 1;
 	}
-	
+
+#ifdef WITH_ADS	
 	if(section < 1)
 	{
 		return 1;
 	}
-
+#endif
 	return [recentArray count];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+#ifdef WITH_ADS
 	if(indexPath.section < 1) {
-		return 48.0; // this is the height of the AdMob ad
+		return 55.0; // this is the height of the ad
 	}
-	
+#endif
 	return 44.0; // this is the generic cell height
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 	UITableViewCell *cell;
-	
+#ifdef WITH_ADS
 	if(indexPath.section < 1) 
 	{
 		cell = [tableview dequeueReusableCellWithIdentifier:@"adCell"];
-		if(adNotReceived)
+		/*
+		if(cell != nil)
 		{
-			if(cell != nil)
-			{
-				[cell release];
-				cell = nil;
-			}
-			
-			adNotReceived = 0;
+			[cell release];
+			cell = nil;
 		}
+    */
 		if(cell == nil)
 		{
 			cell = [[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:@"adCell"];
-			// Request an AdMob ad for this table view cell
-			adMobView = [AdMobView requestAdWithDelegate:self];
-			[cell.contentView addSubview:adMobView];
+			// Request an ad for this table view cell
+		  altAds = [SOApp.delegate getAdViewWithIndex:2];
+			[cell.contentView addSubview:altAds];
 		}
 		else
 		{
-			[adMobView requestFreshAd];
+		  altAds = [SOApp.delegate getAdViewWithIndex:2];
+			[cell.contentView addSubview:altAds];
 		}
 		
 		cell.text = @"";
 	}
 	else
+#endif
 	{
 		cell = [tableview dequeueReusableCellWithIdentifier:@"cell"];
 		if (cell == nil) 
 		{
 			cell = [[[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:@"cell"] autorelease];
 		}
-		cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-		if([[[recentArray objectAtIndex:indexPath.row] objectForKey:@"title"] compare:@""] != NSOrderedSame)
-			cell.text = [[recentArray objectAtIndex:indexPath.row] objectForKey:@"title"];
-		else if([[[recentArray objectAtIndex:indexPath.row] objectForKey:@"bookmark"] compare:@""] != NSOrderedSame)
-			cell.text = [[[recentArray objectAtIndex:indexPath.row] objectForKey:@"bookmark"] lastPathComponent];
-		else if([[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] compare:@""] != NSOrderedSame)
-			cell.text = [[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] lastPathComponent];
+		cell.accessoryType = UITableViewCellAccessoryNone;
+		if([[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] compare:@""] != NSOrderedSame)
+		{
+			UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 320, 44)];
+			label.numberOfLines = 1;
+			label.adjustsFontSizeToFitWidth = YES;
+			label.minimumFontSize = 9.0f;
+			label.lineBreakMode = UILineBreakModeMiddleTruncation;
+			label.text = [[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] lastPathComponent];
+			[cell.contentView addSubview:label];
+			[label release];
+		}
 	}
 	
 	// Set up the cell
@@ -273,33 +245,17 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+#ifdef WITH_ADS
 	if( indexPath.section < 1 )
 	{
 		return;
 	}
+#endif
 	char *cListingsPath;
-	if([[[recentArray objectAtIndex:indexPath.row] objectForKey:@"title"] compare:@""] != NSOrderedSame && [[[recentArray objectAtIndex:indexPath.row] objectForKey:@"id"] compare:@""] != NSOrderedSame  && [[[recentArray objectAtIndex:indexPath.row] objectForKey:@"tunein"] compare:@""] != NSOrderedSame)
-	{
-	}
-	else if([[[recentArray objectAtIndex:indexPath.row] objectForKey:@"bookmark"] compare:@""] != NSOrderedSame )
-	{
-		cListingsPath = (char*)[[[recentArray objectAtIndex:indexPath.row] objectForKey:@"bookmark"] UTF8String];
-		[SOApp.nowPlayingView setCurrentStation:[[recentArray objectAtIndex:indexPath.row] objectForKey:@"bookmark"] 
-		 withTitle:NULL 
-		 withId:NULL 
-		 withTunein:NULL 
-		 withPath:NULL 
-		 withFile:NULL 
-		 withDir:NULL];
-	}
-	else if([[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] compare:@""] != NSOrderedSame )
+	if([[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] compare:@""] != NSOrderedSame )
 	{
 		cListingsPath = (char*)[[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] UTF8String];
 		[SOApp.nowPlayingView setCurrentStation:[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] 
-		 withTitle:NULL 
-		 withId:NULL 
-		 withTunein:NULL 
-		 withPath:[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] 
 		 withFile:[[recentArray objectAtIndex:indexPath.row] objectForKey:@"file"] 
 		 withDir:[[recentArray objectAtIndex:indexPath.row] objectForKey:@"directory"]];
 	}
@@ -307,7 +263,7 @@
 	
 	[SOApp.nowPlayingView startEmu:cListingsPath];
 	[SOApp.delegate switchToNowPlaying];
-	[tabBar didMoveToWindowNowPlaying];
+	//[tabBar didMoveToWindowNowPlaying];
 }
 
 #if 0
@@ -355,36 +311,5 @@
 	}	
 }
 #endif
-
-
-#pragma mark -
-#pragma mark AdMobDelegate methods
-
-- (NSString *)publisherId {
-	return @"a148e086678b92c"; // this should be prefilled; if not, get it from www.admob.com
-}
-
-- (UIColor *)adBackgroundColor {
-	return [UIColor colorWithRed:0 green:0 blue:0 alpha:1]; // this should be prefilled; if not, provide a UIColor
-}
-
-- (UIColor *)adTextColor {
-	return [UIColor colorWithRed:1 green:1 blue:1 alpha:1]; // this should be prefilled; if not, provide a UIColor
-}
-
-- (BOOL)mayAskForLocation {
-	return NO; // this should be prefilled; if not, see AdMobProtocolDelegate.h for instructions
-}
-
-- (void)didReceiveAd:(AdMobView *)adView {
-	NSLog(@"AdMob: Did receive ad");
-}
-
-- (void)didFailToReceiveAd:(AdMobView *)adView {
-	NSLog(@"AdMob: Did fail to receive ad");
-	adNotReceived = 1;
-	//[self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
-	[tableview reloadData];
-}
 
 @end

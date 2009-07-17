@@ -15,6 +15,7 @@ extern unsigned long gp2x_pad_status;
 @synthesize window;
 @synthesize navigationController;
 
+
 - (id)init {
 	if (self = [super init]) {
 		// 
@@ -24,9 +25,20 @@ extern unsigned long gp2x_pad_status;
 
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
+  int i;
 	[[UIApplication sharedApplication] setStatusBarHidden:NO animated:NO];
-	application.idleTimerDisabled = YES;
+	[[UIApplication sharedApplication] setIdleTimerDisabled:YES];
 	application.delegate = self;
+
+#ifdef WITH_ADS
+  //MainScreenWindow = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+  //Blocked = [AltAds isAdBlockingEnabled];
+  for(i = 0; i < NUMBER_OF_AD_PAGES; i++)
+  {
+    altAds[i] = [[AltAds alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320.0f, 55.0f) andWindow:nil];
+  }
+#endif
+
 	CGRect frame = window.frame;
 	frame.origin.y = window.frame.origin.y+window.frame.size.height-49;
 	frame.size.height = 49;
@@ -39,17 +51,45 @@ extern unsigned long gp2x_pad_status;
 	
 //	tabBar.selectedItem = 0;
 	// Configure and show the window
+	//[SOApp.nowPlayingView startEmu:"/var/mobile/Media/ROMs/GBA/Pokemon - Emerald Version (U) [f1] (Save Type).gba"];
+	//[window addSubview:[SOApp.nowPlayingView view]];
+	//[window makeKeyAndVisible];
 	[window addSubview:[navigationController view]];
-	[window makeKeyAndVisible];	
+	[window makeKeyAndVisible];
 }
+
+#ifdef WITH_ADS
+- (AltAds*)getAdViewWithIndex:(int)index {
+  if(index < NUMBER_OF_AD_PAGES)
+  {
+    return altAds[index];
+  }
+  return altAds[0];
+}
+
+- (void)pauseAdViews {
+  int i;
+  
+  for(i = 0; i < NUMBER_OF_AD_PAGES; i++)
+  {
+    [altAds[i] stopAdTimers];
+  }
+}
+
+- (void)unpauseAdViews {
+  int i;
+  
+  for(i = 0; i < NUMBER_OF_AD_PAGES; i++)
+  {
+    [altAds[i] RefreshAd];
+  }
+}
+#endif
 
 #pragma mark TabBar Actions
 - (void)switchToBrowse {
 	[[UIApplication sharedApplication] setStatusBarHidden:NO animated:NO];
-	CGRect frame = window.frame;
-	frame.origin.y = window.frame.origin.y+window.frame.size.height-49;
-	frame.size.height = 49;
-	tabBar.frame = frame;
+	[tabBar setHidden:NO];
 	CGRect navFrame = [navigationController view].frame;
 	navFrame.origin.y = 20;
 	navFrame.size.height = 460 - 49;
@@ -61,10 +101,7 @@ extern unsigned long gp2x_pad_status;
 }
 - (void)switchToSaveStates {
 	[[UIApplication sharedApplication] setStatusBarHidden:NO animated:NO];
-	CGRect frame = window.frame;
-	frame.origin.y = window.frame.origin.y+window.frame.size.height-49;
-	frame.size.height = 49;
-	tabBar.frame = frame;
+	[tabBar setHidden:NO];
 	CGRect navFrame = [navigationController view].frame;
 	navFrame.origin.y = 20;
 	navFrame.size.height = 460 - 49;
@@ -72,38 +109,16 @@ extern unsigned long gp2x_pad_status;
 	navigationController.navigationBarHidden = FALSE;
 	navigationController.navigationBar.hidden = FALSE;
 	
-	[SOApp.saveStatesView refreshData:@"/var/mobile/Media/ROMs/PSX/"];
+	[SOApp.saveStatesView refreshData:[NSString stringWithCString:get_documents_path("/")]]; //  @"/var/mobile/Media/ROMs/GBA/"];
 	if ([[[self navigationController] viewControllers] containsObject:SOApp.saveStatesView]) {
 		[[self navigationController] popToViewController:SOApp.saveStatesView animated:NO];
 	} else {
 		[[self navigationController] pushViewController:SOApp.saveStatesView animated:NO];
 	}
 }
-- (void)switchToBookmarks {
-	[[UIApplication sharedApplication] setStatusBarHidden:NO animated:NO];
-	CGRect frame = window.frame;
-	frame.origin.y = window.frame.origin.y+window.frame.size.height-49;
-	frame.size.height = 49;
-	tabBar.frame = frame;
-	CGRect navFrame = [navigationController view].frame;
-	navFrame.origin.y = 20;
-	navFrame.size.height = 460 - 49;
-	[navigationController view].frame = navFrame;
-	navigationController.navigationBarHidden = FALSE;
-	navigationController.navigationBar.hidden = FALSE;
-	
-	if ([[[self navigationController] viewControllers] containsObject:SOApp.bookmarksView]) {
-		[[self navigationController] popToViewController:SOApp.bookmarksView animated:NO];
-	} else {
-		[[self navigationController] pushViewController:SOApp.bookmarksView animated:NO];
-	}
-}
 - (void)switchToNowPlaying {
 	[[UIApplication sharedApplication] setStatusBarHidden:YES animated:NO];
-	CGRect frame = window.frame;
-	frame.origin.y = window.frame.origin.y+window.frame.size.height-1;
-	frame.size.height = 1;
-	tabBar.frame = frame;
+	[tabBar setHidden:YES];
 	CGRect navFrame = [navigationController view].frame;
 	navFrame.origin.y = 0;
 	navFrame.size.height = 480;
@@ -121,10 +136,7 @@ extern unsigned long gp2x_pad_status;
 }
 - (void)switchToRecent {
 	[[UIApplication sharedApplication] setStatusBarHidden:NO animated:NO];
-	CGRect frame = window.frame;
-	frame.origin.y = window.frame.origin.y+window.frame.size.height-49;
-	frame.size.height = 49;
-	tabBar.frame = frame;
+	[tabBar setHidden:NO];
 	CGRect navFrame = [navigationController view].frame;
 	navFrame.origin.y = 20;
 	navFrame.size.height = 460 - 49;
@@ -138,11 +150,35 @@ extern unsigned long gp2x_pad_status;
 		[[self navigationController] pushViewController:SOApp.recentView animated:NO];
 	}
 }
+- (void)switchToOptions {
+	[[UIApplication sharedApplication] setStatusBarHidden:NO animated:NO];
+	[tabBar setHidden:NO];
+	CGRect navFrame = [navigationController view].frame;
+	navFrame.origin.y = 20;
+	navFrame.size.height = 460 - 49;
+	[navigationController view].frame = navFrame;
+	navigationController.navigationBarHidden = FALSE;
+	navigationController.navigationBar.hidden = FALSE;
+	
+	if ([[[self navigationController] viewControllers] containsObject:SOApp.optionsView]) {
+		[[self navigationController] popToViewController:SOApp.optionsView animated:NO];
+	} else {
+		[[self navigationController] pushViewController:SOApp.optionsView animated:NO];
+	}
+}
+
 - (void)applicationWillTerminate:(UIApplication *)application {
-	// Save data if appropriate
 }
 
 - (void)dealloc {
+#ifdef WITH_ADS
+  int i;
+  for(i = 0; i < NUMBER_OF_AD_PAGES; i++)
+  {
+    [altAds[i] release];
+  }
+#endif
+
 	[ navigationController release ];
 	[ window release ];
 	[ super dealloc ];

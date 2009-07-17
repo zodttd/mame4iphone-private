@@ -1,0 +1,88 @@
+
+MAME4ALL 1.4 (04/09/2008)
+-------------------------
+Changes by Headoverheels:
+- Fixed graphic priority in Xain'd Sleena.
+- Added 7 new romset from MAME 0.37b7:
+  + Batsugun Special Ver. (batugnsp)
+  + Exerizer (Japan) (bootleg) (exerizrb)
+  + Mahou Daisakusen (Japan) (mahoudai)
+  + Pipi & Bibis / Whoopee (Japan) [bootleg ?] (pipibibi)
+  + Shippu Mahou Daisakusen (Japan) (shippumd)
+  + Sky Fox (skyfox)
+  + Truxton II / Tatsujin II / Tatsujin Oh (Japan) (tatsujn2)
+
+Changes by Slaanesh:
+Use Cyclone for M68010 as well as M68000 CPUs.
+This gives a good speed up for games such as Gauntlet, Marble Madness and other Atari games.
+
+Changes by Franxis:
+Raiden CPU frequency fixed (reduced from 20 to 10 MHz). Still very slow.
+
+MAME4ALL 1.3 (05/04/2008)
+-------------------------
+Changes by Headoverheels:
+- New Gaelco games added (MAME 0.37b7): Big Karnak (bigkarnk) and Biomechanical Toy (biomtoy).
+- New SunA 8 bit games added (MAME 0.37b15): Hard Head (hardhead), Hard Head (Bootleg) (hardhedb) and Rough Ranger (rranger).
+- Optimizations in Xain'd Sleena.
+- Fixed the NEC cpu bug that caused slowdowns in Raiden (MAME 0.37b15).
+- Fixed some bugs in the I86/NEC cpu emulation. This includes raster effects problems in Geostorm and the 99 credits bug in Lethal Thunder (MAME 0.66).
+
+Changes by Franxis:
+- Cheats support added.
+- Auto-fire support. Thanks to the code by AGAWA Koji.
+- Jackal has been corrected.
+
+Changes by Slaanesh:
+- Optimizations in Commando (now it uses tilemaps).
+
+MAME4ALL 1.2 (18/03/2008)
+-------------------------
+Another bug fix version:
+- The random games launching problem has been corrected.
+- Random problems with USB joypads should be gone.
+- The four players can be controlled with the GP2X joypad.
+- The coinage and start buttons of the four players can be controlled with the GP2X joypad (see readme.txt).
+- Problem with Namco System 1 games has been solved.
+- The vector games visualization is improved using antialias and translucency.
+- Fixed screen orientation in Dodonpachi and Dangun Feveron.
+
+MAME4ALL 1.1 (16/03/2008)
+-------------------------
+Bug fix version:
+- Improved the DrZ80 compatibility. A lot of new games are compatible (Neo·Geo games, Bubble Bobble, Tokio, etc).
+- High Scores support. Thanks to PalMAME for the hiscore.dat file.
+- Fixed the video output in the vector games.
+- Fixed the video orientation in the Bubble Bobble bootleg version (Bobble Bobble).
+- Bubble Bobble can be played fullspeed now thanks to the DrZ80 core. I recommend to use the bootleg versions
+  (Bobble Bobble and Super Bubble Bobble) because the emulation is faster.
+- New great skins for the menu by Pedator.
+
+MAME4ALL 1.0 (11/03/2008)
+-------------------------
+The following things have been changed to the version shown on the RetroMadrid 2008 fair:
+- No more lock-ups.
+- Configuration files per game.
+- The sound volume can be changed in rotated modes (VolUp or VolDown + START).
+- The sound volume is not reset after a pause.
+- Documentation added.
+
+MAME4ALL Private Beta (08/03/2008)
+----------------------------------
+This port has been first shown in the RetroMadrid 2008 fair on 8th of march in Madrid (Spain) (www.retromadrid.es):
+- Based on MAME 0.37b5.
+- Support for 2240 romsets.
+- Compatible with GP2X F100 and F200.
+- Support for up to 4 USB joypads.
+- Full 64 MB RAM support.
+- GP2X clock: 66 to 300 MHz.
+- Video depth: auto, 8 bit and 16 bit.
+- Video modes: standard, scaled, 4:3, rotated, border and TATE.
+- Sound options: 11 to 44 KHz (mono and stereo).
+- Underclock and overclock supported.
+- Selectable Cyclone and DRZ80 ASM cores.
+- Compatible with TV-Out (PAL and NTSC).
+- RAM tweaks integrated.
+- Only one executable (console based) with a separate frontend to select the games.
+- Access to the original MAME GUI.
+- Better performance than the previous port in a lot of games.

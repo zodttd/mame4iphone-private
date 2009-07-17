@@ -3,6 +3,8 @@
 #include "vidhrdw/vector.h"
 #include "dirty.h"
 
+extern unsigned long gp2x_fps_debug;
+
 dirtygrid grid1;
 dirtygrid grid2;
 char *dirty_old=grid1;
@@ -868,6 +870,7 @@ void osd_update_video_and_audio(struct osd_bitmap *bitmap)
 				{
 					do
 					{
+            sched_yield();
 						curr = ticker();
 					} while ((curr < target) && (target-curr<TICKS_PER_SEC));
 				}
@@ -895,13 +898,13 @@ void osd_update_video_and_audio(struct osd_bitmap *bitmap)
 			vector_updates = 0;
 		}
 
-		if (showfps || showfpstemp)
+		if (gp2x_fps_debug || showfps || showfpstemp)
 		{
 			int fps;
 			char buf[30];
-			//int divdr;
-			//divdr = 100 * FRAMESKIP_LEVELS;
-			fps = video_fps * speed / 100; //(video_fps * (FRAMESKIP_LEVELS - frameskip) * speed + (divdr / 2)) / divdr;
+			int divdr;
+			divdr = 100 * FRAMESKIP_LEVELS;
+			fps = (video_fps * (FRAMESKIP_LEVELS - frameskip) * speed + (divdr / 2)) / divdr;
 			sprintf(buf,"%s%2d%4d%%%4d/%d fps",autoframeskip?"auto":"fskp",frameskip,speed,fps,(int)(video_fps+0.5));
 			ui_text(bitmap,buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,0);
 			if (vector_game)

@@ -13,47 +13,129 @@
 #import <CoreSurface/CoreSurface.h>
 #import <QuartzCore/CALayer.h>
 
+#import <pthread.h>
+#import <sched.h>
 #import <unistd.h>
 #import <sys/time.h>
 
 struct myGSPathPoint {
 	char unk0;
 	char unk1;
-	short int status;
-	int unk2;
-	int unk3;
-	int unk4;
+	char unk2;
+	char unk3;
+	char unk4;
+	char unk5;
+	char status;
+	char unk7;
+	char unk8;
+	char unk9;
+	char unk10;
+	char unk11;
+	char unk12;
+	char unk13;
+	char unk14;
+	char unk15;
 	float x;
 	float y;
 };
 
 typedef struct {
-	int unk0;
-	int unk1;
-	int type;
-	int subtype;
-	float unk2;
-	float unk3;
-	float x;
-	float y;
-	int timestamp1;
-	int timestamp2;
-	int unk4;
-	int modifierFlags;
-	int unk5;
-	int unk6;
-	int mouseEvent;
-	short int dx;
-	short int fingerCount;	
-	int unk7;
-	int unk8;
+	char unk0;
+	char unk1;
+	char unk2;
+	char unk3;
+	char unk4;
+	char unk5;
+	char unk6;
+	char unk7;
+	
+	char unk8;
 	char unk9;
-	char numPoints;
-	short int unk10;
-	int unk11;
-	int unk12;
-	int unk13;
-	struct myGSPathPoint points[10];
+	char unk10;
+	char unk11;
+	char unk12;
+	char unk13;
+	char unk14;
+	char unk15;
+	
+	char unk16;
+	char unk17;
+	char unk18;
+	char unk19;
+	char unk20;
+	char unk21;
+	char unk22;
+	char unk23;
+	
+	char unk24;
+	char unk25;
+	char unk26;
+	char unk27;
+	char unk28;
+	char unk29;
+	char unk30;
+	char unk31;
+	
+	char unk32;
+	char unk33;
+	char unk34;
+	char unk35;
+	char unk36;
+	char unk37;
+	char unk38;
+	char unk39;
+	
+	char unk40;
+	char unk41;
+	char unk42;
+	char unk43;
+	char unk44;
+	char unk45;
+	char unk46;
+	char unk47;
+	
+	char unk48;
+	char unk49;
+	char unk50;
+	char unk51;
+	char unk52;
+	char unk53;
+	char unk54;
+	char unk55;
+	
+	char type;
+	char unk57;
+	char unk58;
+	char unk59;
+	char unk60;
+	char unk61;
+	char fingerCount;
+	char unk62;	
+	char unk63;
+	char unk64;
+	char unk65;
+	char unk66;
+	char unk67;
+	char unk68;
+	char unk69;
+	char unk70;
+	char unk71;
+	char unk72;
+	char unk73;
+	char unk74;
+	char unk75;
+	char unk76;
+	char unk77;
+	char unk78;
+	char unk79;
+	char unk80;
+	char unk81;
+	char unk82;
+	char unk83;
+	char unk84;
+	char unk85;
+	char unk86;
+	struct myGSPathPoint points[100];
 } myGSEvent;
 
 @interface ScreenView : UIView
@@ -63,14 +145,18 @@ typedef struct {
 	NSTimer						*	timer;
 }
 
-- (id)initWithFrame:(struct CGRect)rect;
+- (id)initWithFrame:(CGRect)frame;
 - (void)drawRect:(CGRect)rect;
 - (CoreSurfaceBufferRef)getSurface;
+- (void)updateScreen;
+- (void)dummy;
 
 @end
 
-@interface NowPlayingController : UIViewController {
-	IBOutlet	UISlider		* volumeSlider;
+@interface NowPlayingController : UIViewController <UIActionSheetDelegate> 
+{
+	//IBOutlet	UISlider		* volumeSlider;
+	IBOutlet	UIView			* screenView;
 	IBOutlet	UITabBar		* tabBar;
 	IBOutlet	UIWindow		* window;
 	IBOutlet	UIButton			* ButtonL1;
@@ -87,8 +173,8 @@ typedef struct {
 	IBOutlet	UIButton			* ButtonUPRIGHT;
 	IBOutlet	UIButton			* ButtonDOWNLEFT;
 	IBOutlet	UIButton			* ButtonDOWNRIGHT;
-	IBOutlet	UIButton			* ButtonSAVE;
-	IBOutlet	UIButton			* ButtonBOOKMARK;
+	//IBOutlet	UIButton			* ButtonSAVE;
+	//IBOutlet	UIButton			* ButtonBOOKMARK;
 	IBOutlet	UIButton			* ButtonTRIANGLE;
 	IBOutlet	UIButton			* ButtonSQUARE;
 	IBOutlet	UIButton			* ButtonCIRCLE;
@@ -100,43 +186,52 @@ typedef struct {
 	NSString					* currentPath;
 	NSString					* currentFile;
 	NSString					* currentDir;
-	ScreenView					* screenView;
-	
-    CGRect ButtonUp;
-    CGRect ButtonLeft;
-    CGRect ButtonDown;
-    CGRect ButtonRight;
-    CGRect ButtonUpLeft;
-    CGRect ButtonDownLeft;
-    CGRect ButtonUpRight;
-    CGRect ButtonDownRight;
-    CGRect Up;
-    CGRect Left;
-    CGRect Down;
-    CGRect Right;
-    CGRect UpLeft;
-    CGRect DownLeft;
-    CGRect UpRight;
-    CGRect DownRight;
-    CGRect Select;
-    CGRect Start;
-    CGRect LPad;
-    CGRect RPad;
-    CGRect LPad2;
-    CGRect RPad2;
-    CGRect Menu;
+	//ScreenView					* screenView;
+	UIImageView					* controllerImageView;
+  CGRect ButtonUp;
+  CGRect ButtonLeft;
+  CGRect ButtonDown;
+  CGRect ButtonRight;
+  CGRect ButtonUpLeft;
+  CGRect ButtonDownLeft;
+  CGRect ButtonUpRight;
+  CGRect ButtonDownRight;
+  CGRect Up;
+  CGRect Left;
+  CGRect Down;
+  CGRect Right;
+  CGRect UpLeft;
+  CGRect DownLeft;
+  CGRect UpRight;
+  CGRect DownRight;
+  CGRect Select;
+  CGRect Start;
+  CGRect LPad;
+  CGRect RPad;
+  CGRect LPad2;
+  CGRect RPad2;
+  CGRect Menu;
 	
 	CGPoint fingers[5];
-    int numFingers;
+  int numFingers;
+	
+	CoreSurfaceBufferRef			_screenSurface;
+	CALayer						*	screenLayer;
+	NSTimer						*	timer;	
 }
 
-- (void)getControllerCoords;
+- (void)getControllerCoords:(int)orientation;
 - (void)fixRects;
-- (void)dumpEvent:(myGSEvent*)event;
+- (void)mouseEvent:(myGSEvent*)event;
 - (void)volumeChanged:(id)sender;
-- (void)setBookmark:(id)sender;
+//- (void)setBookmark:(id)sender;
+- (void)setSaveState:(id)sender;
 - (void)setCurrentlyPlaying:(NSString*) str;
-- (void)setCurrentStation:(NSString*)theStation withTitle:(NSString*)theTitle withId:(NSString*)theId withTunein:(NSString*)theTunein withPath:(NSString*)thePath withFile:(NSString*)theFile withDir:(NSString*)theDir;
+- (void)setCurrentStation:(NSString*)thePath withFile:(NSString*)theFile withDir:(NSString*)theDir;
 - (void)startEmu:(char*)path;
+- (void)runSound;
+- (void)runProgram;
+- (void)runMenu;
+- (void)runMainMenu;
 
 @end

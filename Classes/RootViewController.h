@@ -7,18 +7,19 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "AdMobDelegateProtocol.h"
 
 extern void *app_Thread_Start(void *args);
 
-@interface RootViewController : UITableViewController<AdMobDelegate> {
+@interface RootViewController : UITableViewController {
 	NSMutableArray			*browseArray;
 	NSMutableArray			*indexedLetters;
 	NSMutableArray			*displayList;
 	IBOutlet UITableView	*tableView;
 	IBOutlet UIWindow		*window;
 	IBOutlet UITabBar		*tabBar;
-	AdMobView				*adMobView;
+#ifdef WITH_ADS
+	AltAds*	 altAds;
+#endif
 	NSUInteger				adNotReceived;
 	NSString*				currentPath;
 }
@@ -28,5 +29,6 @@ extern void *app_Thread_Start(void *args);
 - (void)setupIndexedData;
 - (NSMutableArray*)getDisplayList;
 - (void)setCurrentlyPlaying:(NSString*) str;
+- (void)initRootData;
 
 @end

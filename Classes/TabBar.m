@@ -16,14 +16,23 @@ BOOL blocking = NO;
 	[self setSelectedItem:[self.items objectAtIndex:0]];
 }
 
+/*
 - (void)didMoveToWindowNowPlaying
 {
-	[self setSelectedItem:[self.items objectAtIndex:4]];
+	[self setSelectedItem:[self.items objectAtIndex:3]];
 }
+*/
 
+/*
 - (void)didMoveToWindowBookmarks
 {
 	[self setSelectedItem:[self.items objectAtIndex:1]];
+}
+*/
+
+- (void)didMoveToWindowSaveStates
+{
+	[self setSelectedItem:[self.items objectAtIndex:2]];
 }
 
 - (void)setSelectedItem:(id)item {
@@ -32,16 +41,21 @@ BOOL blocking = NO;
 
 		if (!blocking)
 		{
-			if (itemIndex == 0) {
+			if (itemIndex == 0) 
+			{
 				[SOApp.delegate switchToBrowse];
-			} else if (itemIndex == 1) {
-				[SOApp.delegate switchToBookmarks];
-			} else if (itemIndex == 2) {
+			} 
+			else if (itemIndex == 1) 
+			{
 				[SOApp.delegate switchToRecent];
-			} else if (itemIndex == 3) {
+			} 
+			else if (itemIndex == 2) 
+			{
 				[SOApp.delegate switchToSaveStates];
-			} else {
-				[SOApp.delegate switchToNowPlaying];
+			} 
+			else 
+			{
+				[SOApp.delegate switchToOptions];
 			}
 		}
 		blocking = NO;

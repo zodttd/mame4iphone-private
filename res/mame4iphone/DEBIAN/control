@@ -1,0 +1,9 @@
+Package: com.zodttd.mame4iphone
+Name: mame4iphone
+Version: 0.5.5
+Architecture: iphoneos-arm
+Depiction: http://www.zodttd.com/repo/cydiathemes/mame4iphone.html
+Homepage: http://www.zodttd.com
+Maintainer: ZodTTD <zodttd@zodttd.com>
+Author: ZodTTD
+Section: Games

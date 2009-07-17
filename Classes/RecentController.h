@@ -8,18 +8,20 @@
 
 #import <UIKit/UIKit.h>
 
-@interface RecentController : UIViewController < UITableViewDataSource, UITableViewDelegate, AdMobDelegate > {
+@interface RecentController : UIViewController < UITableViewDataSource, UITableViewDelegate > {
 	IBOutlet UITableView		* tableview;
 	IBOutlet UITabBar			* tabBar;
 	IBOutlet UITextField		* textBookmark;
 	IBOutlet UIWindow			* window;
 	NSMutableArray				* recentArray;
-	AdMobView					* adMobView;
+#ifdef WITH_ADS
+	AltAds*	 altAds;
+#endif
 	NSUInteger					  adNotReceived;
 }
 
 - (void)getRecent;
-- (void)addRecent:(NSString*)thisServer withId:(NSString*)thisId withTunein:(NSString*)thisTunein withBookmark:(NSString*)thisBookmark withPath:(NSString*)thisPath withFile:(NSString*)thisFile withDir:(NSString*)thisDir;
+- (void)addRecent:(NSString*)thisPath withFile:(NSString*)thisFile withDir:(NSString*)thisDir;
 - (NSString*)getDocumentsDirectory;
 
 @end

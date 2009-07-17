@@ -10,6 +10,8 @@
 #include <ctype.h>
 #include "allegro.h"
 
+extern int global_enable_audio;
+
 /* from video.c */
 extern int frameskip,autoframeskip;
 extern int video_sync, wait_vsync;
@@ -281,6 +283,10 @@ void parse_cmdline (int argc, char **argv, int game_index)
 
 	/* read sound configuration */
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
+	if(global_enable_audio)
+	{
+    soundcard = -1;
+	}
 	options.use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  0);
 	options.samplerate = get_int  ("config", "samplerate", "sr", 22050);
 	if (options.samplerate < 5000) options.samplerate = 5000;

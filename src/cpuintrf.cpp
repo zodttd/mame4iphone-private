@@ -118,7 +118,9 @@
 #if (HAS_ARM)
 #include "cpu/arm/arm.h"
 #endif
-
+#if (GP2X)
+extern int __emulation_run;
+#endif
 
 /* these are triggers sent to the timer system for various interrupt events */
 #define TRIGGER_TIMESLICE		-1000
@@ -723,7 +725,7 @@ logerror("Machine reset\n");
 
 	/* loop until the user quits */
 	usres = 0;
-	while (usres == 0)
+	while (usres == 0 && __emulation_run != 0)
 	{
 		int cpunum;
 

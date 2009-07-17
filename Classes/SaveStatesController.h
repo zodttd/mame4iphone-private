@@ -8,14 +8,16 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SaveStatesController : UIViewController < UITableViewDataSource, UITableViewDelegate, AdMobDelegate > {
+@interface SaveStatesController : UIViewController < UITableViewDataSource, UITableViewDelegate > {
 	NSMutableArray			*browseArray;
 	NSMutableArray			*indexedLetters;
 	NSMutableArray			*displayList;
 	IBOutlet UITableView	*tableview;
 	IBOutlet UIWindow		*window;
 	IBOutlet UITabBar		*tabBar;
-	AdMobView				*adMobView;
+#ifdef WITH_ADS
+	AltAds*	 altAds;
+#endif
 	NSUInteger				adNotReceived;
 	NSString*				currentPath;
 }
