@@ -45,8 +45,4 @@ extern void z8000_State_Load(int cpunum, void *f);
 /* PUBLIC GLOBALS */
 extern int z8000_ICount;
 
-#ifdef MAME_DEBUG
-extern int DasmZ8000(char *buff, int pc);
-#endif
-
 #endif /* Z8K_H */

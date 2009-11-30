@@ -107,7 +107,8 @@ READ_HANDLER( twincobr_dsp_r )
 		case 0x7000:	input_data = wardner_mainram[dsp_addr_w] + (wardner_mainram[dsp_addr_w+1]<<8); break;
 		case 0x8000:	input_data = spriteram[dsp_addr_w] + (spriteram[dsp_addr_w+1]<<8); break;
 		case 0xa000:	input_data = paletteram[dsp_addr_w] + (paletteram[dsp_addr_w+1]<<8); break;
-		default:		logerror("DSP PC:%04x Warning !!! IO reading from %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
+		default:		//logerror("DSP PC:%04x Warning !!! IO reading from %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
+		    break;
 	}
 #if LOG_DSP_CALLS
 	logerror("DSP PC:%04x IO read %04x at %08x (port 1)\n",cpu_getpreviouspc(),input_data,main_ram_seg + dsp_addr_w);
@@ -167,7 +168,8 @@ WRITE_HANDLER( twincobr_dsp_w )
 							spriteram[dsp_addr_w + 1] = (data >> 8) & 0xff;break;
 			case 0xa000:	paletteram[dsp_addr_w] = data & 0xff;
 							paletteram[dsp_addr_w + 1] = (data >> 8) & 0xff; break;
-			default:		logerror("DSP PC:%04x Warning !!! IO writing to %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
+			default:		//logerror("DSP PC:%04x Warning !!! IO writing to %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
+			    break;
 		}
 #if LOG_DSP_CALLS
 		logerror("DSP PC:%04x IO write %04x at %08x (port 1)\n",cpu_getpreviouspc(),data,main_ram_seg + dsp_addr_w);

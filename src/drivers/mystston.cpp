@@ -1,3 +1,5 @@
+#include "../vidhrdw/mystston.cpp"
+
 /***************************************************************************
 
 Mysterious Stones memory map (preliminary)

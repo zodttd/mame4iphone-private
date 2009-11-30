@@ -268,15 +268,6 @@ void qsound_set_command(int data, int value)
 			ch=(ch+1)&0x0f;	/* strange ... */
 			qsound_channel[ch].bank=(value&0x7f)<<16;
 			qsound_channel[ch].bank /= LENGTH_DIV;
-#ifdef MAME_DEBUG
-			if (!value & 0x8000)
-			{
-				char baf[40];
-				sprintf(baf,"Register3=%04x",value);
-				usrintf_showmessage(baf);
-			}
-#endif
-
 			break;
 		case 1: /* start */
 			qsound_channel[ch].address=value;
@@ -300,14 +291,6 @@ void qsound_set_command(int data, int value)
 			break;
 		case 3: /* unknown */
 			qsound_channel[ch].reg3=value;
-#ifdef MAME_DEBUG
-			if (value != 0x8000)
-			{
-				char baf[40];
-				sprintf(baf,"Register3=%04x",value);
-				usrintf_showmessage(baf);
-			}
-#endif
 			break;
 		case 4: /* loop offset */
 			qsound_channel[ch].loop=value/LENGTH_DIV;
@@ -341,14 +324,6 @@ void qsound_set_command(int data, int value)
 			break;
 
 		case 7:  /* unused */
-#ifdef MAME_DEBUG
-			{
-				char baf[40];
-				sprintf(baf,"UNUSED QSOUND REG 7=%04x",value);
-				usrintf_showmessage(baf);
-			}
-#endif
-
 			break;
 		case 8:
 			{
@@ -369,15 +344,6 @@ void qsound_set_command(int data, int value)
 			break;
 		 case 9:
 			qsound_channel[ch].reg9=value;
-/*
-#ifdef MAME_DEBUG
-			{
-				char baf[40];
-				sprintf(baf,"QSOUND REG 9=%04x",value);
-				usrintf_showmessage(baf);
-			}
-#endif
-*/
 			break;
 	}
 #if LOG_QSOUND

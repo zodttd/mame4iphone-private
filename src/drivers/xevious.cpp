@@ -1,3 +1,6 @@
+#include "../vidhrdw/xevious.cpp"
+#include "../machine/xevious.cpp"
+
 /***************************************************************************
 
 Xevious

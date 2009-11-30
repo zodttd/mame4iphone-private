@@ -1,3 +1,5 @@
+#include "../vidhrdw/exedexes.cpp"
+
 /***************************************************************************
 
 Exed Exes memory map (preliminary) - RD 29/07/97

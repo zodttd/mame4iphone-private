@@ -12,14 +12,8 @@
 #include "driver.h"
 #include "osd_cpu.h"
 #include "cpuintrf.h"
-#include "mamedbg.h"
 #include "tms34010.h"
 #include "34010ops.h"
-
-#ifdef MAME_DEBUG
-extern int debug_key_pressed;
-#endif
-
 
 /************************************
 
@@ -137,44 +131,13 @@ New 34020 ops:
 
 #define VERBOSE 			0
 #define LOG_CONTROL_REGS	0
-#define LOG_GRAPHICS_OPS	1
+#define LOG_GRAPHICS_OPS	0
 
 #if VERBOSE
 #define LOG(x)	logerror x
 #else
 #define LOG(x)
 #endif
-
-static UINT8 tms34010_reg_layout[] =
-{
-	TMS34010_PC, TMS34010_SP, -1,
-	TMS34010_A0, TMS34010_B0, -1,
-	TMS34010_A1, TMS34010_B1, -1,
-	TMS34010_A2, TMS34010_B2, -1,
-	TMS34010_A3, TMS34010_B3, -1,
-	TMS34010_A4, TMS34010_B4, -1,
-	TMS34010_A5, TMS34010_B5, -1,
-	TMS34010_A6, TMS34010_B6, -1,
-	TMS34010_A7, TMS34010_B7, -1,
-	TMS34010_A8, TMS34010_B8, -1,
-	TMS34010_A9, TMS34010_B9, -1,
-	TMS34010_A10,TMS34010_B10,-1,
-	TMS34010_A11,TMS34010_B11,-1,
-	TMS34010_A12,TMS34010_B12,-1,
-	TMS34010_A13,TMS34010_B13,-1,
-	TMS34010_A14,TMS34010_B14, 0
-};
-
-static UINT8 tms34010_win_layout[] =
-{
-	40, 0,39,17,	/* register window (top right) */
-	 0, 0,39,17,	/* disassembler window (left, upper) */
-	 0,18,39, 4,	/* memory #1 window (left, middle) */
-	40,18,39, 4,	/* memory #2 window (lower) */
-	 0,23,80, 1 	/* command line window (bottom rows) */
-};
-
-
 
 /*###################################################################################################
 **	CORE STATE
@@ -268,11 +231,13 @@ static struct tms34010_config default_config =
 
 static void check_interrupt(void);
 
-
+static timer_tm interval=0;
 
 /*###################################################################################################
 **	FUNCTION TABLES
 **#################################################################################################*/
+
+#include "34010fld.cpp"
 
 extern WRITE_HANDLER( wfield_01 );
 extern WRITE_HANDLER( wfield_02 );
@@ -523,6 +488,21 @@ INLINE void RESET_ST(void)
 /* Combine indiviual flags into the Status Register */
 INLINE UINT32 GET_ST(void)
 {
+    UINT32 ret=0;
+    
+    if (N_FLAG) ret|=0x80000000;
+    if (C_FLAG) ret|=0x40000000;
+    if (!NOTZ_FLAG) ret|=0x20000000;
+    if (V_FLAG) ret|=0x10000000;
+    if (P_FLAG) ret|=0x02000000;
+    if (IE_FLAG) ret|=0x00200000;
+    if (FE1_FLAG) ret|=0x00000800;
+    ret|=(FW(1) << 6);
+    if (FE0_FLAG) ret|=0x00000020;
+    ret|=FW(0);
+    return ret;
+    
+    /*
 	return (     N_FLAG ? 0x80000000 : 0) |
 		   (     C_FLAG ? 0x40000000 : 0) |
 		   (  NOTZ_FLAG ? 0 : 0x20000000) |
@@ -533,6 +513,7 @@ INLINE UINT32 GET_ST(void)
 		   (FW(1) << 6)                   |
 		   (   FE0_FLAG ? 0x00000020 : 0) |
 		   FW(0);
+	*/
 }
 
 /* Break up Status Register into indiviual flags */
@@ -652,8 +633,8 @@ static READ_HANDLER( read_pixel_shiftreg )
 {
 	if (state.config->to_shiftreg)
 		state.config->to_shiftreg(offset, &state.shiftreg[0]);
-	else
-		logerror("To ShiftReg function not set. PC = %08X\n", PC);
+	/*else
+		logerror("To ShiftReg function not set. PC = %08X\n", PC);*/
 	return state.shiftreg[0];
 }
 
@@ -770,8 +751,8 @@ static WRITE_HANDLER( write_pixel_shiftreg )
 {
 	if (state.config->from_shiftreg)
 		state.config->from_shiftreg(offset, &state.shiftreg[0]);
-	else
-		logerror("From ShiftReg function not set. PC = %08X\n", PC);
+	/*else
+		logerror("From ShiftReg function not set. PC = %08X\n", PC);*/
 }
 
 
@@ -950,6 +931,8 @@ void tms34010_reset(void *param)
 
 	/* reset the timers and the host interface (but only the first time) */
 	host_interface_context = NULL;
+
+    interval = TIME_IN_HZ(Machine->drv->frames_per_second);
 }
 
 void tms34020_reset(void *param)
@@ -1303,9 +1286,6 @@ int tms34010_execute(int cycles)
 	{
 		state.reset_deferred = 0;
 		PC = RLONG(0xffffffe0);
-#if MAME_DEBUG
-		debug_key_pressed = 1;
-#endif
 	}
 
 	/* execute starting now */
@@ -1313,27 +1293,15 @@ int tms34010_execute(int cycles)
 	change_pc29(PC)
 	do
 	{
-		#ifdef	MAME_DEBUG
-		if (mame_debug) { state.st = GET_ST(); MAME_Debug(); }
-		#endif
 		state.op = ROPCODE();
 		(*opcode_table[state.op >> 4])();
 
-		#ifdef	MAME_DEBUG
-		if (mame_debug) { state.st = GET_ST(); MAME_Debug(); }
-		#endif
 		state.op = ROPCODE();
 		(*opcode_table[state.op >> 4])();
 
-		#ifdef	MAME_DEBUG
-		if (mame_debug) { state.st = GET_ST(); MAME_Debug(); }
-		#endif
 		state.op = ROPCODE();
 		(*opcode_table[state.op >> 4])();
 
-		#ifdef	MAME_DEBUG
-		if (mame_debug) { state.st = GET_ST(); MAME_Debug(); }
-		#endif
 		state.op = ROPCODE();
 		(*opcode_table[state.op >> 4])();
 
@@ -1355,15 +1323,6 @@ int tms34020_execute(int cycles)
 
 const char *tms34010_info(void *context, int regnum)
 {
-	static char buffer[40][63+1];
-	static int which = 0;
-	tms34010_regs *r = (tms34010_regs *)context;
-
-	which = ++which % 40;
-	buffer[which][0] = '\0';
-	if (!context)
-		r = &state;
-
 	switch (regnum)
 	{
 		case CPU_INFO_NAME: return "TMS34010";
@@ -1371,79 +1330,8 @@ const char *tms34010_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998\nParts based on code by Aaron Giles";
-		case CPU_INFO_REG_LAYOUT: return (const char *)tms34010_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)tms34010_win_layout;
-
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->st & 0x80000000 ? 'N':'.',
-				r->st & 0x40000000 ? 'C':'.',
-				r->st & 0x20000000 ? 'Z':'.',
-				r->st & 0x10000000 ? 'V':'.',
-				r->st & 0x08000000 ? '?':'.',
-				r->st & 0x04000000 ? '?':'.',
-				r->st & 0x02000000 ? 'P':'.',
-				r->st & 0x01000000 ? '?':'.',
-				r->st & 0x00800000 ? '?':'.',
-				r->st & 0x00400000 ? '?':'.',
-				r->st & 0x00200000 ? 'I':'.',
-				r->st & 0x00100000 ? '?':'.',
-				r->st & 0x00080000 ? '?':'.',
-				r->st & 0x00040000 ? '?':'.',
-				r->st & 0x00020000 ? '?':'.',
-				r->st & 0x00010000 ? '?':'.',
-				r->st & 0x00008000 ? '?':'.',
-				r->st & 0x00004000 ? '?':'.',
-				r->st & 0x00002000 ? '?':'.',
-				r->st & 0x00001000 ? '?':'.',
-				r->st & 0x00000800 ? 'E':'.',
-				r->st & 0x00000400 ? 'F':'.',
-				r->st & 0x00000200 ? 'F':'.',
-				r->st & 0x00000100 ? 'F':'.',
-				r->st & 0x00000080 ? 'F':'.',
-				r->st & 0x00000040 ? 'F':'.',
-				r->st & 0x00000020 ? 'E':'.',
-				r->st & 0x00000010 ? 'F':'.',
-				r->st & 0x00000008 ? 'F':'.',
-				r->st & 0x00000004 ? 'F':'.',
-				r->st & 0x00000002 ? 'F':'.',
-				r->st & 0x00000001 ? 'F':'.');
-			break;
-		case CPU_INFO_REG+TMS34010_PC: sprintf(buffer[which], "PC :%08X", r->pc); break;
-		case CPU_INFO_REG+TMS34010_SP: sprintf(buffer[which], "SP :%08X", r->regs.a.a.Aregs[15]); break;
-		case CPU_INFO_REG+TMS34010_ST: sprintf(buffer[which], "ST :%08X", r->st); break;
-		case CPU_INFO_REG+TMS34010_A0: sprintf(buffer[which], "A0 :%08X", r->regs.a.a.Aregs[ 0]); break;
-		case CPU_INFO_REG+TMS34010_A1: sprintf(buffer[which], "A1 :%08X", r->regs.a.a.Aregs[ 1]); break;
-		case CPU_INFO_REG+TMS34010_A2: sprintf(buffer[which], "A2 :%08X", r->regs.a.a.Aregs[ 2]); break;
-		case CPU_INFO_REG+TMS34010_A3: sprintf(buffer[which], "A3 :%08X", r->regs.a.a.Aregs[ 3]); break;
-		case CPU_INFO_REG+TMS34010_A4: sprintf(buffer[which], "A4 :%08X", r->regs.a.a.Aregs[ 4]); break;
-		case CPU_INFO_REG+TMS34010_A5: sprintf(buffer[which], "A5 :%08X", r->regs.a.a.Aregs[ 5]); break;
-		case CPU_INFO_REG+TMS34010_A6: sprintf(buffer[which], "A6 :%08X", r->regs.a.a.Aregs[ 6]); break;
-		case CPU_INFO_REG+TMS34010_A7: sprintf(buffer[which], "A7 :%08X", r->regs.a.a.Aregs[ 7]); break;
-		case CPU_INFO_REG+TMS34010_A8: sprintf(buffer[which], "A8 :%08X", r->regs.a.a.Aregs[ 8]); break;
-		case CPU_INFO_REG+TMS34010_A9: sprintf(buffer[which], "A9 :%08X", r->regs.a.a.Aregs[ 9]); break;
-		case CPU_INFO_REG+TMS34010_A10: sprintf(buffer[which],"A10:%08X", r->regs.a.a.Aregs[10]); break;
-		case CPU_INFO_REG+TMS34010_A11: sprintf(buffer[which],"A11:%08X", r->regs.a.a.Aregs[11]); break;
-		case CPU_INFO_REG+TMS34010_A12: sprintf(buffer[which],"A12:%08X", r->regs.a.a.Aregs[12]); break;
-		case CPU_INFO_REG+TMS34010_A13: sprintf(buffer[which],"A13:%08X", r->regs.a.a.Aregs[13]); break;
-		case CPU_INFO_REG+TMS34010_A14: sprintf(buffer[which],"A14:%08X", r->regs.a.a.Aregs[14]); break;
-		case CPU_INFO_REG+TMS34010_B0: sprintf(buffer[which], "B0 :%08X", r->regs.Bregs[BINDEX( 0)]); break;
-		case CPU_INFO_REG+TMS34010_B1: sprintf(buffer[which], "B1 :%08X", r->regs.Bregs[BINDEX( 1)]); break;
-		case CPU_INFO_REG+TMS34010_B2: sprintf(buffer[which], "B2 :%08X", r->regs.Bregs[BINDEX( 2)]); break;
-		case CPU_INFO_REG+TMS34010_B3: sprintf(buffer[which], "B3 :%08X", r->regs.Bregs[BINDEX( 3)]); break;
-		case CPU_INFO_REG+TMS34010_B4: sprintf(buffer[which], "B4 :%08X", r->regs.Bregs[BINDEX( 4)]); break;
-		case CPU_INFO_REG+TMS34010_B5: sprintf(buffer[which], "B5 :%08X", r->regs.Bregs[BINDEX( 5)]); break;
-		case CPU_INFO_REG+TMS34010_B6: sprintf(buffer[which], "B6 :%08X", r->regs.Bregs[BINDEX( 6)]); break;
-		case CPU_INFO_REG+TMS34010_B7: sprintf(buffer[which], "B7 :%08X", r->regs.Bregs[BINDEX( 7)]); break;
-		case CPU_INFO_REG+TMS34010_B8: sprintf(buffer[which], "B8 :%08X", r->regs.Bregs[BINDEX( 8)]); break;
-		case CPU_INFO_REG+TMS34010_B9: sprintf(buffer[which], "B9 :%08X", r->regs.Bregs[BINDEX( 9)]); break;
-		case CPU_INFO_REG+TMS34010_B10: sprintf(buffer[which],"B10:%08X", r->regs.Bregs[BINDEX(10)]); break;
-		case CPU_INFO_REG+TMS34010_B11: sprintf(buffer[which],"B11:%08X", r->regs.Bregs[BINDEX(11)]); break;
-		case CPU_INFO_REG+TMS34010_B12: sprintf(buffer[which],"B12:%08X", r->regs.Bregs[BINDEX(12)]); break;
-		case CPU_INFO_REG+TMS34010_B13: sprintf(buffer[which],"B13:%08X", r->regs.Bregs[BINDEX(13)]); break;
-		case CPU_INFO_REG+TMS34010_B14: sprintf(buffer[which],"B14:%08X", r->regs.Bregs[BINDEX(14)]); break;
 	}
-	return buffer[which];
+	return "";
 }
 
 const char *tms34020_info(void *context, int regnum)
@@ -1464,12 +1352,8 @@ const char *tms34020_info(void *context, int regnum)
 
 unsigned tms34010_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm34010(buffer,pc);
-#else
 	sprintf( buffer, "$%04X", cpu_readop16(pc>>3) );
 	return 2;
-#endif
 }
 
 unsigned tms34020_dasm(char *buffer, unsigned pc)
@@ -1619,7 +1503,7 @@ static void update_display_address(tms34010_regs *context, int vcount)
 static void vsblnk_callback(int cpunum)
 {
 	/* reset timer for next frame */
-	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
+	//float interval = TIME_IN_HZ(Machine->drv->frames_per_second);
 	tms34010_regs *context = (tms34010_regs *)FINDCONTEXT(cpunum);
 	vsblnk_timer[cpunum] = timer_set(interval, cpunum, vsblnk_callback);
 	CONTEXT_IOREG(context, REG_DPYADR) = CONTEXT_IOREG(context, REG_DPYSTRT);
@@ -1631,7 +1515,7 @@ static void dpyint_callback(int cpunum)
 {
 	/* reset timer for next frame */
 	tms34010_regs *context = (tms34010_regs *)FINDCONTEXT(cpunum);
-	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
+	//float interval = TIME_IN_HZ(Machine->drv->frames_per_second);
 	dpyint_timer[cpunum] = timer_set(interval, cpunum, dpyint_callback);
 	cpu_generate_internal_interrupt(cpunum, TMS34010_DI);
 
@@ -1663,6 +1547,7 @@ static void update_timers(int cpunum, tms34010_regs *context)
 **	I/O REGISTER WRITES
 **#################################################################################################*/
 
+/*
 static const char *ioreg_name[] =
 {
 	"HESYNC", "HEBLNK", "HSBLNK", "HTOTAL",
@@ -1674,6 +1559,7 @@ static const char *ioreg_name[] =
 	"RESERVED", "RESERVED", "RESERVED", "DPYTAP",
 	"HCOUNT", "VCOUNT", "DPYADR", "REFCNT"
 };
+*/
 
 static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, int data)
 {
@@ -1723,7 +1609,7 @@ static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, in
 			break;
 
 		case REG_PMASK:
-			if (data) logerror("Plane masking not supported. PC=%08X\n", cpu_get_pc());
+			/*if (data) logerror("Plane masking not supported. PC=%08X\n", cpu_get_pc());*/
 			break;
 
 		case REG_DPYCTL:
@@ -1782,13 +1668,13 @@ static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, in
 			/* output interrupt? */
 			if (!(oldreg & 0x0080) && (newreg & 0x0080))
 			{
-				logerror("CPU#%d Output int = 1\n", cpunum);
+				//logerror("CPU#%d Output int = 1\n", cpunum);
 				if (context->config->output_int)
 					(*context->config->output_int)(1);
 			}
 			else if ((oldreg & 0x0080) && !(newreg & 0x0080))
 			{
-				logerror("CPU#%d Output int = 0\n", cpunum);
+				//logerror("CPU#%d Output int = 0\n", cpunum);
 				if (context->config->output_int)
 					(*context->config->output_int)(0);
 			}
@@ -1796,12 +1682,12 @@ static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, in
 			/* input interrupt? (should really be state-based, but the functions don't exist!) */
 			if (!(oldreg & 0x0008) && (newreg & 0x0008))
 			{
-				logerror("CPU#%d Input int = 1\n", cpunum);
+				//logerror("CPU#%d Input int = 1\n", cpunum);
 				cpu_generate_internal_interrupt(cpunum, TMS34010_HI);
 			}
 			else if ((oldreg & 0x0008) && !(newreg & 0x0008))
 			{
-				logerror("CPU#%d Input int = 0\n", cpunum);
+				//logerror("CPU#%d Input int = 0\n", cpunum);
 				CONTEXT_IOREG(context, REG_INTPEND) &= ~TMS34010_HI;
 			}
 			break;
@@ -1816,8 +1702,8 @@ static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, in
 			break;
 	}
 
-	if (LOG_CONTROL_REGS)
-		logerror("CPU#%d: %s = %04X (%d)\n", cpunum, ioreg_name[reg], CONTEXT_IOREG(context, reg), cpu_getscanline());
+	/*if (LOG_CONTROL_REGS)
+		logerror("CPU#%d: %s = %04X (%d)\n", cpunum, ioreg_name[reg], CONTEXT_IOREG(context, reg), cpu_getscanline());*/
 }
 
 WRITE_HANDLER( tms34010_io_register_w )
@@ -1839,8 +1725,8 @@ static int common_io_register_r(int cpunum, tms34010_regs *context, int reg)
 	int result, total;
 
 	reg >>= 1;
-	if (LOG_CONTROL_REGS)
-		logerror("CPU#%d: read %s\n", cpunum, ioreg_name[reg]);
+	/*if (LOG_CONTROL_REGS)
+		logerror("CPU#%d: read %s\n", cpunum, ioreg_name[reg]);*/
 
 	switch (reg)
 	{
@@ -1993,7 +1879,7 @@ void tms34010_host_w(int cpunum, int reg, int data)
 
 		/* error case */
 		default:
-			logerror("tms34010_host_control_w called on invalid register %d\n", reg);
+			//logerror("tms34010_host_control_w called on invalid register %d\n", reg);
 			break;
 	}
 }
@@ -2056,6 +1942,6 @@ int tms34010_host_r(int cpunum, int reg)
 	}
 
 	/* error case */
-	logerror("tms34010_host_control_r called on invalid register %d\n", reg);
+	//logerror("tms34010_host_control_r called on invalid register %d\n", reg);
 	return 0;
 }

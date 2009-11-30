@@ -46,26 +46,6 @@ static int instruction_length[64] =
 	 5, 5, 5, 5 	/* Fx */
 };
 
-static char *instruction_name[64] =
-{
-	"undef","ORG  ","WPR  ","RPR  ",	/* 0x */
-	"undef","undef","WPTN ","RPTN ",	/* 1x */
-	"undef","DRD  ","DWT  ","DMOD ",	/* 2x */
-	"undef","undef","undef","undef",	/* 3x */
-	"undef","RD   ","WT   ","MOD  ",	/* 4x */
-	"undef","undef","CLR  ","SCLR ",	/* 5x */
-	"CPY  ","CPY  ","CPY  ","CPY  ",	/* 6x */
-	"SCPY ","SCPY ","SCPY ","SCPY ",	/* 7x */
-	"AMOVE","RMOVE","ALINE","RLINE", 	/* 8x */
-	"ARCT ","RRCT ","APLL ","RPLL ",	/* 9x */
-	"APLG ","RPLG ","CRCL ","ELPS ",	/* Ax */
-	"AARC ","RARC ","AEARC","REARC",	/* Bx */
-	"AFRCT","RFRCT","PAINT","DOT  ",	/* Cx */
-	"PTN  ","PTN  ","PTN  ","PTN  ",	/* Dx */
-	"AGCPY","AGCPY","AGCPY","AGCPY",	/* Ex */
-	"RGCPY","RGCPY","RGCPY","RGCPY" 	/* Fx */
-};
-
 int HD63484_start(void)
 {
 	fifo_counter = 0;
@@ -278,12 +258,12 @@ void HD63484_command_w(UINT16 cmd)
 
 	if (fifo_counter >= len)
 	{
-		int i;
+		//int i;
 
-		logerror("PC %05x: HD63484 command %s (%04x) ",cpu_get_pc(),instruction_name[fifo[0]>>10],fifo[0]);
-		for (i = 1;i < fifo_counter;i++)
+		//logerror("PC %05x: HD63484 command %s (%04x) ",cpu_get_pc(),instruction_name[fifo[0]>>10],fifo[0]);
+		/*for (i = 1;i < fifo_counter;i++)
 			logerror("%04x ",fifo[i]);
-		logerror("\n");
+		logerror("\n");*/
 
 		if (fifo[0] == 0x0400)	/* ORG */
 			org = ((fifo[1] & 0x00ff) << 12) | ((fifo[2] & 0xfff0) >> 4);
@@ -427,8 +407,8 @@ rwp /= 2;
 			cpx = (dst - 2*org) % 384;
 			cpy = (dst - 2*org) / 384;
 		}
-		else
-logerror("unsupported command\n");
+/*		else
+logerror("unsupported command\n");*/
 
 		fifo_counter = 0;
 	}
@@ -440,7 +420,7 @@ static READ_HANDLER( HD63484_status_r )
 {
 	if (offset == 1) return 0xff;	/* high 8 bits - not used */
 
-	if (cpu_get_pc() != 0xfced6) logerror("%05x: HD63484 status read\n",cpu_get_pc());
+	//if (cpu_get_pc() != 0xfced6) logerror("%05x: HD63484 status read\n",cpu_get_pc());
 	return 0x22;	/* write FIFO ready + command end */
 }
 
@@ -467,7 +447,7 @@ static WRITE_HANDLER( HD63484_data_w )
 			HD63484_command_w(val);
 		else
 		{
-logerror("PC %05x: HD63484 register %02x write %04x\n",cpu_get_pc(),regno,val);
+//logerror("PC %05x: HD63484 register %02x write %04x\n",cpu_get_pc(),regno,val);
 			HD63484_reg[regno/2] = val;
 			if (regno & 0x80) regno += 2;	/* autoincrement */
 		}
@@ -484,7 +464,7 @@ static READ_HANDLER( HD63484_data_r )
 	}
 	else
 	{
-logerror("%05x: HD63484 read register %02x\n",cpu_get_pc(),regno);
+//logerror("%05x: HD63484 read register %02x\n",cpu_get_pc(),regno);
 		res = 0;
 	}
 

@@ -63,7 +63,7 @@ static void timer_callback_2608(int param)
 }
 
 /* TimerHandler from fm.c */
-static void TimerHandler(int n,int c,int count,double stepTime)
+static void TimerHandler(int n,int c,int count,timer_tm stepTime)
 {
 	if( count == 0 )
 	{	/* Reset FM Timer */
@@ -76,7 +76,7 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 	}
 	else
 	{	/* Start FM Timer */
-		double timeSec = (double)count * stepTime;
+		timer_tm timeSec = (timer_tm)count * stepTime;
 
 		if( Timer[n][c] == 0 )
 		{

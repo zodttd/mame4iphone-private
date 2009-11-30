@@ -8,6 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "osinline.h"
 #include <math.h>
 
 
@@ -297,18 +298,22 @@ static void mix_to_16(int length, INT16 *dest_left, INT16 *dest_right)
 {
 	INT32 *mixer_left = mixer_buffer_left;
 	INT32 *mixer_right = mixer_buffer_right;
-	int i, clippers = 0;
+	int i;
 
 	for (i = 0; i < length; i++)
 	{
 		INT32 sample_left = *mixer_left++;
 		INT32 sample_right = *mixer_right++;
 
-		if (sample_left < -32768) { sample_left = -32768; clippers++; }
-		else if (sample_left > 32767) { sample_left = 32767; clippers++; }
-		if (sample_right < -32768) { sample_right = -32768; clippers++; }
-		else if (sample_right > 32767) { sample_right = 32767; clippers++; }
-
+#ifndef clip_short
+		if (sample_left < -32768) { sample_left = -32768; }
+		else if (sample_left > 32767) { sample_left = 32767; }
+		if (sample_right < -32768) { sample_right = -32768; }
+		else if (sample_right > 32767) { sample_right = 32767; }
+#else
+        clip_short(sample_left);
+        clip_short(sample_right);
+#endif
 		*dest_left++ = sample_left;
 		*dest_right++ = sample_right;
 	}
@@ -791,11 +796,14 @@ void fir_filter(INT32 *input, INT16 *output, int count)
 		result += (input[-27] + input[-28] + input[-29]) << 12;
 		result >>= 14;
 
+#ifndef clip_short
 		if (result < -32768)
 			result = -32768;
 		else if (result > 32767)
 			result = 32767;
-
+#else
+        clip_short(result);
+#endif
 		*output++ = result;
 		input++;
 	}
@@ -814,8 +822,8 @@ void decode_and_filter_cvsd(UINT8 *input, int bytes, int maskbits, int frequency
 	INT32 buffer[SAMPLE_BUFFER_LENGTH + FIR_HISTORY_LENGTH];
 	int total_samples = bytes * 8;
 	int mask = (1 << maskbits) - 1;
-	double filter, integrator, leak;
-	double charge, decay, gain;
+	float filter, integrator, leak;
+	float charge, decay, gain;
 	int steps;
 	int chunk_start;
 
@@ -830,9 +838,9 @@ void decode_and_filter_cvsd(UINT8 *input, int bytes, int maskbits, int frequency
 #endif
 
 	/* compute the charge, decay, and leak constants */
-	charge = pow(exp(-1), 1.0 / (FILTER_CHARGE_TC * (double)frequency));
-	decay = pow(exp(-1), 1.0 / (FILTER_DECAY_TC * (double)frequency));
-	leak = pow(exp(-1), 1.0 / (INTEGRATOR_LEAK_TC * (double)frequency));
+	charge = pow(exp(-1), 1.0 / (FILTER_CHARGE_TC * (float)frequency));
+	decay = pow(exp(-1), 1.0 / (FILTER_DECAY_TC * (float)frequency));
+	leak = pow(exp(-1), 1.0 / (INTEGRATOR_LEAK_TC * (float)frequency));
 
 	/* compute the gain */
 	gain = SAMPLE_GAIN;
@@ -861,7 +869,7 @@ void decode_and_filter_cvsd(UINT8 *input, int bytes, int maskbits, int frequency
 		/* loop over samples */
 		for (ind = 0; ind < chunk_bytes; ind++)
 		{
-			double temp;
+			float temp;
 			int databyte = *input++;
 			int bit;
 			int sample;

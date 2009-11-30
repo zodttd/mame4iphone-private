@@ -101,16 +101,16 @@ WRITE_HANDLER( wms_wolfu_cmos_w )
 		COMBINE_WORD_MEM(&wms_cmos_ram[offset], data);
 		cmos_write_enable = 0;
 	}
-	else
+	/*else
 	{
 		logerror("%08X:Unexpected CMOS W @ %05X\n", cpu_get_pc(), offset);
 		usrintf_showmessage("Bad CMOS write");
-	}
+	}*/
 }
 
 READ_HANDLER( wms_wolfu_cmos_r )
 {
-	logerror("%08X:CMOS R @ %05X\n", cpu_get_pc(), offset);
+	//logerror("%08X:CMOS R @ %05X\n", cpu_get_pc(), offset);
 	return READ_WORD(&wms_cmos_ram[offset]);
 }
 
@@ -130,7 +130,7 @@ static WRITE_HANDLER( wms_wolfu_io_w )
 	switch (offset / 2)
 	{
 		case 1:
-			logerror("%08X:Control W @ %05X = %04X\n", cpu_get_pc(), offset, data);
+			//logerror("%08X:Control W @ %05X = %04X\n", cpu_get_pc(), offset, data);
 
 			/* bit 4 reset sound CPU */
 			williams_dcs_reset_w(data & 0x10);
@@ -151,7 +151,7 @@ static WRITE_HANDLER( wms_wolfu_io_w )
 			break;
 
 		default:
-			logerror("%08X:Unknown I/O write to %d = %04X\n", cpu_get_pc(), offset / 2, data);
+			//logerror("%08X:Unknown I/O write to %d = %04X\n", cpu_get_pc(), offset / 2, data);
 			break;
 	}
 	WRITE_WORD(&iodata[offset / 2], newword);
@@ -179,7 +179,7 @@ static READ_HANDLER( wms_wolfu_io_r )
 			return (security_status << 12) | wms_wolfu_sound_state_r(0);
 			
 		default:
-			logerror("%08X:Unknown I/O read from %d\n", cpu_get_pc(), offset / 2);
+			//logerror("%08X:Unknown I/O read from %d\n", cpu_get_pc(), offset / 2);
 			break;
 	}
 	return 0xffff;
@@ -449,7 +449,7 @@ void wms_wolfu_init_machine(void)
 
 READ_HANDLER( wms_wolfu_security_r )
 {
-	logerror("%08X:Security R = %04X\n", cpu_get_pc(), security_buffer);
+	//logerror("%08X:Security R = %04X\n", cpu_get_pc(), security_buffer);
 	security_status = 1;
 	return security_buffer;
 }
@@ -457,7 +457,7 @@ READ_HANDLER( wms_wolfu_security_r )
 
 WRITE_HANDLER( wms_wolfu_security_w )
 {
-	logerror("%08X:Security W = %04X\n", cpu_get_pc(), data);
+	//logerror("%08X:Security W = %04X\n", cpu_get_pc(), data);
 	if (!(data & 0x00ff0000))
 	{
 		/* status seems to reflect the clock bit */
@@ -485,7 +485,7 @@ WRITE_HANDLER( wms_wolfu_security_w )
 
 READ_HANDLER( wms_wolfu_sound_r )
 {
-	logerror("%08X:Sound read\n", cpu_get_pc());
+	//logerror("%08X:Sound read\n", cpu_get_pc());
 
 	if ( sound_type == SOUND_DCS && Machine->sample_rate )
 		return williams_dcs_data_r(0);
@@ -506,7 +506,7 @@ WRITE_HANDLER( wms_wolfu_sound_w )
 	/* check for out-of-bounds accesses */
 	if (offset)
 	{
-		logerror("%08X:Unexpected write to sound (hi) = %04X\n", cpu_get_pc(), data);
+		//logerror("%08X:Unexpected write to sound (hi) = %04X\n", cpu_get_pc(), data);
 		return;
 	}
 	
@@ -514,7 +514,7 @@ WRITE_HANDLER( wms_wolfu_sound_w )
 	switch (sound_type)
 	{
 		case SOUND_DCS:
-			logerror("%08X:Sound write = %04X\n", cpu_get_pc(), data);
+			//logerror("%08X:Sound write = %04X\n", cpu_get_pc(), data);
 			williams_dcs_data_w(0, data & 0xff);
 			break;
 	}

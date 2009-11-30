@@ -1,3 +1,5 @@
+#include "../vidhrdw/commando.cpp"
+
 /***************************************************************************
 
 Commando memory map (preliminary)
@@ -332,7 +334,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_commando =
+static struct MachineDriver machine_driver_commando =
 {
 	/* basic machine hardware */
 	{

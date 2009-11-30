@@ -1,3 +1,5 @@
+#include "../vidhrdw/bogeyman.cpp"
+
 /***************************************************************************
 
 	Bogey Manor               (c) 1985 Technos Japan

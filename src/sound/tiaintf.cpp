@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "tiaintf.h"
 #include "tiasound.h"
+#include "tiasound.cpp"
 
 static int channel = -1;
 static const struct TIAinterface *intf;

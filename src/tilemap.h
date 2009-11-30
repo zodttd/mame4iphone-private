@@ -150,7 +150,7 @@ struct tilemap {
 	/* for the back half of a split layer */
 
 	struct tilemap *next; /* resource tracking */
-};
+} __attribute__ ((__aligned__ (32)));
 
 /* don't call these from drivers - they are called from mame.c */
 int tilemap_init( void );

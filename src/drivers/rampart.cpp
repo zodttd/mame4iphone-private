@@ -1,3 +1,5 @@
+#include "../vidhrdw/rampart.cpp"
+
 /***************************************************************************
 
 	Rampart
@@ -121,7 +123,7 @@ static OPBASE_HANDLER( opbase_override )
 		/* return -1 so that the standard routine doesn't do anything more */
 		address = -1;
 
-		logerror("Slapstic op override at %06X\n", address);
+		//logerror("Slapstic op override at %06X\n", address);
 	}
 
 	return address;
@@ -215,11 +217,11 @@ static WRITE_HANDLER( latch_w )
 	*/
 
 	/* upper byte being modified? */
-	if (!(data & 0xff000000))
+	/*if (!(data & 0xff000000))
 	{
 		if (data & 0x1000)
 			logerror("Color bank set to 1!\n");
-	}
+	}*/
 
 	/* lower byte being modified? */
 	if (!(data & 0x00ff0000))

@@ -1,3 +1,6 @@
+#include "../vidhrdw/astrof.cpp"
+#include "../sndhrdw/astrof.cpp"
+
 /*
     Driver For DECO   ASTRO FIGHTER/TOMAHAWK 777
 

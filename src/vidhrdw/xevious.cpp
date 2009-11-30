@@ -224,7 +224,7 @@ WRITE_HANDLER( xevious_vh_latch_w )
 		flip_screen_w(0,data & 1);
 		break;
    default:
-		   logerror("CRTC WRITE REG: %x  Data: %03x\n",reg, data);
+		   //logerror("CRTC WRITE REG: %x  Data: %03x\n",reg, data);
 		   break;
 	}
 }

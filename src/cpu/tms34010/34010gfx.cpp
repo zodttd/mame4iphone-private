@@ -22,11 +22,12 @@ static void line(void)
 {
 	if (!P_FLAG)
 	{
+	    /*
 		if (state.window_checking != 0 && state.window_checking != 3)
 		{
 			logerror("LINE XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
 		}
-
+        */
 		P_FLAG = 1;
 		TEMP = (state.op & 0x80) ? 1 : 0;  /* boundary value depends on the algorithm */
 		LOGGFX(("%08X:LINE (%d,%d)-(%d,%d)\n", PC, DADDR_X, DADDR_Y, DADDR_X + DYDX_X, DADDR_Y + DYDX_Y));
@@ -87,9 +88,11 @@ static int apply_window(int srcbpp, int src_is_linear)
 		int ey = sy + DYDX_Y - 1;
 		int diff, cycles = 3;
 
+        /*
 		if (state.window_checking == 1 || state.window_checking == 2)
 			logerror("Window mode %d not supported!\n", state.window_checking);
-
+        */
+        
 		/* clear the V flag by default */
 		CLR_V;
 
@@ -212,16 +215,16 @@ static WRITE_HANDLER( shiftreg_w )
 {
 	if (state.config->from_shiftreg)
 		(*state.config->from_shiftreg)((UINT32)(offset << 3) & ~15, &state.shiftreg[0]);
-	else
-		logerror("From ShiftReg function not set. PC = %08X\n", PC);
+	/*else
+		logerror("From ShiftReg function not set. PC = %08X\n", PC);*/
 }
 
 static READ_HANDLER( shiftreg_r )
 {
 	if (state.config->to_shiftreg)
 		(*state.config->to_shiftreg)((UINT32)(offset << 3) & ~15, &state.shiftreg[0]);
-	else
-		logerror("To ShiftReg function not set. PC = %08X\n", PC);
+	/*else
+		logerror("To ShiftReg function not set. PC = %08X\n", PC);*/
 	return state.shiftreg[0];
 }
 

@@ -1,3 +1,5 @@
+#include "../vidhrdw/cloak.cpp"
+
 /****************************************************************************
 
 Master processor
@@ -225,8 +227,8 @@ INPUT_PORTS_START( cloak )
 	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON5 )
 
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x3f, IP_ACTIVE_HIGH, IPT_UNKNOWN )

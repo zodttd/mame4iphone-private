@@ -1,3 +1,5 @@
+#include "../vidhrdw/battlane.cpp"
+
 /***************************************************************************
 
 	BattleLane
@@ -145,23 +147,6 @@ static struct MemoryWriteAddress battlane_writemem[] =
 
 int battlane_cpu1_interrupt(void)
 {
-#ifdef MAME_DEBUG
-	if (keyboard_pressed(KEYCODE_F))
-	{
-		FILE *fp;
-		while (keyboard_pressed(KEYCODE_F)) ;
-		fp=fopen("RAM.DMP", "w+b");
-		if (fp)
-		{
-			unsigned char *RAM =
-			memory_region(REGION_CPU1);
-
-			fwrite(RAM, 0x4000, 1, fp);
-			fclose(fp);
-		}
-	}
-#endif
-
     if (cpu_getiloops()==0)
 	{
         /* See note in battlane_cpu_command_w */

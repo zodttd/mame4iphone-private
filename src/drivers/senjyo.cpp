@@ -1,3 +1,6 @@
+#include "../sndhrdw/senjyo.cpp"
+#include "../vidhrdw/senjyo.cpp"
+
 /***************************************************************************
 
 Senjyo / Star Force / Baluba-louk

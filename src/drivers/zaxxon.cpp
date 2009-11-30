@@ -1,3 +1,6 @@
+#include "../vidhrdw/zaxxon.cpp"
+#include "../sndhrdw/zaxxon.cpp"
+
 /***************************************************************************
 
 Notes:

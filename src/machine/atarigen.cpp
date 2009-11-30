@@ -762,8 +762,8 @@ static void delayed_sound_reset(int param)
 static void delayed_sound_w(int param)
 {
 	/* warn if we missed something */
-	if (atarigen_cpu_to_sound_ready)
-		logerror("Missed command from 68010\n");
+	//if (atarigen_cpu_to_sound_ready)
+	//	logerror("Missed command from 68010\n");
 
 	/* set up the states and signal an NMI to the sound CPU */
 	atarigen_cpu_to_sound = param;
@@ -786,8 +786,8 @@ static void delayed_sound_w(int param)
 static void delayed_6502_sound_w(int param)
 {
 	/* warn if we missed something */
-	if (atarigen_sound_to_cpu_ready)
-		logerror("Missed result from 6502\n");
+	//if (atarigen_sound_to_cpu_ready)
+	//	logerror("Missed result from 6502\n");
 
 	/* set up the states and signal the sound interrupt to the main CPU */
 	atarigen_sound_to_cpu = param;
@@ -835,15 +835,15 @@ void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2)
 	/* determine the pointer to the first speed check location */
 	address_low = memory[compare_pc1 + 1] | (memory[compare_pc1 + 2] << 8);
 	address_high = memory[compare_pc1 + 4] | (memory[compare_pc1 + 5] << 8);
-	if (address_low != address_high - 1)
-		logerror("Error: address %04X does not point to a speedup location!", compare_pc1);
+	//if (address_low != address_high - 1)
+	//	logerror("Error: address %04X does not point to a speedup location!", compare_pc1);
 	speed_a = &memory[address_low];
 
 	/* determine the pointer to the second speed check location */
 	address_low = memory[compare_pc2 + 1] | (memory[compare_pc2 + 2] << 8);
 	address_high = memory[compare_pc2 + 4] | (memory[compare_pc2 + 5] << 8);
-	if (address_low != address_high - 1)
-		logerror("Error: address %04X does not point to a speedup location!", compare_pc2);
+	//if (address_low != address_high - 1)
+	//	logerror("Error: address %04X does not point to a speedup location!", compare_pc2);
 	speed_b = &memory[address_low];
 
 	/* install a handler on the second address */
@@ -1008,7 +1008,7 @@ size_t atarigen_alpharam_size;
 /* statics */
 static atarigen_scanline_callback scanline_callback;
 static int scanlines_per_callback;
-static double scanline_callback_period;
+static timer_tm scanline_callback_period;
 static int last_scanline;
 
 /* prototypes */
@@ -1026,7 +1026,7 @@ void atarigen_scanline_timer_reset(atarigen_scanline_callback update_graphics, i
 {
 	/* set the scanline callback */
 	scanline_callback = update_graphics;
-	scanline_callback_period = (double)frequency * cpu_getscanlineperiod();
+	scanline_callback_period = (timer_tm)frequency * cpu_getscanlineperiod();
 	scanlines_per_callback = frequency;
 
 	/* compute the last scanline */
@@ -1256,8 +1256,8 @@ WRITE_HANDLER( atarigen_video_control_w )
 		/* log anything else */
 		case 0x00:
 		default:
-			if (oldword != newword)
-				logerror("video_control_w(%02X, %04X) ** [prev=%04X]\n", offset, newword, oldword);
+			//if (oldword != newword)
+			//	logerror("video_control_w(%02X, %04X) ** [prev=%04X]\n", offset, newword, oldword);
 			break;
 	}
 }
@@ -1272,7 +1272,7 @@ WRITE_HANDLER( atarigen_video_control_w )
 
 READ_HANDLER( atarigen_video_control_r )
 {
-	logerror("video_control_r(%02X)\n", offset);
+	//logerror("video_control_r(%02X)\n", offset);
 
 	/* a read from offset 0 returns the current scanline */
 	/* also sets bit 0x4000 if we're in VBLANK */
@@ -1415,7 +1415,7 @@ void atarigen_mo_update(const UINT8 *base, int link, int scanline)
 		/* bounds checking */
 		if (data >= molist_upper_bound)
 		{
-			logerror("Motion object list exceeded maximum\n");
+			//logerror("Motion object list exceeded maximum\n");
 			break;
 		}
 
@@ -3050,14 +3050,14 @@ WRITE_HANDLER( atarigen_halt_until_hblank_0_w )
 	/* halt the CPU until the next HBLANK */
 	int hpos = cpu_gethorzbeampos();
 	int hblank = Machine->drv->screen_width * 9 / 10;
-	double fraction;
+	float fraction;
 
 	/* if we're in hblank, set up for the next one */
 	if (hpos >= hblank)
 		hblank += Machine->drv->screen_width;
 
 	/* halt and set a timer to wake up */
-	fraction = (double)(hblank - hpos) / (double)Machine->drv->screen_width;
+	fraction = (float)(hblank - hpos) / (float)Machine->drv->screen_width;
 	timer_set(cpu_getscanlineperiod() * fraction, 0, unhalt_cpu);
 	cpu_set_halt_line(0, ASSERT_LINE);
 }

@@ -1,3 +1,6 @@
+#include "../sndhrdw/gyruss.cpp"
+#include "../vidhrdw/gyruss.cpp"
+
 /***************************************************************************
 
 Gyruss memory map (preliminary)

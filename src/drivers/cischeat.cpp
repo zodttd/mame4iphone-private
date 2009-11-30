@@ -1,3 +1,5 @@
+#include "../vidhrdw/cischeat.cpp"
+
 /***************************************************************************
 
 						Cisco Heat & F1 GrandPrix Star

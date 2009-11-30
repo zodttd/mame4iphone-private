@@ -68,7 +68,7 @@ const struct GameDriver *drivers[] =
 
 #else	/* DRIVER_RECURSIVE */
 
-#ifndef NEOMAME
+//#ifndef NEOMAME
 
 	/* "Pacman hardware" games */
 	DRIVER( pacman )	/* (c) 1980 Namco */
@@ -841,8 +841,8 @@ TESTDRIVER( firebarr )	/* (c) 1993 Irem (Japan) */
 	DRIVER( tsamura2 )	/* (c) 1985 Taito */
 	DRIVER( nunchaku )	/* (c) 1985 Taito */
 	DRIVER( yamagchi )	/* (c) 1985 Taito */
-TESTDRIVER( flstory )	/* A45 (c) 1985 Taito Corporation */
-TESTDRIVER( flstoryj )	/* A45 (c) 1985 Taito Corporation (Japan) */
+	DRIVER( flstory )	/* A45 (c) 1985 Taito Corporation */
+	DRIVER( flstoryj )	/* A45 (c) 1985 Taito Corporation (Japan) */
 TESTDRIVER( onna34ro )	/* A52 */
 	DRIVER( gladiatr )	/* (c) 1986 Taito America Corporation (US) */
 	DRIVER( ogonsiro )	/* (c) 1986 Taito Corporation (Japan) */
@@ -896,18 +896,22 @@ TESTDRIVER( arkblock )	/* bootleg */
 	DRIVER( kagekij )	/* (c) 1988 Taito Corporation (Japan) */
 
 	/* Taito L-System games */
-	DRIVER( fhawk )		/* (c) 1988 Taito Corporation (Japan) */
 	DRIVER( raimais )	/* (c) 1988 Taito Corporation (Japan) */
+	DRIVER( fhawk )		/* (c) 1988 Taito Corporation (Japan) */
 	DRIVER( champwr )	/* (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( champwru )	/* (c) 1989 Taito America Corporation (US) */
 	DRIVER( champwrj )	/* (c) 1989 Taito Corporation (Japan) */
-	DRIVER( puzznic )	/* (c) 1989 Taito Corporation (Japan) */
+	DRIVER( kurikint )      /* (c) 1989 Taito Corporation (Japan) */
+	DRIVER( kurikina )	/* (c) 1989 Taito Corporation (Japan) */
 	DRIVER( plotting )	/* (c) 1989 Taito Corporation Japan (World) */
-	DRIVER( palamed )	/* (c) 1990 Taito Corporation (Japan) */
+	DRIVER( puzznic )	/* (c) 1989 Taito Corporation (Japan) */
 	DRIVER( horshoes )	/* (c) 1990 Taito America Corporation (US) */
+	DRIVER( palamed )	/* (c) 1990 Taito Corporation (Japan) */
 	DRIVER( cachat )	/* (c) 1993 Taito Corporation (Japan) */
-TESTDRIVER( plgirls )	/* (c) 1992 Hot-B. */
-TESTDRIVER( plgirls2 )	/* (c) 1993 Hot-B. */
+	DRIVER( tubeit )	/* no copyright message */
+	DRIVER( cubybop )	/* no copyright message */
+	DRIVER( plgirls )	/* (c) 1992 Hot-B. */
+	DRIVER( plgirls2 )	/* (c) 1993 Hot-B. */
 
 	/* Taito B-System games */
 	DRIVER( masterw )	/* B72 (c) 1989 Taito Corporation Japan (World) */
@@ -1707,6 +1711,25 @@ TESTDRIVER( toutruna )	/* (protected) */
 	DRIVER( wb3 )		/* (c) 1988 Sega / Westone */
 	DRIVER( wb3bl )		/* (c) 1988 Sega / Westone (but bootleg) */
 	DRIVER( wrestwar )	/* (c) 1989 */
+	/* Deniam games */
+	/* they run on Sega System 16 video hardware */
+	DRIVER( logicpro )      /* (c) 1996 Deniam */
+	DRIVER( karianx )       /* (c) 1996 Deniam */
+	DRIVER( logicpr2 )      /* (c) 1997 Deniam (Japan) */
+/*
+Deniam is a Korean company (http://deniam.co.kr).
+
+Game list:
+Title            System     Date
+---------------- ---------- ----------
+GO!GO!           deniam-16b 1995/10/11
+Logic Pro        deniam-16b 1996/10/20
+Karian Cross     deniam-16b 1997/04/17
+LOTTERY GAME     deniam-16c 1997/05/21
+Logic Pro 2      deniam-16c 1997/06/20
+Propose          deniam-16c 1997/06/21
+BOMULEUL CHAJARA SEGA ST-V  1997/04/11
+*/
 
 	/* Data East "Burger Time hardware" games */
 	DRIVER( lnc )		/* (c) 1981 */
@@ -2285,6 +2308,7 @@ TESTDRIVER( liberat2 )
 	DRIVER( offtwalc )	/* (c) 1991 */
 	DRIVER( arcadecl )	/* (c) 1992 */
 	DRIVER( sparkz )	/* (c) 1992 */
+	DRIVER( firetrk )	/* (c) 1978 */
 
 	/* SNK / Rock-ola games */
 	DRIVER( sasuke )	/* [1980] Shin Nihon Kikaku (SNK) */
@@ -2585,6 +2609,8 @@ V1.2   May 27,1999
 	DRIVER( raidena )	/* (c) 1990 Seibu Kaihatsu */
 	DRIVER( raidenk )	/* (c) 1990 Seibu Kaihatsu + IBL Corporation license */
 	DRIVER( dcon )		/* (c) 1992 Success */
+	DRIVER( kncljoe )	/* (c) 1985 Seibu Kaihatsu + Taito License */
+	DRIVER( kncljoea )	/* (c) 1985 Seibu Kaihatsu + Taito License */
 
 /* Seibu STI System games:
 
@@ -2626,6 +2652,10 @@ V1.2   May 27,1999
 	DRIVER( f1gpstar )	/* (c) 1991 Jaleco */
 	DRIVER( skyfox )	/* (c) 1987 Jaleco + Nichibutsu USA license */
 	DRIVER( exerizrb )	/* bootleg */
+	DRIVER( argus )         /* (c) 1986 Jaleco */
+	DRIVER( valtric )       /* (c) 1986 Jaleco */
+	DRIVER( butasan )       /* (c) 1987 Jaleco */
+	DRIVER( momoko )        /* (c) 1986 Jaleco */
 
 	/* Jaleco Mega System 1 games */
 	DRIVER( lomakai )	/* (c) 1988 (World) */
@@ -2839,8 +2869,7 @@ TESTDRIVER( dlair )
 	DRIVER( magix )		/* (c) 1995 Yun Sung */
 	DRIVER( royalmah )	/* (c) 1982 Falcon */
 
-
-#endif /* NEOMAME */
+#if 1
 
 	/* Neo Geo games */
 	/* the four digits number is the game ID stored at address 0x0108 of the program ROM */
@@ -3003,6 +3032,8 @@ TESTDRIVER( garou )		/* 0253 (c) 1999 SNK */
 	/* Prehistoric Isle 2 */
 	/* Strikers 1945 Plus */
 	/* Ganryu */
+
+#endif /* NEOMAME */
 
 #endif	/* DRIVER_RECURSIVE */
 

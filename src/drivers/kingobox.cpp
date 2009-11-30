@@ -1,3 +1,5 @@
+#include "../vidhrdw/kingobox.cpp"
+
 /***************************************************************************
 
 King of Boxer - (c) 1985 Woodplace Inc.

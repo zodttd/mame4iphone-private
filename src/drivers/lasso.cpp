@@ -1,3 +1,5 @@
+#include "../vidhrdw/lasso.cpp"
+
 /*	Lasso
 **	(C)1982 SNK
 **

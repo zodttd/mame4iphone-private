@@ -1,3 +1,5 @@
+#include "../vidhrdw/zaccaria.cpp"
+
 /***************************************************************************
 
 Jack Rabbit memory map (preliminary)
@@ -134,7 +136,7 @@ WRITE_HANDLER( zaccaria_dsw_sel_w )
 
 		default:
 			break;
-logerror("PC %04x: portsel = %02x\n",cpu_get_pc(),data);
+//logerror("PC %04x: portsel = %02x\n",cpu_get_pc(),data);
 	}
 }
 

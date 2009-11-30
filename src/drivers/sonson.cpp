@@ -1,3 +1,5 @@
+#include "../vidhrdw/sonson.cpp"
+
 /***************************************************************************
 
 Son Son memory map (preliminary)

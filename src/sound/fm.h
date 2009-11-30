@@ -106,7 +106,7 @@ typedef unsigned char  FMSAMPLE;
 typedef unsigned short FMSAMPLE_MIX;
 #endif
 
-typedef void (*FM_TIMERHANDLER)(int n,int c,int cnt,double stepTime);
+typedef void (*FM_TIMERHANDLER)(int n,int c,int cnt,timer_tm stepTime);
 typedef void (*FM_IRQHANDLER)(int n,int irq);
 /* FM_TIMERHANDLER : Stop or Start timer         */
 /* int n          = chip number                  */

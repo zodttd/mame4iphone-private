@@ -58,6 +58,8 @@ void blitscreen_dirty1_color8(struct osd_bitmap *bitmap)
 		lb += 16 * width;
 		address += 16 * gfx_width;
 	}
+	
+	FLIP_VIDEO;
 }
 
 void blitscreen_dirty0_color8(struct osd_bitmap *bitmap)
@@ -118,6 +120,8 @@ void blitscreen_dirty1_palettized16(struct osd_bitmap *bitmap)
 		lb += 16 * width;
 		address += 16 * gfx_width;
 	}
+	
+	FLIP_VIDEO;
 }
 
 void blitscreen_dirty0_palettized16(struct osd_bitmap *bitmap)
@@ -178,6 +182,8 @@ void blitscreen_dirty1_color16(struct osd_bitmap *bitmap)
 		lb += 16 * width;
 		address += 16 * gfx_width;
 	}
+	
+	FLIP_VIDEO;
 }
 
 void blitscreen_dirty0_color16(struct osd_bitmap *bitmap)

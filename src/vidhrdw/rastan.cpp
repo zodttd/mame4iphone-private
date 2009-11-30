@@ -252,20 +252,20 @@ palette_init_used_colors();
 
 	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	{
-		if (rastan_dirty1[offs/4])
+		if (rastan_dirty1[offs>>2])
 		{
 			int sx,sy;
 			int data1,data2;
 			int flipx,flipy;
 
 
-			rastan_dirty1[offs/4] = 0;
+			rastan_dirty1[offs>>2] = 0;
 
 			data1 = READ_WORD(&rastan_videoram1[offs]);
 			data2 = READ_WORD(&rastan_videoram1[offs + 2]);
 
-			sx = (offs/4) % 64;
-			sy = (offs/4) / 64;
+			sx = (offs>>2) % 64;
+			sy = offs>>8;
 
 			flipx = data1 & 0x4000;
 			flipy = data1 & 0x8000;
@@ -289,7 +289,7 @@ palette_init_used_colors();
 
 	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	{
-		if (rastan_dirty3[offs/4])
+		if (rastan_dirty3[offs>>2])
 		{
 			int sx,sy;
 			int data1,data2;
@@ -474,13 +474,13 @@ palette_init_used_colors();
 			int flipx,flipy;
 
 
-			rastan_dirty1[offs/4] = 0;
+			rastan_dirty1[offs>>2] = 0;
 
 			data1 = READ_WORD(&rastan_videoram1[offs]);
 			data2 = READ_WORD(&rastan_videoram1[offs + 2]);
 
-			sx = (offs/4) % 64;
-			sy = (offs/4) / 64;
+			sx = (offs>>2) % 64;
+			sy = offs>>8;
 
 			flipx = data1 & 0x4000;
 			flipy = data1 & 0x8000;
@@ -504,20 +504,20 @@ palette_init_used_colors();
 
 	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	{
-		if (rastan_dirty3[offs/4])
+		if (rastan_dirty3[offs>>2])
 		{
 			int sx,sy;
 			int data1,data2;
 			int flipx,flipy;
 
 
-			rastan_dirty3[offs/4] = 0;
+			rastan_dirty3[offs>>2] = 0;
 
 			data1 = READ_WORD(&rastan_videoram3[offs]);
 			data2 = READ_WORD(&rastan_videoram3[offs + 2]);
 
-			sx = (offs/4) % 64;
-			sy = (offs/4) / 64;
+			sx = (offs>>2) % 64;
+			sy = offs>>8;
 
 			flipx = data1 & 0x4000;
 			flipy = data1 & 0x8000;
@@ -702,18 +702,18 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	{
-		if (rastan_dirty1[offs/4])
+		if (rastan_dirty1[offs>>2])
 		{
 			int sx,sy;
 			int data1,data2;
 
-			rastan_dirty1[offs/4] = 0;
+			rastan_dirty1[offs>>2] = 0;
 
 			data1 = READ_WORD(&rastan_videoram1[offs]);
 			data2 = READ_WORD(&rastan_videoram1[offs + 2]);
 
-			sx = (offs/4) % 64;
-			sy = (offs/4) / 64;
+			sx = (offs>>2) % 64;
+			sy = offs>>8;
 
 			drawgfx(tmpbitmap1, Machine->gfx[0],
 					data2,
@@ -726,19 +726,19 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	{
-		if (rastan_dirty3[offs/4])
+		if (rastan_dirty3[offs>>2])
 		{
 			int sx,sy;
 			int data1,data2;
 
 
-			rastan_dirty3[offs/4] = 0;
+			rastan_dirty3[offs>>2] = 0;
 
 			data1 = READ_WORD(&rastan_videoram3[offs]);
 			data2 = READ_WORD(&rastan_videoram3[offs + 2]);
 
-			sx = (offs/4) % 64;
-			sy = (offs/4) / 64;
+			sx = (offs>>2) % 64;
+			sy = offs>>8;
 
             /* Colour as Transparent */
 

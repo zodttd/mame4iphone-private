@@ -1,3 +1,6 @@
+#ifndef CRT6845_H
+#define CRT6845_H
+
 /**********************************************************************
 
         Motorola 6845 CRT Controller interface and emulation
@@ -51,4 +54,4 @@ READ_HANDLER( crtc6845_register_r );
 WRITE_HANDLER( crtc6845_address_w );
 WRITE_HANDLER( crtc6845_register_w );
 
-
+#endif

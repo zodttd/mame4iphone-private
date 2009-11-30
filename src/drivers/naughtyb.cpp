@@ -1,3 +1,5 @@
+#include "../vidhrdw/naughtyb.cpp"
+
 /***************************************************************************
 
 Naughty Boy driver by Sal and John Bugliarisi.

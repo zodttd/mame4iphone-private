@@ -1,3 +1,6 @@
+#include "../machine/wmstunit.cpp"
+#include "../vidhrdw/wmstunit.cpp"
+
 /*************************************************************************
 
 	Driver for Midway T-unit games
@@ -483,7 +486,7 @@ static struct MachineDriver machine_driver_tunit_adpcm =
 	{
 		{
 			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
+			((50000000/TMS34010_CLOCK_DIVIDER)/2)/0.8,	/* 50 Mhz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
@@ -521,7 +524,7 @@ static struct MachineDriver machine_driver_tunit_dcs =
 	{
 		{
 			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
+			((50000000/TMS34010_CLOCK_DIVIDER)/2)/0.8,	/* 50 Mhz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config

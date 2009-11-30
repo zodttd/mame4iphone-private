@@ -1,3 +1,6 @@
+#include "../machine/toypop.cpp"
+#include "../vidhrdw/toypop.cpp"
+
 /****************************************
 
 TOYPOP

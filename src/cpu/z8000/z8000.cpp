@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "driver.h"
-#include "mamedbg.h"
 #include "z8000.h"
 #include "z8000cpu.h"
 
@@ -34,21 +33,6 @@
 #else
 #define LOG(x)
 #endif
-
-static UINT8 z8000_reg_layout[] = {
-	Z8000_PC, Z8000_NSP, Z8000_FCW, Z8000_PSAP, Z8000_REFRESH, -1,
-	Z8000_R0, Z8000_R1, Z8000_R2, Z8000_R3, Z8000_R4, Z8000_R5, Z8000_R6, Z8000_R7, -1,
-	Z8000_R8, Z8000_R9, Z8000_R10,Z8000_R11,Z8000_R12,Z8000_R13,Z8000_R14,Z8000_R15,-1,
-	Z8000_IRQ_REQ, Z8000_IRQ_SRV, Z8000_IRQ_VEC, Z8000_NMI_STATE, Z8000_NVI_STATE, Z8000_VI_STATE, 0
-};
-
-static UINT8 z8000_win_layout[] = {
-	 0, 0,80, 4,	/* register window (top rows) */
-	 0, 5,26,17,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 /* opcode execution table */
 Z8000_exec *z8000_exec = NULL;
@@ -347,7 +331,7 @@ INLINE void set_irq(int type)
             IRQ_REQ = type;
             break;
         default:
-            logerror("Z8000 invalid Cause_Interrupt %04x\n", type);
+            /*logerror("Z8000 invalid Cause_Interrupt %04x\n", type);*/
             return;
     }
     /* set interrupt request flag, reset HALT flag */
@@ -476,8 +460,6 @@ int z8000_execute(int cycles)
         /* any interrupt request pending? */
         if (IRQ_REQ)
 			Interrupt();
-
-		CALL_MAME_DEBUG;
 
 		if (IRQ_REQ & Z8000_HALT)
         {
@@ -682,15 +664,6 @@ void z8000_set_irq_callback(int (*callback)(int irqline))
  ****************************************************************************/
 const char *z8000_info(void *context, int regnum)
 {
-	static char buffer[32][47+1];
-	static int which = 0;
-	z8000_Regs *r = (z8000_Regs *)context;
-
-	which = ++which % 32;
-    buffer[which][0] = '\0';
-	if( !context )
-		r = &Z;
-
     switch( regnum )
 	{
 		case CPU_INFO_NAME: return "Z8002";
@@ -698,73 +671,14 @@ const char *z8000_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
-
-		case CPU_INFO_REG_LAYOUT: return (const char*)z8000_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)z8000_win_layout;
-
-        case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->fcw & 0x8000 ? 's':'.',
-				r->fcw & 0x4000 ? 'n':'.',
-				r->fcw & 0x2000 ? 'e':'.',
-				r->fcw & 0x1000 ? '2':'.',
-				r->fcw & 0x0800 ? '1':'.',
-				r->fcw & 0x0400 ? '?':'.',
-				r->fcw & 0x0200 ? '?':'.',
-				r->fcw & 0x0100 ? '?':'.',
-				r->fcw & 0x0080 ? 'C':'.',
-				r->fcw & 0x0040 ? 'Z':'.',
-				r->fcw & 0x0020 ? 'S':'.',
-				r->fcw & 0x0010 ? 'V':'.',
-				r->fcw & 0x0008 ? 'D':'.',
-				r->fcw & 0x0004 ? 'H':'.',
-				r->fcw & 0x0002 ? '?':'.',
-				r->fcw & 0x0001 ? '?':'.');
-            break;
-		case CPU_INFO_REG+Z8000_PC: sprintf(buffer[which], "PC :%04X", r->pc); break;
-		case CPU_INFO_REG+Z8000_NSP: sprintf(buffer[which], "SP :%04X", r->nsp); break;
-		case CPU_INFO_REG+Z8000_FCW: sprintf(buffer[which], "FCW:%04X", r->fcw); break;
-		case CPU_INFO_REG+Z8000_PSAP: sprintf(buffer[which], "NSP:%04X", r->psap); break;
-		case CPU_INFO_REG+Z8000_REFRESH: sprintf(buffer[which], "REFR:%04X", r->refresh); break;
-		case CPU_INFO_REG+Z8000_IRQ_REQ: sprintf(buffer[which], "IRQR:%04X", r->irq_req); break;
-		case CPU_INFO_REG+Z8000_IRQ_SRV: sprintf(buffer[which], "IRQS:%04X", r->irq_srv); break;
-		case CPU_INFO_REG+Z8000_IRQ_VEC: sprintf(buffer[which], "IRQV:%04X", r->irq_vec); break;
-#ifdef	LSB_FIRST
-#define REG_XOR 3
-#else
-#define REG_XOR 0
-#endif
-		case CPU_INFO_REG+Z8000_R0: sprintf(buffer[which], "R0 :%04X", r->regs.W[ 0^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R1: sprintf(buffer[which], "R1 :%04X", r->regs.W[ 1^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R2: sprintf(buffer[which], "R2 :%04X", r->regs.W[ 2^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R3: sprintf(buffer[which], "R3 :%04X", r->regs.W[ 3^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R4: sprintf(buffer[which], "R4 :%04X", r->regs.W[ 4^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R5: sprintf(buffer[which], "R5 :%04X", r->regs.W[ 5^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R6: sprintf(buffer[which], "R6 :%04X", r->regs.W[ 6^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R7: sprintf(buffer[which], "R7 :%04X", r->regs.W[ 7^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R8: sprintf(buffer[which], "R8 :%04X", r->regs.W[ 8^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R9: sprintf(buffer[which], "R9 :%04X", r->regs.W[ 9^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R10: sprintf(buffer[which], "R10:%04X", r->regs.W[10^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R11: sprintf(buffer[which], "R11:%04X", r->regs.W[11^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R12: sprintf(buffer[which], "R12:%04X", r->regs.W[12^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R13: sprintf(buffer[which], "R13:%04X", r->regs.W[13^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R14: sprintf(buffer[which], "R14:%04X", r->regs.W[14^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_R15: sprintf(buffer[which], "R15:%04X", r->regs.W[15^REG_XOR]); break;
-		case CPU_INFO_REG+Z8000_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+Z8000_NVI_STATE: sprintf(buffer[which], "NVI:%X", r->irq_state[0]); break;
-		case CPU_INFO_REG+Z8000_VI_STATE: sprintf(buffer[which], "VI :%X", r->irq_state[1]); break;
     }
-	return buffer[which];
+	return "";
 }
 
 
 unsigned z8000_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-    return DasmZ8000(buffer,pc);
-#else
 	sprintf( buffer, "$%04X", cpu_readop16(pc) );
 	return 2;
-#endif
 }
 

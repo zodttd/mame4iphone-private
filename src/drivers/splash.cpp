@@ -1,3 +1,5 @@
+#include "../vidhrdw/splash.cpp"
+
 /***************************************************************************
 
 Driver by Manuel Abadia <manu@teleline.es>

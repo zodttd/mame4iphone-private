@@ -148,8 +148,8 @@ static void convert_color_prom(unsigned char *palette, unsigned short *colortabl
 				dp += gfx->line_modulo;
 			}
 
-			if (sprite_transparency[i])
-logerror("sprite %i has transparency.\n",i);
+//			if (sprite_transparency[i])
+//logerror("sprite %i has transparency.\n",i);
 		}
 	}
 }

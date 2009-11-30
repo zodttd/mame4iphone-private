@@ -1,3 +1,6 @@
+#include "../machine/exterm.cpp"
+#include "../vidhrdw/exterm.cpp"
+
 /****************************************************************************
 
 	Exterminator memory map

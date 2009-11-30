@@ -1,3 +1,6 @@
+#include "../machine/bublbobl.cpp"
+#include "../vidhrdw/bublbobl.cpp"
+
 /***************************************************************************
 Bubble Bobble / Tokio
 

@@ -1,3 +1,5 @@
+#include "../vidhrdw/starcrus.cpp"
+
 /***************************************************************************
 
 Ramtek Star Cruiser Driver

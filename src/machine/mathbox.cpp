@@ -251,7 +251,7 @@ WRITE_HANDLER( mb_go_w )
       break;
 
     case 0x1f:
-      logerror("math box function 0x1f\n");
+      //logerror("math box function 0x1f\n");
       /* $$$ do some computation here (selftest? signature analysis? */
       break;
     }

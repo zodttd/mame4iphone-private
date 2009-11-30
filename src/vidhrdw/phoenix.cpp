@@ -216,7 +216,8 @@ READ_HANDLER( phoenix_input_port_0_r )
 		ret	|= 0x08;
 		break;
 	default:
-		logerror("Unknown protection question %02X at %04X\n", protection_question, cpu_get_pc());
+		//logerror("Unknown protection question %02X at %04X\n", protection_question, cpu_get_pc());
+		break;
 	}
 
 	return ret;

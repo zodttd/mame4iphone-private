@@ -1,3 +1,5 @@
+#include "../vidhrdw/jrpacman.cpp"
+
 /***************************************************************************
 
 Jr. Pac Man memory map (preliminary)

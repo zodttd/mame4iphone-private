@@ -1,3 +1,5 @@
+#include "../vidhrdw/blstroid.cpp"
+
 /***************************************************************************
 
 Blasteroids Memory Map

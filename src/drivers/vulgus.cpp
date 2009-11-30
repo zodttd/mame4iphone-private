@@ -1,3 +1,5 @@
+#include "../vidhrdw/vulgus.cpp"
+
 /***************************************************************************
 
 Vulgus memory map (preliminary)

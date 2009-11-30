@@ -1,3 +1,5 @@
+#include "../vidhrdw/karnov.cpp"
+
 /***************************************************************************
 
   Karnov (USA version)                   (c) 1987 Data East USA
@@ -92,7 +94,7 @@ static void wndrplnt_i8751_w(int data)
 	if (data==0x300) i8751_return=0x17; /* Copyright text on title screen */
 //	if (data==0x300) i8751_return=0x1; /* (USA) Copyright text on title screen */
 
-	if (data!=0x600) logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
+	//if (data!=0x600) logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
 
 	cpu_cause_interrupt(0,6); /* Signal main cpu task is complete */
 }
@@ -230,7 +232,7 @@ static WRITE_HANDLER( karnov_control_w )
 			break;
 
 		case 0xc: /* SECR (Reset i8751) */
-			logerror("Reset i8751\n");
+			//logerror("Reset i8751\n");
 			i8751_return=0;
 			break;
 

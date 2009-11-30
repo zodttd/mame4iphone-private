@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include "driver.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "m6502.h"
 #include "ops02.h"
 #include "ill02.h"
@@ -38,21 +37,6 @@
 #else
 #define LOG(x)
 #endif
-
-/* Layout of the registers in the debugger */
-static UINT8 m6502_reg_layout[] = {
-	M6502_PC, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y, -1,
-	M6502_EA, M6502_ZP, M6502_NMI_STATE, M6502_IRQ_STATE, M6502_SO_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6502_win_layout[] = {
-	25, 0,55, 2,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 /****************************************************************************
  * The 6502 registers.
@@ -259,8 +243,6 @@ int m6502_execute(int cycles)
 		UINT8 op;
 		PPC = PCD;
 
-		CALL_MAME_DEBUG;
-
 #if 1
 		/* if an irq is pending, take it now */
 		if( m6502.pending_irq )
@@ -411,80 +393,27 @@ void m6502_state_load(void *file)
  ****************************************************************************/
 const char *m6502_info(void *context, int regnum)
 {
-	static char buffer[16][47+1];
-	static int which = 0;
-	m6502_Regs *r = (m6502_Regs *)context;
-
-	which = ++which % 16;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &m6502;
-
 	switch( regnum )
 	{
-		case CPU_INFO_REG+M6502_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+M6502_S: sprintf(buffer[which], "S:%02X", r->sp.b.l); break;
-		case CPU_INFO_REG+M6502_P: sprintf(buffer[which], "P:%02X", r->p); break;
-		case CPU_INFO_REG+M6502_A: sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+M6502_X: sprintf(buffer[which], "X:%02X", r->x); break;
-		case CPU_INFO_REG+M6502_Y: sprintf(buffer[which], "Y:%02X", r->y); break;
-		case CPU_INFO_REG+M6502_EA: sprintf(buffer[which], "EA:%04X", r->ea.w.l); break;
-		case CPU_INFO_REG+M6502_ZP: sprintf(buffer[which], "ZP:%03X", r->zp.w.l); break;
-		case CPU_INFO_REG+M6502_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+M6502_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_REG+M6502_SO_STATE: sprintf(buffer[which], "SO:%X", r->so_state); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->p & 0x80 ? 'N':'.',
-				r->p & 0x40 ? 'V':'.',
-				r->p & 0x20 ? 'R':'.',
-				r->p & 0x10 ? 'B':'.',
-				r->p & 0x08 ? 'D':'.',
-				r->p & 0x04 ? 'I':'.',
-				r->p & 0x02 ? 'Z':'.',
-				r->p & 0x01 ? 'C':'.');
-			break;
 		case CPU_INFO_NAME: return "M6502";
 		case CPU_INFO_FAMILY: return "Motorola 6502";
 		case CPU_INFO_VERSION: return "1.2";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 1998 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6502_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6502_win_layout;
 	}
-	return buffer[which];
+	return "";
 }
 
 unsigned m6502_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm6502( buffer, pc );
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 /****************************************************************************
  * 65C02 section
  ****************************************************************************/
 #if (HAS_M65C02)
-
-/* Layout of the registers in the debugger */
-static UINT8 m65c02_reg_layout[] = {
-	M65C02_A,M65C02_X,M65C02_Y,M65C02_S,M65C02_PC,M65C02_P, -1,
-	M65C02_EA,M65C02_ZP,M65C02_NMI_STATE,M65C02_IRQ_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m65c02_win_layout[] = {
-	25, 0,55, 2,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 
 void m65c02_reset (void *param)
 {
@@ -526,8 +455,6 @@ int m65c02_execute(int cycles)
 	{
 		UINT8 op;
 		PPC = PCD;
-
-		CALL_MAME_DEBUG;
 
 		op = RDOP();
 		(*m6502.insn[op])();
@@ -600,19 +527,13 @@ const char *m65c02_info(void *context, int regnum)
 	{
 		case CPU_INFO_NAME: return "M65C02";
 		case CPU_INFO_VERSION: return "1.2";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m65c02_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m65c02_win_layout;
 	}
 	return m6502_info(context,regnum);
 }
 unsigned m65c02_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm6502( buffer, pc );
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 #endif
@@ -621,21 +542,6 @@ unsigned m65c02_dasm(char *buffer, unsigned pc)
  * 65SC02 section
  ****************************************************************************/
 #if (HAS_M65SC02)
-/* Layout of the registers in the debugger */
-static UINT8 m65sc02_reg_layout[] = {
-	M65SC02_A,M65SC02_X,M65SC02_Y,M65SC02_S,M65SC02_PC,M65SC02_P, -1,
-	M65SC02_EA,M65SC02_ZP,M65SC02_NMI_STATE,M65SC02_IRQ_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m65sc02_win_layout[] = {
-	25, 0,55, 2,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 
 void m65sc02_reset (void *param)
 {
@@ -669,19 +575,13 @@ const char *m65sc02_info(void *context, int regnum)
 			return "Copyright (c) 1998 Juergen Buchmueller\n"
 				"Copyright (c) 2000 Peter Trauner\n"
 				"all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m65sc02_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m65sc02_win_layout;
 	}
 	return m6502_info(context,regnum);
 }
 unsigned m65sc02_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm6502( buffer, pc );
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 #endif
@@ -690,20 +590,6 @@ unsigned m65sc02_dasm(char *buffer, unsigned pc)
  * 2A03 section
  ****************************************************************************/
 #if (HAS_N2A03)
-/* Layout of the registers in the debugger */
-static UINT8 n2a03_reg_layout[] = {
-	N2A03_A,N2A03_X,N2A03_Y,N2A03_S,N2A03_PC,N2A03_P, -1,
-	N2A03_EA,N2A03_ZP,N2A03_NMI_STATE,N2A03_IRQ_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 n2a03_win_layout[] = {
-	25, 0,55, 2,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 void n2a03_reset (void *param)
 {
@@ -732,8 +618,6 @@ const char *n2a03_info(void *context, int regnum)
 	{
 		case CPU_INFO_NAME: return "N2A03";
 		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_REG_LAYOUT: return (const char*)n2a03_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)n2a03_win_layout;
 	}
 	return m6502_info(context,regnum);
 }
@@ -749,12 +633,8 @@ void n2a03_irq(void)
 
 unsigned n2a03_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm6502( buffer, pc );
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 #endif
 
@@ -762,21 +642,6 @@ unsigned n2a03_dasm(char *buffer, unsigned pc)
  * 6510 section
  ****************************************************************************/
 #if (HAS_M6510)
-/* Layout of the registers in the debugger */
-static UINT8 m6510_reg_layout[] = {
-	M6510_A,M6510_X,M6510_Y,M6510_S,M6510_PC,M6510_P, -1,
-	M6510_EA,M6510_ZP,M6510_NMI_STATE,M6510_IRQ_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6510_win_layout[] = {
-	25, 0,55, 2,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 void m6510_reset (void *param)
 {
 	m6502_reset(param);
@@ -804,20 +669,14 @@ const char *m6510_info(void *context, int regnum)
 	{
 		case CPU_INFO_NAME: return "M6510";
 		case CPU_INFO_VERSION: return "1.2";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6510_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6510_win_layout;
 	}
 	return m6502_info(context,regnum);
 }
 
 unsigned m6510_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm6510( buffer, pc );
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 #endif
 

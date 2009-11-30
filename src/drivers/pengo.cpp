@@ -1,3 +1,5 @@
+#include "../vidhrdw/pengo.cpp"
+
 /***************************************************************************
 
 Pengo memory map (preliminary)

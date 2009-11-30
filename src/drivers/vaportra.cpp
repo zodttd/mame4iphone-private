@@ -1,3 +1,5 @@
+#include "../vidhrdw/vaportra.cpp"
+
 /***************************************************************************
 
   Vapor Trail (World version)  (c) 1989 Data East Corporation
@@ -56,7 +58,7 @@ static READ_HANDLER( vaportra_control_r )
 			return (readinputport(0) + (readinputport(1) << 8));
 	}
 
-	logerror("Unknown control read at %d\n",offset);
+	//logerror("Unknown control read at %d\n",offset);
 	return 0xffff;
 }
 

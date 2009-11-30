@@ -1,3 +1,5 @@
+#include "../vidhrdw/zodiack.cpp"
+
 /***************************************************************************
 
 Zodiack/Dogfight Memory Map (preliminary)

@@ -124,7 +124,7 @@ WRITE_HANDLER( cop01_gfxbank_w )
 	/* bits 4 and 5 select sprite bank */
 	spritebank = (data & 0x30) >> 4;
 
-logerror("gfxbank = %02x\n",data);
+//logerror("gfxbank = %02x\n",data);
 }
 
 

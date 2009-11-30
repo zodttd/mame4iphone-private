@@ -36,28 +36,14 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "m6805.h"
 
 #define IRQ_LEVEL_DETECT 0
-
-static UINT8 m6805_reg_layout[] = {
-	M6805_PC, M6805_S, M6805_CC, M6805_A, M6805_X, M6805_IRQ_STATE, 0
-};
 
 enum {
 	SUBTYPE_M6805,
 	SUBTYPE_M68705,
 	SUBTYPE_HD63705
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6805_win_layout[] = {
-	27, 0,53, 4,	/* register window (top, right rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
 };
 
 /* 6805 Registers */
@@ -585,8 +571,6 @@ int m6805_execute(int cycles)
 		if (m6805.pending_interrupts != 0)
 			Interrupt();
 
-		CALL_MAME_DEBUG;
-
 		ireg=M_RDOP(PC++);
 
 		switch( ireg )
@@ -863,16 +847,6 @@ int m6805_execute(int cycles)
  ****************************************************************************/
 const char *m6805_info(void *context, int regnum)
 {
-	static char buffer[8][47+1];
-	static int which = 0;
-	m6805_Regs *r = (m6805_Regs *)context;
-
-	which = ++which % 8;
-    buffer[which][0] = '\0';
-
-    if( !context )
-		r = &m6805;
-
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "M6805";
@@ -880,56 +854,20 @@ const char *m6805_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "The MAME team.";
-		case CPU_INFO_REG_LAYOUT: return (const char *)m6805_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)m6805_win_layout;
-
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->cc & 0x80 ? '?':'.',
-                r->cc & 0x40 ? '?':'.',
-                r->cc & 0x20 ? '?':'.',
-                r->cc & 0x10 ? 'H':'.',
-                r->cc & 0x08 ? 'I':'.',
-                r->cc & 0x04 ? 'N':'.',
-                r->cc & 0x02 ? 'Z':'.',
-                r->cc & 0x01 ? 'C':'.');
-            break;
-		case CPU_INFO_REG+M6805_A: sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+M6805_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+M6805_S: sprintf(buffer[which], "S:%02X", r->s.w.l); break;
-		case CPU_INFO_REG+M6805_X: sprintf(buffer[which], "X:%02X", r->x); break;
-		case CPU_INFO_REG+M6805_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+M6805_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[0]); break;
     }
-	return buffer[which];
+	return "";
 }
 
 unsigned m6805_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-    return Dasm6805(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 /****************************************************************************
  * M68705 section
  ****************************************************************************/
 #if (HAS_M68705)
-static UINT8 m68705_reg_layout[] = {
-	M68705_PC, M68705_S, M68705_CC, M68705_A, M68705_X, M68705_IRQ_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m68705_win_layout[] = {
-	27, 0,53, 4,	/* register window (top, right rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
 
 void m68705_reset(void *param)
 {
@@ -959,20 +897,14 @@ const char *m68705_info(void *context, int regnum)
 	{
 		case CPU_INFO_NAME: return "M68705";
 		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m68705_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m68705_win_layout;
     }
 	return m6805_info(context,regnum);
 }
 
 unsigned m68705_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm6805(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 #endif
 
@@ -980,19 +912,6 @@ unsigned m68705_dasm(char *buffer, unsigned pc)
  * HD63705 section
  ****************************************************************************/
 #if (HAS_HD63705)
-static UINT8 hd63705_reg_layout[] = {
-	HD63705_PC, HD63705_S, HD63705_CC, HD63705_A, HD63705_X, -1,-1,
-	HD63705_NMI_STATE, HD63705_IRQ1_STATE, HD63705_IRQ2_STATE, HD63705_ADCONV_STATE,0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 hd63705_win_layout[] = {
-	27, 0,53, 4,	/* register window (top, right rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
 
 void hd63705_reset(void *param)
 {
@@ -1070,38 +989,18 @@ void hd63705_state_load(void *file)
 
 const char *hd63705_info(void *context, int regnum)
 {
-	static char buffer[8][47+1];
-	static int which = 0;
-	m6805_Regs *r = (m6805_Regs *)context;
-
-	which = ++which % 8;
-    buffer[which][0] = '\0';
-
-    if( !context )
-		r = &m6805;
-
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "HD63705";
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_CREDITS: return "Keith Wilkins, Juergen Buchmueller";
-		case CPU_INFO_REG_LAYOUT: return (const char *)hd63705_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)hd63705_win_layout;
-		case CPU_INFO_REG+HD63705_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); return buffer[which];
-		case CPU_INFO_REG+HD63705_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", r->irq_state[HD63705_INT_IRQ1]); return buffer[which];
-		case CPU_INFO_REG+HD63705_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", r->irq_state[HD63705_INT_IRQ2]); return buffer[which];
-		case CPU_INFO_REG+HD63705_ADCONV_STATE: sprintf(buffer[which], "ADCONV:%X", r->irq_state[HD63705_INT_ADCONV]); return buffer[which];
     }
 	return m6805_info(context,regnum);
 }
 
 unsigned hd63705_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm6805(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 #endif

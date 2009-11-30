@@ -1,3 +1,5 @@
+#include "../vidhrdw/twin16.cpp"
+
 /*
 Konami "Twin16"
 

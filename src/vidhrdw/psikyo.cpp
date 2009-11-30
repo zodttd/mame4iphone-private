@@ -253,24 +253,6 @@ static void psikyo_draw_sprites(struct osd_bitmap *bitmap/*,int priority*/)
 				code++;
 			}
 		}
-
-#ifdef MAME_DEBUG
-		if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_S) )
-		{
-			struct DisplayText dt[2];
-			char buf[40];
-
-			dt[0].text	=	buf;	dt[0].color	=	UI_COLOR_NORMAL;
-			dt[0].x		=	y;	dt[0].y		=	320-16-x;
-			dt[1].text	=	0;
-
-			sprintf(buf, "%04X>%04X %04X-%04X %04X", sprite*8,
-						READ_WORD(&source[ 0 ]), READ_WORD(&source[ 2 ]),
-						READ_WORD(&source[ 4 ]), READ_WORD(&source[ 6 ]) );
-			displaytext(bitmap,dt,0,0);
-		}
-#endif
-
 	}
 
 }
@@ -404,40 +386,6 @@ void psikyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_set_scrolly(tilemap_1, 0, READ_WORD(&psikyo_vregs[0x40a]) );
 	tilemap_set_scrollx(tilemap_1, 0, READ_WORD(&psikyo_vregs[0x40e]) );
-
-
-#ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z))
-{
-	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
-	if (keyboard_pressed(KEYCODE_A))	msk |= 4;
-	if (msk != 0) layers_ctrl &= msk;
-
-#if 0
-/* Show (part of) the video registers */
-{
-	char buf[80];
-
-	sprintf(buf,"%04X%04X-%04X%04X %04X%04X-%04X%04X %04X%04X-%04X%04X %04X",
-				READ_WORD(&psikyo_vregs[0x400]), READ_WORD(&psikyo_vregs[0x402]),
-				READ_WORD(&psikyo_vregs[0x404]), READ_WORD(&psikyo_vregs[0x406]),
-
-				READ_WORD(&psikyo_vregs[0x408]), READ_WORD(&psikyo_vregs[0x40a]),
-				READ_WORD(&psikyo_vregs[0x40c]), READ_WORD(&psikyo_vregs[0x40e]),
-
-				READ_WORD(&psikyo_vregs[0x410]), READ_WORD(&psikyo_vregs[0x412]),
-				READ_WORD(&psikyo_vregs[0x414]), READ_WORD(&psikyo_vregs[0x416]),
-
-				READ_WORD(&spriteram_2[0x800-2])
-			);
-
-	usrintf_showmessage(buf);
-}
-#endif
-}
-#endif
 
 	tilemap_update(ALL_TILEMAPS);
 

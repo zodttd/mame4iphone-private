@@ -899,33 +899,6 @@ void browser(struct osd_bitmap *bitmap)
 #define WECLEMAN_LAMPS \
 	osd_led_w(0,(wecleman_selected_ip >> 2)& 1); 		// Start lamp
 
-
-
-/* You can activate each single layer of gfx */
-#define WECLEMAN_LAYERSCTRL \
-{ \
-	static int browse = 0; \
-	KEY(B, browse ^= 1;) \
-	if (browse) \
-	{ \
-		osd_clearbitmap(Machine->scrbitmap); \
-		browser(bitmap); \
-		return; \
-	} \
-	if (keyboard_pressed(KEYCODE_Z)) \
-	{ \
-	int msk = 0; \
-	 \
-		if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0xffe1;} \
-		if (keyboard_pressed(KEYCODE_W))	{ msk |= 0xffe2;} \
-		if (keyboard_pressed(KEYCODE_E))	{ msk |= 0xffe4;} \
-		if (keyboard_pressed(KEYCODE_A))	{ msk |= 0xffe8;} \
-		if (keyboard_pressed(KEYCODE_R))	{ msk |= 0xfff0;} \
-		if (msk != 0) layers_ctrl &= msk; \
-	} \
-}
-
-
 /***************************************************************************
 							WEC Le Mans 24
 ***************************************************************************/
@@ -938,10 +911,6 @@ void wecleman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	WECLEMAN_LAMPS
 
 	WECLEMAN_TVKILL
-
-#ifdef MAME_DEBUG
-	WECLEMAN_LAYERSCTRL
-#endif
 
 {
 /* Set the scroll values for the scrolling layers */
@@ -1035,10 +1004,6 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	WECLEMAN_LAMPS
 
 	WECLEMAN_TVKILL
-
-#ifdef MAME_DEBUG
-	WECLEMAN_LAYERSCTRL
-#endif
 
 	K051316_tilemap_update_0();
 	K051316_tilemap_update_1();

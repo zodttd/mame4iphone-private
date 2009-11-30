@@ -633,9 +633,6 @@ INLINE void apu_regwrite(int chip,int address, uint8 value)
 
       break;
    default:
-#ifdef MAME_DEBUG
-logerror("invalid apu write: $%02X at $%04X\n", value, address);
-#endif
       break;
    }
 }

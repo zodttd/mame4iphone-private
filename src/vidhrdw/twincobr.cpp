@@ -207,8 +207,8 @@ WRITE_HANDLER( twincobr_fgscroll_w )
 
 WRITE_HANDLER( twincobr_exscroll_w )	/* Extra unused video layer */
 {
-	if (offset == 0) logerror("PC - write %04x to extra video layer Y scroll register\n",data);
-	else logerror("PC - write %04x to extra video layer scroll X register\n",data);
+	//if (offset == 0) logerror("PC - write %04x to extra video layer Y scroll register\n",data);
+	//else logerror("PC - write %04x to extra video layer scroll X register\n",data);
 }
 
 /******************** Wardner interface to this hardware ********************/

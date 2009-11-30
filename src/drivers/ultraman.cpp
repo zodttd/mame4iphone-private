@@ -1,3 +1,5 @@
+#include "../vidhrdw/ultraman.cpp"
+
 /***************************************************************************
 
 Ultraman (c) 1991  Banpresto / Bandai

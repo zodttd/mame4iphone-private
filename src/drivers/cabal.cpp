@@ -1,3 +1,5 @@
+#include "../vidhrdw/cabal.cpp"
+
 /******************************************************************
 Cabal Bootleg
 (c)1998 Red Corp

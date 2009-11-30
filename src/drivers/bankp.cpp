@@ -1,3 +1,5 @@
+#include "../vidhrdw/bankp.cpp"
+
 /***************************************************************************
 
 Bank Panic memory map (preliminary)

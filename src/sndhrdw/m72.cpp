@@ -89,8 +89,13 @@ static void setvector_callback(int param)
 		cpu_set_irq_line(1,0,ASSERT_LINE);
 }
 
+static UINT8 *m72_region=NULL;
+static int m72_region_length=0;
+
 void m72_init_sound(void)
 {
+    m72_region=NULL;
+    m72_region_length=0;
 	setvector_callback(VECTOR_INIT);
 }
 
@@ -159,11 +164,15 @@ WRITE_HANDLER( rtype2_sample_addr_w )
 
 READ_HANDLER( m72_sample_r )
 {
-	return memory_region(REGION_SOUND1)[sample_addr];
+    if (m72_region==NULL)
+        m72_region=memory_region(REGION_SOUND1);
+	return m72_region[sample_addr];
 }
 
 WRITE_HANDLER( m72_sample_w )
 {
 	DAC_signed_data_w(0,data);
-	sample_addr = (sample_addr + 1) & (memory_region_length(REGION_SOUND1) - 1);
+	if (m72_region_length==0)
+	    m72_region_length=memory_region_length(REGION_SOUND1);
+	sample_addr = (sample_addr + 1) & (m72_region_length - 1);
 }

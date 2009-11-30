@@ -382,7 +382,6 @@ extern	UINT8	*RAM;
  ***************************************************************/
 #define CLI 													\
 	if ((m6502.irq_state != CLEAR_LINE) && (P & F_I)) { 		\
-		logerror("M6502#%d CLI sets after_cli\n",cpu_getactivecpu()); \
 		m6502.after_cli = 1;									\
 	}															\
 	P &= ~F_I
@@ -451,8 +450,7 @@ extern	UINT8	*RAM;
 /* 6502 ********************************************************
  *	ILL Illegal opcode
  ***************************************************************/
-#define ILL 													\
-	logerror("M6502 illegal opcode %04x: %02x\n",(PCW-1)&0xffff, cpu_readop((PCW-1)&0xffff))
+#define ILL
 
 /* 6502 ********************************************************
  *	INC Increment memory

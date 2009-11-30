@@ -1,3 +1,6 @@
+#include "../machine/missile.cpp"
+#include "../vidhrdw/missile.cpp"
+
 /***************************************************************************
 
 

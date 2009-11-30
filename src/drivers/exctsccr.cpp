@@ -1,3 +1,6 @@
+#include "../machine/exctsccr.cpp"
+#include "../vidhrdw/exctsccr.cpp"
+
 /***************************************************************************
 
 Exciting Soccer - (c) 1983 Alpha Denshi Co.

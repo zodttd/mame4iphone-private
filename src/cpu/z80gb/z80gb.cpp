@@ -17,26 +17,12 @@
 #include <string.h>
 #include "z80gb.h"
 #include "daa_tab.h"
-#include "mamedbg.h"
 #include "state.h"
 
 #define FLAG_Z	0x80
 #define FLAG_N  0x40
 #define FLAG_H  0x20
 #define FLAG_C  0x10
-
-static UINT8 z80gb_reg_layout[] = {
-	Z80GB_PC, Z80GB_SP, Z80GB_AF, Z80GB_BC, Z80GB_DE, Z80GB_HL, -1,
-	Z80GB_IRQ_STATE, 0
-};
-
-static UINT8 z80gb_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
 
 /* Nr of cycles to run */
 extern int z80gb_ICount;
@@ -170,7 +156,7 @@ INLINE void z80gb_ProcessInterrupts (void)
 		if (irq)
 		{
 			int irqline = 0;
-			logerror("Z80GB Interrupt IRQ $%02X\n", irq);
+			//logerror("Z80GB Interrupt IRQ $%02X\n", irq);
 
 			while( irqline < 5 )
 			{
@@ -189,7 +175,7 @@ INLINE void z80gb_ProcessInterrupts (void)
 					Regs.w.SP -= 2;
 					mem_WriteWord (Regs.w.SP, Regs.w.PC);
 					Regs.w.PC = 0x40 + irqline * 8;
-					logerror("Z80GB Interrupt PC $%04X\n", Regs.w.PC );
+					//logerror("Z80GB Interrupt PC $%04X\n", Regs.w.PC );
 					return;
 				}
 				irqline++;
@@ -210,7 +196,6 @@ int z80gb_execute (int cycles)
 
 	do
 	{
-		CALL_MAME_DEBUG;
 		ICycles = 0;
 		z80gb_ProcessInterrupts ();
 		x = mem_ReadByte (Regs.w.PC++);
@@ -331,14 +316,14 @@ void z80gb_set_irq_line (int irqline, int state)
 	{
 		IFLAGS |= 0x01 << irqline;
 		CheckInterrupts = 1;
-		logerror("Z80GB assert irq line %d ($%02X)\n", irqline, IFLAGS);
+		//logerror("Z80GB assert irq line %d ($%02X)\n", irqline, IFLAGS);
 	}
 	else
 	{
 		IFLAGS &= ~(0x01 << irqline);
 		if( IFLAGS == 0 )
 			CheckInterrupts = 0;
-		logerror("Z80GB clear irq line %d ($%02X)\n", irqline, IFLAGS);
+		//logerror("Z80GB clear irq line %d ($%02X)\n", irqline, IFLAGS);
     }
 }
 
@@ -385,54 +370,21 @@ void z80gb_state_load(void *file)
 
 const char *z80gb_info(void *context, int regnum)
 {
-	static char buffer[8][47+1];
-	static int which = 0;
-	z80gb_regs *r = context;
-
-	which = ++which % 8;
-    buffer[which][0] = '\0';
-	if( !context )
-		r = &Regs;
-
     switch( regnum )
 	{
-		case CPU_INFO_REG+Z80GB_PC: sprintf(buffer[which], "PC:%04X", r->w.PC); break;
-		case CPU_INFO_REG+Z80GB_SP: sprintf(buffer[which], "SP:%04X", r->w.SP); break;
-		case CPU_INFO_REG+Z80GB_AF: sprintf(buffer[which], "AF:%04X", r->w.AF); break;
-		case CPU_INFO_REG+Z80GB_BC: sprintf(buffer[which], "BC:%04X", r->w.BC); break;
-		case CPU_INFO_REG+Z80GB_DE: sprintf(buffer[which], "DE:%04X", r->w.DE); break;
-		case CPU_INFO_REG+Z80GB_HL: sprintf(buffer[which], "HL:%04X", r->w.HL); break;
-		case CPU_INFO_REG+Z80GB_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->w.irq_state); break;
-        case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->b.F & 0x80 ? 'Z':'.',
-				r->b.F & 0x40 ? 'N':'.',
-				r->b.F & 0x20 ? 'H':'.',
-				r->b.F & 0x10 ? 'C':'.',
-				r->b.F & 0x08 ? '3':'.',
-				r->b.F & 0x04 ? '2':'.',
-				r->b.F & 0x02 ? '1':'.',
-				r->b.F & 0x01 ? '0':'.');
-			break;
 		case CPU_INFO_NAME: return "Z80GB";
 		case CPU_INFO_FAMILY: return "Nintendo Z80";
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 2000 by The MESS Team.";
-		case CPU_INFO_REG_LAYOUT: return (const char *)z80gb_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)z80gb_win_layout;
 	}
-	return buffer[which];
+	return "";
 }
 
 unsigned z80gb_dasm( char *buffer, unsigned pc )
 {
-#ifdef MAME_DEBUG
-	return DasmZ80GB( buffer, pc );
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 

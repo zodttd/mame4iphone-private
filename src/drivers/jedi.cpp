@@ -1,3 +1,7 @@
+#include "../machine/jedi.cpp"
+#include "../vidhrdw/jedi.cpp"
+#include "../sndhrdw/jedi.cpp"
+
 /****************************************************************************
 
 Return of the Jedi

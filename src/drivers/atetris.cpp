@@ -1,3 +1,5 @@
+#include "../vidhrdw/atetris.cpp"
+
 /***************************************************************************
 
 Atari Tetris Memory Map (preliminary)

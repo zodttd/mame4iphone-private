@@ -102,15 +102,15 @@ WRITE_HANDLER( irobot_sharedmem_w )
 
 static void irvg_done_callback (int param)
 {
-	logerror("vg done. ");
-	IR_CPU_STATE;
+	//logerror("vg done. ");
+	//IR_CPU_STATE;
 	irvg_running = 0;
 }
 
 WRITE_HANDLER( irobot_statwr_w )
 {
-	logerror("write %2x ", data);
-	IR_CPU_STATE;
+	//logerror("write %2x ", data);
+	//IR_CPU_STATE;
 
 	irobot_combase = comRAM[data >> 7];
 	irobot_combase_mb = comRAM[(data >> 7) ^ 1];
@@ -126,14 +126,14 @@ WRITE_HANDLER( irobot_statwr_w )
 #if IR_TIMING
 		if (irvg_running == 0)
 		{
-			logerror("vg start ");
-			IR_CPU_STATE;
+			//logerror("vg start ");
+			//IR_CPU_STATE;
 			irvg_timer = timer_set (TIME_IN_MSEC(10), 0, irvg_done_callback);
 		}
 		else
 		{
-			logerror("vg start [busy!] ");
-			IR_CPU_STATE;
+			//logerror("vg start [busy!] ");
+			//IR_CPU_STATE;
 			timer_reset (irvg_timer , TIME_IN_MSEC(10));
 		}
 #endif
@@ -199,7 +199,7 @@ static void scanline_callback(int scanline)
 {
     if (scanline == 0) irvg_vblank=0;
     if (scanline == 224) irvg_vblank=1;
-    logerror("SCANLINE CALLBACK %d\n",scanline);
+    //logerror("SCANLINE CALLBACK %d\n",scanline);
     /* set the IRQ line state based on the 32V line state */
     cpu_set_irq_line(0, M6809_IRQ_LINE, (scanline & 32) ? ASSERT_LINE : CLEAR_LINE);
 
@@ -256,8 +256,8 @@ READ_HANDLER( irobot_status_r )
 {
 	int d=0;
 
-	logerror("status read. ");
-	IR_CPU_STATE;
+	//logerror("status read. ");
+	//IR_CPU_STATE;
 
 	if (!irmb_running) d |= 0x20;
 	if (irvg_running) d |= 0x40;
@@ -474,8 +474,8 @@ void init_irobot(void)
 
 static void irmb_done_callback (int param)
 {
-    logerror("mb done. ");
-	IR_CPU_STATE;
+    //logerror("mb done. ");
+	//IR_CPU_STATE;
 	irmb_running = 0;
 	cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 }
@@ -864,20 +864,20 @@ default:	case 0x3f:	IXOR(irmb_din(curop), 0);							break;
 	}
 	profiler_mark(PROFILER_END);
 
-	logerror("%d instructions for Mathbox \n", icount);
+	//logerror("%d instructions for Mathbox \n", icount);
 
 
 #if IR_TIMING
 	if (irmb_running == 0)
 	{
 		irmb_timer = timer_set (TIME_IN_HZ(12000000) * icount, 0, irmb_done_callback);
-		logerror("mb start ");
-		IR_CPU_STATE;
+		//logerror("mb start ");
+		//IR_CPU_STATE;
 	}
 	else
 	{
-		logerror("mb start [busy!] ");
-		IR_CPU_STATE;
+		//logerror("mb start [busy!] ");
+		//IR_CPU_STATE;
 		timer_reset (irmb_timer, TIME_IN_NSEC(200) * icount);
 	}
 #else

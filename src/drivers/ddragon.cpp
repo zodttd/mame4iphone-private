@@ -1,3 +1,5 @@
+#include "../vidhrdw/ddragon.cpp"
+
 /***************************************************************************
 
 Double Dragon     (c) 1987 Technos Japan

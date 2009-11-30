@@ -1,3 +1,6 @@
+#include "../machine/bagman.cpp"
+#include "../vidhrdw/bagman.cpp"
+
 /***************************************************************************
 
 Bagman memory map (preliminary)

@@ -15,10 +15,9 @@ CPUS+=M68000@
 SOUNDS+=AY8910@
 SOUNDS+=YM2610@
 
-DRVLIBS = $(OBJ)/neogeo.a
+$(OBJ)/drivers/neogeo.o: src/machine/neogeo.cpp src/machine/pd4990a.cpp src/vidhrdw/neogeo.cpp src/drivers/neogeo.cpp
 
-$(OBJ)/neogeo.a: \
-	$(OBJ)/machine/neogeo.o $(OBJ)/machine/pd4990a.o $(OBJ)/vidhrdw/neogeo.o $(OBJ)/drivers/neogeo.o \
+DRVOBJS = $(OBJ)/drivers/neogeo.o
 
 # MAME specific core objs
 COREOBJS += $(OBJ)/driver.o

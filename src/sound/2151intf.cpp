@@ -43,7 +43,7 @@ static void timer_callback_2151(int param)
 }
 
 /* TimerHandler from fm.c */
-static void TimerHandler(int n,int c,int count,double stepTime)
+static void TimerHandler(int n,int c,int count,timer_tm stepTime)
 {
 	if( count == 0 )
 	{	/* Reset FM Timer */
@@ -55,7 +55,7 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 	}
 	else
 	{	/* Start FM Timer */
-		double timeSec = (double)count * stepTime;
+		timer_tm timeSec = (timer_tm)count * stepTime;
 
 		if( Timer[n][c] == 0 )
 		{
@@ -103,13 +103,23 @@ static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 				mixed_vol>>=16;
 				sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
 			}
-			stream[i] = stream_init_multi(YM2151_NUMBUF,
-				name,vol,rate,i,OPMUpdateOne);
+#ifndef MAME_FASTSOUND
+			stream[i] = stream_init_multi(YM2151_NUMBUF,name,vol,rate,i,OPMUpdateOne);
+#else
+            {
+				extern int fast_sound;
+				if (fast_sound)
+                    stream[i] = stream_init_multi(YM2151_NUMBUF,name,vol,rate/2,i,OPMUpdateOne);
+                else
+        			stream[i] = stream_init_multi(YM2151_NUMBUF,name,vol,rate,i,OPMUpdateOne);
+            }
+#endif
 		}
 		/* Set Timer handler */
 		for (i = 0; i < intf->num; i++)
 			Timer[i][0] =Timer[i][1] = 0;
-		if (OPMInit(intf->num,intf->baseclock,Machine->sample_rate,TimerHandler,IRQHandler) == 0)
+        i=OPMInit(intf->num,intf->baseclock,Machine->sample_rate,TimerHandler,IRQHandler);
+		if (i == 0)
 		{
 			/* set port handler */
 			for (i = 0; i < intf->num; i++)

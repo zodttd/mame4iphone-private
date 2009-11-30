@@ -57,30 +57,8 @@ TODO:
 #include <string.h>
 #include "cpuintrf.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "m6800.h"
-
-
-#define VERBOSE 0
-
-#if VERBOSE
-#define LOG(x)	logerror x
-#else
-#define LOG(x)
-#endif
-
-#if 0
-/* CPU subtypes, needed for extra insn after TAP/CLI/SEI */
-enum {
-	SUBTYPE_M6800,
-	SUBTYPE_M6801,
-	SUBTYPE_M6802,
-	SUBTYPE_M6803,
-	SUBTYPE_M6808,
-	SUBTYPE_HD63701,
-	SUBTYPE_NSC8105
-};
-#endif
+#include "osdepend.h"
 
 /* 6800 Registers */
 typedef struct
@@ -182,7 +160,7 @@ static UINT32 timer_next;
 }
 
 #define SET_TIMRE_EVENT {					\
-	timer_next = (OCD < TOD) ? OCD : TOD;	\
+	timer_next = (OCD - CTD < TOD - CTD) ? OCD : TOD;	\
 }
 
 /* cleanup high-word of counters */
@@ -200,11 +178,11 @@ static UINT32 timer_next;
 }
 
 /* take interrupt */
-#define TAKE_ICI ENTER_INTERRUPT("M6800#%d take ICI\n",0xfff6)
-#define TAKE_OCI ENTER_INTERRUPT("M6800#%d take OCI\n",0xfff4)
-#define TAKE_TOI ENTER_INTERRUPT("M6800#%d take TOI\n",0xfff2)
-#define TAKE_SCI ENTER_INTERRUPT("M6800#%d take SCI\n",0xfff0)
-#define TAKE_TRAP ENTER_INTERRUPT("M6800#%d take TRAP\n",0xffee)
+#define TAKE_ICI ENTER_INTERRUPT(0xfff6)
+#define TAKE_OCI ENTER_INTERRUPT(0xfff4)
+#define TAKE_TOI ENTER_INTERRUPT(0xfff2)
+#define TAKE_SCI ENTER_INTERRUPT(0xfff0)
+#define TAKE_TRAP ENTER_INTERRUPT(0xffee)
 
 /* check IRQ2 (internal irq) */
 #define CHECK_IRQ2 {											\
@@ -231,7 +209,6 @@ static UINT32 timer_next;
 #define ONE_MORE_INSN() {		\
 	UINT8 ireg; 							\
 	pPPC = pPC; 							\
-	CALL_MAME_DEBUG;						\
 	ireg=M_RDOP(PCD);						\
 	PC++;									\
 	(*m6800.insn[ireg])();					\
@@ -243,8 +220,8 @@ static UINT32 timer_next;
 	if( !(CC & 0x10) )											\
 	{															\
 		if( m6800.irq_state[M6800_IRQ_LINE] != CLEAR_LINE )		\
-		{	/* stanadrd IRQ */									\
-			ENTER_INTERRUPT("M6800#%d take IRQ1\n",0xfff8);		\
+		{	/* standard IRQ */									\
+			ENTER_INTERRUPT(0xfff8);		\
 			if( m6800.irq_callback )							\
 				(void)(*m6800.irq_callback)(M6800_IRQ_LINE);	\
 		}														\
@@ -387,7 +364,7 @@ static const UINT8 flags8d[256]= /* decrement */
 #define IDXWORD(w) {INDEXED;w.d=RM16(EAD);}
 
 /* Macros for branch instructions */
-#define CHANGE_PC() change_pc(PCD)
+#define CHANGE_PC() change_pc16(PCD)
 #define BRANCH(f) {IMMBYTE(t);if(f){PC+=SIGNED(t);CHANGE_PC();}}
 #define NXORV  ((CC&0x08)^((CC&0x02)<<2))
 
@@ -488,9 +465,8 @@ INLINE void WM16( UINT32 Addr, PAIR *p )
 }
 
 /* IRQ enter */
-static void ENTER_INTERRUPT(char *message,UINT16 irq_vector)
+static void ENTER_INTERRUPT(UINT16 irq_vector)
 {
-	LOG((message, cpu_getactivecpu()));
 	if( m6800.wai_state & (M6800_WAI|M6800_SLP) )
 	{
 		if( m6800.wai_state & M6800_WAI )
@@ -707,12 +683,11 @@ void m6800_set_reg(int regnum, unsigned val)
 void m6800_set_nmi_line(int state)
 {
 	if (m6800.nmi_state == state) return;
-	LOG(("M6800#%d set_nmi_line %d ", cpu_getactivecpu(), state));
 	m6800.nmi_state = state;
 	if (state == CLEAR_LINE) return;
 
 	/* NMI */
-	ENTER_INTERRUPT("M6800#%d take NMI\n",0xfffc);
+	ENTER_INTERRUPT(0xfffc);
 }
 
 void m6800_set_irq_line(int irqline, int state)
@@ -720,7 +695,6 @@ void m6800_set_irq_line(int irqline, int state)
 	int eddge;
 
 	if (m6800.irq_state[irqline] == state) return;
-	LOG(("M6800#%d set_irq_line %d,%d\n", cpu_getactivecpu(), irqline, state));
 	m6800.irq_state[irqline] = state;
 
 	switch(irqline)
@@ -732,7 +706,7 @@ void m6800_set_irq_line(int irqline, int state)
 		eddge = (state == CLEAR_LINE ) ? 2 : 0;
 		if( ((m6800.tcsr&TCSR_IEDG) ^ (state==CLEAR_LINE ? TCSR_IEDG : 0))==0 )
 			return;
-		/* active eddge in */
+		/* active edge in */
 		m6800.tcsr |= TCSR_ICF;
 		m6800.pending_tcsr |= TCSR_ICF;
 		m6800.input_capture = CT;
@@ -794,282 +768,281 @@ int m6800_execute(int cycles)
 	INCREMENT_COUNTER(m6800.extra_cycles);
 	m6800.extra_cycles = 0;
 
-	if( m6800.wai_state & M6800_WAI )
-	{
-		EAT_CYCLES;
-		goto getout;
-	}
-
 	do
 	{
-		pPPC = pPC;
-		CALL_MAME_DEBUG;
-		ireg=M_RDOP(PCD);
-		PC++;
-
-		switch( ireg )
+		if( m6800.wai_state & M6800_WAI )
 		{
-			case 0x00: illegal(); break;
-			case 0x01: nop(); break;
-			case 0x02: illegal(); break;
-			case 0x03: illegal(); break;
-			case 0x04: illegal(); break;
-			case 0x05: illegal(); break;
-			case 0x06: tap(); break;
-			case 0x07: tpa(); break;
-			case 0x08: inx(); break;
-			case 0x09: dex(); break;
-			case 0x0A: CLV; break;
-			case 0x0B: SEV; break;
-			case 0x0C: CLC; break;
-			case 0x0D: SEC; break;
-			case 0x0E: cli(); break;
-			case 0x0F: sei(); break;
-			case 0x10: sba(); break;
-			case 0x11: cba(); break;
-			case 0x12: illegal(); break;
-			case 0x13: illegal(); break;
-			case 0x14: illegal(); break;
-			case 0x15: illegal(); break;
-			case 0x16: tab(); break;
-			case 0x17: tba(); break;
-			case 0x18: illegal(); break;
-			case 0x19: daa(); break;
-			case 0x1a: illegal(); break;
-			case 0x1b: aba(); break;
-			case 0x1c: illegal(); break;
-			case 0x1d: illegal(); break;
-			case 0x1e: illegal(); break;
-			case 0x1f: illegal(); break;
-			case 0x20: bra(); break;
-			case 0x21: brn(); break;
-			case 0x22: bhi(); break;
-			case 0x23: bls(); break;
-			case 0x24: bcc(); break;
-			case 0x25: bcs(); break;
-			case 0x26: bne(); break;
-			case 0x27: beq(); break;
-			case 0x28: bvc(); break;
-			case 0x29: bvs(); break;
-			case 0x2a: bpl(); break;
-			case 0x2b: bmi(); break;
-			case 0x2c: bge(); break;
-			case 0x2d: blt(); break;
-			case 0x2e: bgt(); break;
-			case 0x2f: ble(); break;
-			case 0x30: tsx(); break;
-			case 0x31: ins(); break;
-			case 0x32: pula(); break;
-			case 0x33: pulb(); break;
-			case 0x34: des(); break;
-			case 0x35: txs(); break;
-			case 0x36: psha(); break;
-			case 0x37: pshb(); break;
-			case 0x38: illegal(); break;
-			case 0x39: rts(); break;
-			case 0x3a: illegal(); break;
-			case 0x3b: rti(); break;
-			case 0x3c: illegal(); break;
-			case 0x3d: illegal(); break;
-			case 0x3e: wai(); break;
-			case 0x3f: swi(); break;
-			case 0x40: nega(); break;
-			case 0x41: illegal(); break;
-			case 0x42: illegal(); break;
-			case 0x43: coma(); break;
-			case 0x44: lsra(); break;
-			case 0x45: illegal(); break;
-			case 0x46: rora(); break;
-			case 0x47: asra(); break;
-			case 0x48: asla(); break;
-			case 0x49: rola(); break;
-			case 0x4a: deca(); break;
-			case 0x4b: illegal(); break;
-			case 0x4c: inca(); break;
-			case 0x4d: tsta(); break;
-			case 0x4e: illegal(); break;
-			case 0x4f: clra(); break;
-			case 0x50: negb(); break;
-			case 0x51: illegal(); break;
-			case 0x52: illegal(); break;
-			case 0x53: comb(); break;
-			case 0x54: lsrb(); break;
-			case 0x55: illegal(); break;
-			case 0x56: rorb(); break;
-			case 0x57: asrb(); break;
-			case 0x58: aslb(); break;
-			case 0x59: rolb(); break;
-			case 0x5a: decb(); break;
-			case 0x5b: illegal(); break;
-			case 0x5c: incb(); break;
-			case 0x5d: tstb(); break;
-			case 0x5e: illegal(); break;
-			case 0x5f: clrb(); break;
-			case 0x60: neg_ix(); break;
-			case 0x61: illegal(); break;
-			case 0x62: illegal(); break;
-			case 0x63: com_ix(); break;
-			case 0x64: lsr_ix(); break;
-			case 0x65: illegal(); break;
-			case 0x66: ror_ix(); break;
-			case 0x67: asr_ix(); break;
-			case 0x68: asl_ix(); break;
-			case 0x69: rol_ix(); break;
-			case 0x6a: dec_ix(); break;
-			case 0x6b: illegal(); break;
-			case 0x6c: inc_ix(); break;
-			case 0x6d: tst_ix(); break;
-			case 0x6e: jmp_ix(); break;
-			case 0x6f: clr_ix(); break;
-			case 0x70: neg_ex(); break;
-			case 0x71: illegal(); break;
-			case 0x72: illegal(); break;
-			case 0x73: com_ex(); break;
-			case 0x74: lsr_ex(); break;
-			case 0x75: illegal(); break;
-			case 0x76: ror_ex(); break;
-			case 0x77: asr_ex(); break;
-			case 0x78: asl_ex(); break;
-			case 0x79: rol_ex(); break;
-			case 0x7a: dec_ex(); break;
-			case 0x7b: illegal(); break;
-			case 0x7c: inc_ex(); break;
-			case 0x7d: tst_ex(); break;
-			case 0x7e: jmp_ex(); break;
-			case 0x7f: clr_ex(); break;
-			case 0x80: suba_im(); break;
-			case 0x81: cmpa_im(); break;
-			case 0x82: sbca_im(); break;
-			case 0x83: illegal(); break;
-			case 0x84: anda_im(); break;
-			case 0x85: bita_im(); break;
-			case 0x86: lda_im(); break;
-			case 0x87: sta_im(); break;
-			case 0x88: eora_im(); break;
-			case 0x89: adca_im(); break;
-			case 0x8a: ora_im(); break;
-			case 0x8b: adda_im(); break;
-			case 0x8c: cmpx_im(); break;
-			case 0x8d: bsr(); break;
-			case 0x8e: lds_im(); break;
-			case 0x8f: sts_im(); /* orthogonality */ break;
-			case 0x90: suba_di(); break;
-			case 0x91: cmpa_di(); break;
-			case 0x92: sbca_di(); break;
-			case 0x93: illegal(); break;
-			case 0x94: anda_di(); break;
-			case 0x95: bita_di(); break;
-			case 0x96: lda_di(); break;
-			case 0x97: sta_di(); break;
-			case 0x98: eora_di(); break;
-			case 0x99: adca_di(); break;
-			case 0x9a: ora_di(); break;
-			case 0x9b: adda_di(); break;
-			case 0x9c: cmpx_di(); break;
-			case 0x9d: jsr_di(); break;
-			case 0x9e: lds_di(); break;
-			case 0x9f: sts_di(); break;
-			case 0xa0: suba_ix(); break;
-			case 0xa1: cmpa_ix(); break;
-			case 0xa2: sbca_ix(); break;
-			case 0xa3: illegal(); break;
-			case 0xa4: anda_ix(); break;
-			case 0xa5: bita_ix(); break;
-			case 0xa6: lda_ix(); break;
-			case 0xa7: sta_ix(); break;
-			case 0xa8: eora_ix(); break;
-			case 0xa9: adca_ix(); break;
-			case 0xaa: ora_ix(); break;
-			case 0xab: adda_ix(); break;
-			case 0xac: cmpx_ix(); break;
-			case 0xad: jsr_ix(); break;
-			case 0xae: lds_ix(); break;
-			case 0xaf: sts_ix(); break;
-			case 0xb0: suba_ex(); break;
-			case 0xb1: cmpa_ex(); break;
-			case 0xb2: sbca_ex(); break;
-			case 0xb3: illegal(); break;
-			case 0xb4: anda_ex(); break;
-			case 0xb5: bita_ex(); break;
-			case 0xb6: lda_ex(); break;
-			case 0xb7: sta_ex(); break;
-			case 0xb8: eora_ex(); break;
-			case 0xb9: adca_ex(); break;
-			case 0xba: ora_ex(); break;
-			case 0xbb: adda_ex(); break;
-			case 0xbc: cmpx_ex(); break;
-			case 0xbd: jsr_ex(); break;
-			case 0xbe: lds_ex(); break;
-			case 0xbf: sts_ex(); break;
-			case 0xc0: subb_im(); break;
-			case 0xc1: cmpb_im(); break;
-			case 0xc2: sbcb_im(); break;
-			case 0xc3: illegal(); break;
-			case 0xc4: andb_im(); break;
-			case 0xc5: bitb_im(); break;
-			case 0xc6: ldb_im(); break;
-			case 0xc7: stb_im(); break;
-			case 0xc8: eorb_im(); break;
-			case 0xc9: adcb_im(); break;
-			case 0xca: orb_im(); break;
-			case 0xcb: addb_im(); break;
-			case 0xcc: illegal(); break;
-			case 0xcd: illegal(); break;
-			case 0xce: ldx_im(); break;
-			case 0xcf: stx_im(); break;
-			case 0xd0: subb_di(); break;
-			case 0xd1: cmpb_di(); break;
-			case 0xd2: sbcb_di(); break;
-			case 0xd3: illegal(); break;
-			case 0xd4: andb_di(); break;
-			case 0xd5: bitb_di(); break;
-			case 0xd6: ldb_di(); break;
-			case 0xd7: stb_di(); break;
-			case 0xd8: eorb_di(); break;
-			case 0xd9: adcb_di(); break;
-			case 0xda: orb_di(); break;
-			case 0xdb: addb_di(); break;
-			case 0xdc: illegal(); break;
-			case 0xdd: illegal(); break;
-			case 0xde: ldx_di(); break;
-			case 0xdf: stx_di(); break;
-			case 0xe0: subb_ix(); break;
-			case 0xe1: cmpb_ix(); break;
-			case 0xe2: sbcb_ix(); break;
-			case 0xe3: illegal(); break;
-			case 0xe4: andb_ix(); break;
-			case 0xe5: bitb_ix(); break;
-			case 0xe6: ldb_ix(); break;
-			case 0xe7: stb_ix(); break;
-			case 0xe8: eorb_ix(); break;
-			case 0xe9: adcb_ix(); break;
-			case 0xea: orb_ix(); break;
-			case 0xeb: addb_ix(); break;
-			case 0xec: illegal(); break;
-			case 0xed: illegal(); break;
-			case 0xee: ldx_ix(); break;
-			case 0xef: stx_ix(); break;
-			case 0xf0: subb_ex(); break;
-			case 0xf1: cmpb_ex(); break;
-			case 0xf2: sbcb_ex(); break;
-			case 0xf3: illegal(); break;
-			case 0xf4: andb_ex(); break;
-			case 0xf5: bitb_ex(); break;
-			case 0xf6: ldb_ex(); break;
-			case 0xf7: stb_ex(); break;
-			case 0xf8: eorb_ex(); break;
-			case 0xf9: adcb_ex(); break;
-			case 0xfa: orb_ex(); break;
-			case 0xfb: addb_ex(); break;
-			case 0xfc: addx_ex(); break;
-			case 0xfd: illegal(); break;
-			case 0xfe: ldx_ex(); break;
-			case 0xff: stx_ex(); break;
+			EAT_CYCLES;
 		}
-		INCREMENT_COUNTER(cycles_6800[ireg]);
+		else
+		{
+			pPPC = pPC;
+			ireg=M_RDOP(PCD);
+			PC++;
+
+			switch( ireg )
+			{
+				case 0x00: illegal(); break;
+				case 0x01: nop(); break;
+				case 0x02: illegal(); break;
+				case 0x03: illegal(); break;
+				case 0x04: illegal(); break;
+				case 0x05: illegal(); break;
+				case 0x06: tap(); break;
+				case 0x07: tpa(); break;
+				case 0x08: inx(); break;
+				case 0x09: dex(); break;
+				case 0x0A: CLV; break;
+				case 0x0B: SEV; break;
+				case 0x0C: CLC; break;
+				case 0x0D: SEC; break;
+				case 0x0E: cli(); break;
+				case 0x0F: sei(); break;
+				case 0x10: sba(); break;
+				case 0x11: cba(); break;
+				case 0x12: illegal(); break;
+				case 0x13: illegal(); break;
+				case 0x14: illegal(); break;
+				case 0x15: illegal(); break;
+				case 0x16: tab(); break;
+				case 0x17: tba(); break;
+				case 0x18: illegal(); break;
+				case 0x19: daa(); break;
+				case 0x1a: illegal(); break;
+				case 0x1b: aba(); break;
+				case 0x1c: illegal(); break;
+				case 0x1d: illegal(); break;
+				case 0x1e: illegal(); break;
+				case 0x1f: illegal(); break;
+				case 0x20: bra(); break;
+				case 0x21: brn(); break;
+				case 0x22: bhi(); break;
+				case 0x23: bls(); break;
+				case 0x24: bcc(); break;
+				case 0x25: bcs(); break;
+				case 0x26: bne(); break;
+				case 0x27: beq(); break;
+				case 0x28: bvc(); break;
+				case 0x29: bvs(); break;
+				case 0x2a: bpl(); break;
+				case 0x2b: bmi(); break;
+				case 0x2c: bge(); break;
+				case 0x2d: blt(); break;
+				case 0x2e: bgt(); break;
+				case 0x2f: ble(); break;
+				case 0x30: tsx(); break;
+				case 0x31: ins(); break;
+				case 0x32: pula(); break;
+				case 0x33: pulb(); break;
+				case 0x34: des(); break;
+				case 0x35: txs(); break;
+				case 0x36: psha(); break;
+				case 0x37: pshb(); break;
+				case 0x38: illegal(); break;
+				case 0x39: rts(); break;
+				case 0x3a: illegal(); break;
+				case 0x3b: rti(); break;
+				case 0x3c: illegal(); break;
+				case 0x3d: illegal(); break;
+				case 0x3e: wai(); break;
+				case 0x3f: swi(); break;
+				case 0x40: nega(); break;
+				case 0x41: illegal(); break;
+				case 0x42: illegal(); break;
+				case 0x43: coma(); break;
+				case 0x44: lsra(); break;
+				case 0x45: illegal(); break;
+				case 0x46: rora(); break;
+				case 0x47: asra(); break;
+				case 0x48: asla(); break;
+				case 0x49: rola(); break;
+				case 0x4a: deca(); break;
+				case 0x4b: illegal(); break;
+				case 0x4c: inca(); break;
+				case 0x4d: tsta(); break;
+				case 0x4e: illegal(); break;
+				case 0x4f: clra(); break;
+				case 0x50: negb(); break;
+				case 0x51: illegal(); break;
+				case 0x52: illegal(); break;
+				case 0x53: comb(); break;
+				case 0x54: lsrb(); break;
+				case 0x55: illegal(); break;
+				case 0x56: rorb(); break;
+				case 0x57: asrb(); break;
+				case 0x58: aslb(); break;
+				case 0x59: rolb(); break;
+				case 0x5a: decb(); break;
+				case 0x5b: illegal(); break;
+				case 0x5c: incb(); break;
+				case 0x5d: tstb(); break;
+				case 0x5e: illegal(); break;
+				case 0x5f: clrb(); break;
+				case 0x60: neg_ix(); break;
+				case 0x61: illegal(); break;
+				case 0x62: illegal(); break;
+				case 0x63: com_ix(); break;
+				case 0x64: lsr_ix(); break;
+				case 0x65: illegal(); break;
+				case 0x66: ror_ix(); break;
+				case 0x67: asr_ix(); break;
+				case 0x68: asl_ix(); break;
+				case 0x69: rol_ix(); break;
+				case 0x6a: dec_ix(); break;
+				case 0x6b: illegal(); break;
+				case 0x6c: inc_ix(); break;
+				case 0x6d: tst_ix(); break;
+				case 0x6e: jmp_ix(); break;
+				case 0x6f: clr_ix(); break;
+				case 0x70: neg_ex(); break;
+				case 0x71: illegal(); break;
+				case 0x72: illegal(); break;
+				case 0x73: com_ex(); break;
+				case 0x74: lsr_ex(); break;
+				case 0x75: illegal(); break;
+				case 0x76: ror_ex(); break;
+				case 0x77: asr_ex(); break;
+				case 0x78: asl_ex(); break;
+				case 0x79: rol_ex(); break;
+				case 0x7a: dec_ex(); break;
+				case 0x7b: illegal(); break;
+				case 0x7c: inc_ex(); break;
+				case 0x7d: tst_ex(); break;
+				case 0x7e: jmp_ex(); break;
+				case 0x7f: clr_ex(); break;
+				case 0x80: suba_im(); break;
+				case 0x81: cmpa_im(); break;
+				case 0x82: sbca_im(); break;
+				case 0x83: illegal(); break;
+				case 0x84: anda_im(); break;
+				case 0x85: bita_im(); break;
+				case 0x86: lda_im(); break;
+				case 0x87: sta_im(); break;
+				case 0x88: eora_im(); break;
+				case 0x89: adca_im(); break;
+				case 0x8a: ora_im(); break;
+				case 0x8b: adda_im(); break;
+				case 0x8c: cmpx_im(); break;
+				case 0x8d: bsr(); break;
+				case 0x8e: lds_im(); break;
+				case 0x8f: sts_im(); /* orthogonality */ break;
+				case 0x90: suba_di(); break;
+				case 0x91: cmpa_di(); break;
+				case 0x92: sbca_di(); break;
+				case 0x93: illegal(); break;
+				case 0x94: anda_di(); break;
+				case 0x95: bita_di(); break;
+				case 0x96: lda_di(); break;
+				case 0x97: sta_di(); break;
+				case 0x98: eora_di(); break;
+				case 0x99: adca_di(); break;
+				case 0x9a: ora_di(); break;
+				case 0x9b: adda_di(); break;
+				case 0x9c: cmpx_di(); break;
+				case 0x9d: jsr_di(); break;
+				case 0x9e: lds_di(); break;
+				case 0x9f: sts_di(); break;
+				case 0xa0: suba_ix(); break;
+				case 0xa1: cmpa_ix(); break;
+				case 0xa2: sbca_ix(); break;
+				case 0xa3: illegal(); break;
+				case 0xa4: anda_ix(); break;
+				case 0xa5: bita_ix(); break;
+				case 0xa6: lda_ix(); break;
+				case 0xa7: sta_ix(); break;
+				case 0xa8: eora_ix(); break;
+				case 0xa9: adca_ix(); break;
+				case 0xaa: ora_ix(); break;
+				case 0xab: adda_ix(); break;
+				case 0xac: cmpx_ix(); break;
+				case 0xad: jsr_ix(); break;
+				case 0xae: lds_ix(); break;
+				case 0xaf: sts_ix(); break;
+				case 0xb0: suba_ex(); break;
+				case 0xb1: cmpa_ex(); break;
+				case 0xb2: sbca_ex(); break;
+				case 0xb3: illegal(); break;
+				case 0xb4: anda_ex(); break;
+				case 0xb5: bita_ex(); break;
+				case 0xb6: lda_ex(); break;
+				case 0xb7: sta_ex(); break;
+				case 0xb8: eora_ex(); break;
+				case 0xb9: adca_ex(); break;
+				case 0xba: ora_ex(); break;
+				case 0xbb: adda_ex(); break;
+				case 0xbc: cmpx_ex(); break;
+				case 0xbd: jsr_ex(); break;
+				case 0xbe: lds_ex(); break;
+				case 0xbf: sts_ex(); break;
+				case 0xc0: subb_im(); break;
+				case 0xc1: cmpb_im(); break;
+				case 0xc2: sbcb_im(); break;
+				case 0xc3: illegal(); break;
+				case 0xc4: andb_im(); break;
+				case 0xc5: bitb_im(); break;
+				case 0xc6: ldb_im(); break;
+				case 0xc7: stb_im(); break;
+				case 0xc8: eorb_im(); break;
+				case 0xc9: adcb_im(); break;
+				case 0xca: orb_im(); break;
+				case 0xcb: addb_im(); break;
+				case 0xcc: illegal(); break;
+				case 0xcd: illegal(); break;
+				case 0xce: ldx_im(); break;
+				case 0xcf: stx_im(); break;
+				case 0xd0: subb_di(); break;
+				case 0xd1: cmpb_di(); break;
+				case 0xd2: sbcb_di(); break;
+				case 0xd3: illegal(); break;
+				case 0xd4: andb_di(); break;
+				case 0xd5: bitb_di(); break;
+				case 0xd6: ldb_di(); break;
+				case 0xd7: stb_di(); break;
+				case 0xd8: eorb_di(); break;
+				case 0xd9: adcb_di(); break;
+				case 0xda: orb_di(); break;
+				case 0xdb: addb_di(); break;
+				case 0xdc: illegal(); break;
+				case 0xdd: illegal(); break;
+				case 0xde: ldx_di(); break;
+				case 0xdf: stx_di(); break;
+				case 0xe0: subb_ix(); break;
+				case 0xe1: cmpb_ix(); break;
+				case 0xe2: sbcb_ix(); break;
+				case 0xe3: illegal(); break;
+				case 0xe4: andb_ix(); break;
+				case 0xe5: bitb_ix(); break;
+				case 0xe6: ldb_ix(); break;
+				case 0xe7: stb_ix(); break;
+				case 0xe8: eorb_ix(); break;
+				case 0xe9: adcb_ix(); break;
+				case 0xea: orb_ix(); break;
+				case 0xeb: addb_ix(); break;
+				case 0xec: illegal(); break;
+				case 0xed: illegal(); break;
+				case 0xee: ldx_ix(); break;
+				case 0xef: stx_ix(); break;
+				case 0xf0: subb_ex(); break;
+				case 0xf1: cmpb_ex(); break;
+				case 0xf2: sbcb_ex(); break;
+				case 0xf3: illegal(); break;
+				case 0xf4: andb_ex(); break;
+				case 0xf5: bitb_ex(); break;
+				case 0xf6: ldb_ex(); break;
+				case 0xf7: stb_ex(); break;
+				case 0xf8: eorb_ex(); break;
+				case 0xf9: adcb_ex(); break;
+				case 0xfa: orb_ex(); break;
+				case 0xfb: addb_ex(); break;
+				case 0xfc: addx_ex(); break;
+				case 0xfd: illegal(); break;
+				case 0xfe: ldx_ex(); break;
+				case 0xff: stx_ex(); break;
+			}
+			INCREMENT_COUNTER(cycles_6800[ireg]);
+		}
 	} while( m6800_ICount>0 );
 
-getout:
 	INCREMENT_COUNTER(m6800.extra_cycles);
 	m6800.extra_cycles = 0;
 
@@ -1081,71 +1054,21 @@ getout:
  ****************************************************************************/
 const char *m6800_info(void *context, int regnum)
 {
-	/* Layout of the registers in the debugger */
-	static UINT8 m6800_reg_layout[] = {
-		M6800_PC, M6800_S, M6800_CC, M6800_A, M6800_B, M6800_X, -1,
-		M6800_WAI_STATE, M6800_NMI_STATE, M6800_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 m6800_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
-	static char buffer[16][47+1];
-	static int which = 0;
-	m6800_Regs *r = (m6800_Regs *)context;
-
-	which = ++which % 16;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &m6800;
-
 	switch( regnum )
 	{
-		case CPU_INFO_REG+M6800_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
-		case CPU_INFO_REG+M6800_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
-		case CPU_INFO_REG+M6800_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+M6800_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
-		case CPU_INFO_REG+M6800_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
-		case CPU_INFO_REG+M6800_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+M6800_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+M6800_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[M6800_IRQ_LINE]); break;
-//		case CPU_INFO_REG+M6800_TIN_STATE: sprintf(buffer[which], "TIN:%X", r->irq_state[M6800_TIN_LINE]); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->cc & 0x80 ? '?':'.',
-				r->cc & 0x40 ? '?':'.',
-				r->cc & 0x20 ? 'H':'.',
-				r->cc & 0x10 ? 'I':'.',
-				r->cc & 0x08 ? 'N':'.',
-				r->cc & 0x04 ? 'Z':'.',
-				r->cc & 0x02 ? 'V':'.',
-				r->cc & 0x01 ? 'C':'.');
-			break;
 		case CPU_INFO_NAME: return "M6800";
 		case CPU_INFO_FAMILY: return "Motorola 6800";
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "The MAME team.";
-		case CPU_INFO_REG_LAYOUT: return (const char *)m6800_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: case 6800: return (const char *)m6800_win_layout;
 	}
-	return buffer[which];
+	return "";
 }
 
 unsigned m6800_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm680x(6800,buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 /****************************************************************************
@@ -1176,37 +1099,16 @@ void m6801_state_save(void *file) { state_save(file,"m6801"); }
 void m6801_state_load(void *file) { state_load(file,"m6801"); }
 const char *m6801_info(void *context, int regnum)
 {
-	/* Layout of the registers in the debugger */
-	static UINT8 m6801_reg_layout[] = {
-		M6801_PC, M6801_S, M6801_CC, M6801_A, M6801_B, M6801_X, -1,
-		M6801_WAI_STATE, M6801_NMI_STATE, M6801_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 m6801_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "M6801";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6801_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6801_win_layout;
 	}
 	return m6800_info(context,regnum);
 }
 unsigned m6801_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm680x(6801,buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
-#endif
 }
 
 #endif
@@ -1237,38 +1139,17 @@ void m6802_state_save(void *file) { state_save(file,"m6802"); }
 void m6802_state_load(void *file) { state_load(file,"m6802"); }
 const char *m6802_info(void *context, int regnum)
 {
-	/* Layout of the registers in the debugger */
-	static UINT8 m6802_reg_layout[] = {
-		M6802_PC, M6802_S, M6802_CC, M6802_A, M6802_B, M6802_X, -1,
-		M6802_WAI_STATE, M6802_NMI_STATE, M6802_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 m6802_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "M6802";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6802_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6802_win_layout;
 	}
 	return m6800_info(context,regnum);
 }
 
 unsigned m6802_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm680x(6802,buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
-#endif
 }
 
 #endif
@@ -1309,7 +1190,6 @@ int m6803_execute(int cycles)
 	{
 
 		pPPC = pPC;
-		CALL_MAME_DEBUG;
 		ireg=M_RDOP(PCD);
 		PC++;
 
@@ -1599,38 +1479,17 @@ void m6803_state_save(void *file) { state_save(file,"m6803"); }
 void m6803_state_load(void *file) { state_load(file,"m6803"); }
 const char *m6803_info(void *context, int regnum)
 {
-	/* Layout of the registers in the debugger */
-	static UINT8 m6803_reg_layout[] = {
-		M6803_PC, M6803_S, M6803_CC, M6803_A, M6803_B, M6803_X, -1,
-		M6803_WAI_STATE, M6803_NMI_STATE, M6803_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 m6803_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "M6803";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6803_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6803_win_layout;
 	}
 	return m6800_info(context,regnum);
 }
 
 unsigned m6803_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm680x(6803,buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
-#endif
 }
 #endif
 
@@ -1660,38 +1519,17 @@ void m6808_state_save(void *file) { state_save(file,"m6808"); }
 void m6808_state_load(void *file) { state_load(file,"m6808"); }
 const char *m6808_info(void *context, int regnum)
 {
-	/* Layout of the registers in the debugger */
-	static UINT8 m6808_reg_layout[] = {
-		M6808_PC, M6808_S, M6808_CC, M6808_A, M6808_B, M6808_X, -1,
-		M6808_WAI_STATE, M6808_NMI_STATE, M6808_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 m6808_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "M6808";
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6808_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6808_win_layout;
 	}
 	return m6800_info(context,regnum);
 }
 
 unsigned m6808_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm680x(6808,buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
-#endif
 }
 #endif
 
@@ -1728,7 +1566,6 @@ int hd63701_execute(int cycles)
 	do
 	{
 		pPPC = pPC;
-		CALL_MAME_DEBUG;
 		ireg=M_RDOP(PCD);
 		PC++;
 
@@ -2016,26 +1853,9 @@ void hd63701_state_save(void *file) { state_save(file,"hd63701"); }
 void hd63701_state_load(void *file) { state_load(file,"hd63701"); }
 const char *hd63701_info(void *context, int regnum)
 {
-	/* Layout of the registers in the debugger */
-	static UINT8 hd63701_reg_layout[] = {
-		HD63701_PC, HD63701_S, HD63701_CC, HD63701_A, HD63701_B, HD63701_X, -1,
-		HD63701_WAI_STATE, HD63701_NMI_STATE, HD63701_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 hd63701_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "HD63701";
-		case CPU_INFO_REG_LAYOUT: return (const char*)hd63701_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)hd63701_win_layout;
 	}
 	return m6800_info(context,regnum);
 }
@@ -2064,12 +1884,8 @@ WRITE_HANDLER( hd63701_internal_registers_w )
 
 unsigned hd63701_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm680x(63701,buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
-#endif
 }
 #endif
 
@@ -2107,7 +1923,6 @@ int nsc8105_execute(int cycles)
 	do
 	{
 		pPPC = pPC;
-		CALL_MAME_DEBUG;
 		ireg=M_RDOP(PCD);
 		PC++;
 
@@ -2395,38 +2210,17 @@ void nsc8105_state_save(void *file) { state_save(file,"nsc8105"); }
 void nsc8105_state_load(void *file) { state_load(file,"nsc8105"); }
 const char *nsc8105_info(void *context, int regnum)
 {
-	/* Layout of the registers in the debugger */
-	static UINT8 nsc8105_reg_layout[] = {
-		NSC8105_PC, NSC8105_S, NSC8105_CC, NSC8105_A, NSC8105_B, NSC8105_X, -1,
-		NSC8105_WAI_STATE, NSC8105_NMI_STATE, NSC8105_IRQ_STATE, 0
-	};
-
-	/* Layout of the debugger windows x,y,w,h */
-	static UINT8 nsc8105_win_layout[] = {
-		27, 0,53, 4,	/* register window (top rows) */
-		 0, 0,26,22,	/* disassembler window (left colums) */
-		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-		27,14,53, 8,	/* memory #2 window (right, lower middle) */
-		 0,23,80, 1,	/* command line window (bottom rows) */
-	};
-
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "NSC8105";
-		case CPU_INFO_REG_LAYOUT: return (const char*)nsc8105_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)nsc8105_win_layout;
 	}
 	return m6800_info(context,regnum);
 }
 
 unsigned nsc8105_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm680x(8105,buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
 	return 1;
-#endif
 }
 #endif
 
@@ -2451,11 +2245,9 @@ READ_HANDLER( m6803_internal_registers_r )
 		case 0x05:
 		case 0x06:
 		case 0x07:
-			logerror("CPU #%d PC %04x: warning - read from unsupported internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
 			return 0;
 		case 0x08:
 			m6800.pending_tcsr = 0;
-//logerror("CPU #%d PC %04x: warning - read TCSR register\n",cpu_getactivecpu(),cpu_get_pc());
 			return m6800.tcsr;
 		case 0x09:
 			if(!(m6800.pending_tcsr&TCSR_TOF))
@@ -2494,10 +2286,8 @@ READ_HANDLER( m6803_internal_registers_r )
 		case 0x11:
 		case 0x12:
 		case 0x13:
-			logerror("CPU #%d PC %04x: warning - read from unsupported internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
 			return 0;
 		case 0x14:
-			logerror("CPU #%d PC %04x: read RAM control register\n",cpu_getactivecpu(),cpu_get_pc());
 			return m6800.ram_ctrl;
 		case 0x15:
 		case 0x16:
@@ -2511,7 +2301,6 @@ READ_HANDLER( m6803_internal_registers_r )
 		case 0x1e:
 		case 0x1f:
 		default:
-			logerror("CPU #%d PC %04x: warning - read from reserved internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
 			return 0;
 	}
 }
@@ -2542,9 +2331,6 @@ WRITE_HANDLER( m6803_internal_registers_w )
 				else
 					cpu_writeport(M6803_PORT2,(m6800.port2_data & m6800.port2_ddr)
 						| (cpu_readport(M6803_PORT2) & (m6800.port2_ddr ^ 0xff)));
-
-				if (m6800.port2_ddr & 2)
-					logerror("CPU #%d PC %04x: warning - port 2 bit 1 set as output (OLVL) - not supported\n",cpu_getactivecpu(),cpu_get_pc());
 			}
 			break;
 		case 0x02:
@@ -2568,7 +2354,6 @@ WRITE_HANDLER( m6803_internal_registers_w )
 		case 0x05:
 		case 0x06:
 		case 0x07:
-			logerror("CPU #%d PC %04x: warning - write %02x to unsupported internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 			break;
 		case 0x08:
 			m6800.tcsr = data;
@@ -2576,7 +2361,6 @@ WRITE_HANDLER( m6803_internal_registers_w )
 			MODIFIED_tcsr;
 			if( !(CC & 0x10) )
 				CHECK_IRQ2;
-//logerror("CPU #%d PC %04x: TCSR = %02x\n",cpu_getactivecpu(),cpu_get_pc(),data);
 			break;
 		case 0x09:
 			latch09 = data & 0xff;	/* 6301 only */
@@ -2605,17 +2389,14 @@ WRITE_HANDLER( m6803_internal_registers_w )
 			break;
 		case 0x0d:
 		case 0x0e:
-			logerror("CPU #%d PC %04x: warning - write %02x to read only internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 			break;
 		case 0x0f:
 		case 0x10:
 		case 0x11:
 		case 0x12:
 		case 0x13:
-			logerror("CPU #%d PC %04x: warning - write %02x to unsupported internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 			break;
 		case 0x14:
-			logerror("CPU #%d PC %04x: write %02x to RAM control register\n",cpu_getactivecpu(),cpu_get_pc(),data);
 			m6800.ram_ctrl = data;
 			break;
 		case 0x15:
@@ -2630,7 +2411,6 @@ WRITE_HANDLER( m6803_internal_registers_w )
 		case 0x1e:
 		case 0x1f:
 		default:
-			logerror("CPU #%d PC %04x: warning - write %02x to reserved internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 			break;
 	}
 }

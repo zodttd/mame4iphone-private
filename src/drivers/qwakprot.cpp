@@ -1,3 +1,5 @@
+#include "../vidhrdw/qwakprot.cpp"
+
 /***************************************************************************
 
   Qwak (prototype) driver.

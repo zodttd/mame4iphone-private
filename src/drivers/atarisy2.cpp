@@ -1,3 +1,5 @@
+#include "../vidhrdw/atarisy2.cpp"
+
 /***************************************************************************
 
 	Atari System 2
@@ -1212,7 +1214,7 @@ static struct MachineDriver machine_driver_paperboy =
 			ATARI_CLOCK_14MHz/8,
 			sound_readmem,sound_writemem,0,0,
 			0,0,
-			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10))
+			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((float)ATARI_CLOCK_20MHz/2/16/16/16/10))
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
@@ -1267,7 +1269,7 @@ static struct MachineDriver machine_driver_a720 =
 			2000000,	/* artifically high to prevent deadlock at startup ATARI_CLOCK_14MHz/8,*/
 			sound_readmem,sound_writemem,0,0,
 			0,0,
-			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10))
+			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((float)ATARI_CLOCK_20MHz/2/16/16/16/10))
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
@@ -1322,7 +1324,7 @@ static struct MachineDriver machine_driver_sprint =
 			ATARI_CLOCK_14MHz/8,
 			sound_readmem,sound_writemem,0,0,
 			0,0,
-			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10))
+			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((float)ATARI_CLOCK_20MHz/2/16/16/16/10))
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,

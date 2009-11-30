@@ -748,11 +748,13 @@ WRITE_HANDLER( williams_blitter_w )
 		scanline_dirty[w++ % 256] = 1;
 
 	/* Log blits */
+	/*
 	logerror("---------- Blit %02X--------------PC: %04X\n",data,cpu_get_pc());
 	logerror("Source : %02X %02X\n",williams_blitterram[2],williams_blitterram[3]);
 	logerror("Dest   : %02X %02X\n",williams_blitterram[4],williams_blitterram[5]);
 	logerror("W H    : %02X %02X (%d,%d)\n",williams_blitterram[6],williams_blitterram[7],williams_blitterram[6]^4,williams_blitterram[7]^4);
 	logerror("Mask   : %02X\n",williams_blitterram[1]);
+	*/
 }
 
 

@@ -4,7 +4,7 @@
 #include <math.h>
 #include "driver.h"
 #include "ym2151.h"
-
+#include "osinline.h"
 
 /*undef this to not use MAME timer system*/
 #define USE_MAME_TIMERS
@@ -104,8 +104,8 @@ typedef struct
 
 #ifdef USE_MAME_TIMERS
 	void *TimATimer,*TimBTimer;	/*ASG 980324 -- added for tracking timers*/
-	double TimerATime[1024];	/*Timer A times for MAME*/
-	double TimerBTime[256];		/*Timer B times for MAME*/
+	timer_tm TimerATime[1024];	/*Timer A times for MAME*/
+	timer_tm TimerBTime[256];		/*Timer B times for MAME*/
 #else
 	int TimA,TimB;				/*timer A,B enable (0-disabled)*/
 	signed int TimAVal,TimBVal;	/*current value of timer*/
@@ -727,7 +727,7 @@ static void init_chip_tables(YM2151 *chip)
 		/* ASG 980324: changed to compute both TimerA and TimerATime */
 		pom= ( 64.0  *  (1024.0-i) / (double)chip->clock );
 		#ifdef USE_MAME_TIMERS
-			chip->TimerATime[i] = pom;
+			chip->TimerATime[i] = TIME_IN_SEC(pom);
 		#else
 			chip->TimerA[i] = pom * (double)chip->sampfreq * mult;  /*number of samples that timer period takes (fixed point) */
 		#endif
@@ -737,7 +737,7 @@ static void init_chip_tables(YM2151 *chip)
 		/* ASG 980324: changed to compute both TimerB and TimerBTime */
 		pom= ( 1024.0 * (256.0-i)  / (double)chip->clock );
 		#ifdef USE_MAME_TIMERS
-			chip->TimerBTime[i] = pom;
+			chip->TimerBTime[i] = TIME_IN_SEC(pom);
 		#else
 			chip->TimerB[i] = pom * (double)chip->sampfreq * mult;  /*number of samples that timer period takes (fixed point) */
 		#endif
@@ -1024,7 +1024,7 @@ void YM2151WriteReg(int n, int r, int v)
 #if 0
 	/*There's no info on what YM2151 really does when busy flag is set*/
 	if ( chip->status & 0x80 ) return;
-	timer_set ( 68.0 / (double)chip->clock, n, timer_callback_chip_write_busy);
+	timer_set ( 68.0 / (float)chip->clock, n, timer_callback_chip_write_busy);
 	chip->status |= 0x80;    /* set busy flag for 68 chip clock cycles */
 #endif
 
@@ -1106,7 +1106,7 @@ void YM2151WriteReg(int n, int r, int v)
 						/*check if timer value has changed since last start and update if necessary*/
 						if (chip->TimBIndex!=chip->TimBOldIndex)
 						{
-							double timepassed = timer_timeelapsed(chip->TimBTimer);
+							float timepassed = timer_timeelapsed(chip->TimBTimer);
 							timer_remove (chip->TimBTimer);
 							chip->TimBTimer = timer_set (chip->TimerBTime[ chip->TimBIndex ] - timepassed, n, timer_callback_b);
 							chip->TimBOldIndex = chip->TimBIndex;
@@ -1145,7 +1145,7 @@ void YM2151WriteReg(int n, int r, int v)
 						/*check if timer value has changed since last start and update if necessary*/
 						if (chip->TimAIndex!=chip->TimAOldIndex)
 						{
-							double timepassed = timer_timeelapsed(chip->TimATimer);
+							float timepassed = timer_timeelapsed(chip->TimATimer);
 							timer_remove (chip->TimATimer);
 							chip->TimATimer = timer_set (chip->TimerATime[ chip->TimAIndex ] - timepassed, n, timer_callback_a);
 							chip->TimAOldIndex = chip->TimAIndex;
@@ -2049,10 +2049,15 @@ void YM2151UpdateOne(int num, INT16 **buffers, int length)
 
 		outl >>= FINAL_SH;
 		outr >>= FINAL_SH;
+#ifndef clip_short
 		if (outl > MAXOUT) outl = MAXOUT;
 			else if (outl < MINOUT) outl = MINOUT;
 		if (outr > MAXOUT) outr = MAXOUT;
 			else if (outr < MINOUT) outr = MINOUT;
+#else
+        clip_short(outl);
+        clip_short(outr);
+#endif
 		((SAMP*)bufL)[i] = (SAMP)outl;
 		((SAMP*)bufR)[i] = (SAMP)outr;
 

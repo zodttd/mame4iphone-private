@@ -1,3 +1,6 @@
+#include "../vidhrdw/nitedrvr.cpp"
+#include "../machine/nitedrvr.cpp"
+
 /***************************************************************************
 
 Atari Night Driver Driver :)

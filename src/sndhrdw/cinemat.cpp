@@ -452,7 +452,7 @@ void solarq_sound_w(UINT8 sound_val, UINT8 bits_changed)
                 sample_start(7, 10, 0);	// Enemy fire
                 break;
             default:
-                logerror("Unknown sound starting with: %x\n", current_shift & 0xffff);
+                //logerror("Unknown sound starting with: %x\n", current_shift & 0xffff);
                 break;
             }
         }

@@ -1,10 +1,12 @@
-      .DATA
 ;@ Reesy's Z80 Emulator Version 0.001
 
 ;@ (c) Copyright 2004 Reesy, All rights reserved
 ;@ DrZ80 is free for non-commercial use.
 
 ;@ For commercial use, separate licencing terms must be obtained.
+
+      .data
+      .align 4
 
       .global DrZ80Run
       .global DrZ80Ver
@@ -19,7 +21,79 @@
 
 DrZ80Ver: .long 0x0001
 
+;@ --------------------------- Defines ----------------------------
+;@ Make sure that regs/pointers for z80pc to z80sp match up!
+
+	opcodes .req r3
+	z80_icount .req r4
+	cpucontext .req r5
+	z80pc .req r6
+	z80a .req r7
+	z80f .req r8
+	z80bc .req r9
+	z80de .req r10
+	z80hl .req r11
+	z80sp .req r12	
+	z80xx .req lr
+
+	.equ z80pc_pointer,           0                  ;@  0
+	.equ z80a_pointer,            z80pc_pointer+4    ;@  4
+	.equ z80f_pointer,            z80a_pointer+4     ;@  8
+	.equ z80bc_pointer,           z80f_pointer+4     ;@  
+	.equ z80de_pointer,           z80bc_pointer+4
+	.equ z80hl_pointer,           z80de_pointer+4
+	.equ z80sp_pointer,           z80hl_pointer+4
+	.equ z80pc_base,              z80sp_pointer+4
+	.equ z80sp_base,              z80pc_base+4
+	.equ z80ix,                   z80sp_base+4
+	.equ z80iy,                   z80ix+4
+	.equ z80i,                    z80iy+4
+	.equ z80a2,                   z80i+4
+	.equ z80f2,                   z80a2+4
+	.equ z80bc2,                  z80f2+4
+	.equ z80de2,                  z80bc2+4
+	.equ z80hl2,                  z80de2+4
+	.equ cycles_pointer,          z80hl2+4     
+	.equ z80irq,                  cycles_pointer+4
+	.equ z80if,                   z80irq+1
+	.equ z80im,                   z80if+1
+	.equ z80r,                    z80im+1
+	.equ z80irqvector,            z80r+1
+	.equ z80irqcallback,          z80irqvector+4
+	.equ z80_write8,              z80irqcallback+4
+	.equ z80_write16,             z80_write8+4
+	.equ z80_in,                  z80_write16+4
+	.equ z80_out,                 z80_in+4
+	.equ z80_read8,               z80_out+4
+	.equ z80_read16,              z80_read8+4
+	.equ z80_rebaseSP,            z80_read16+4
+	.equ z80_rebasePC,            z80_rebaseSP+4
+
+	.equ VFlag, 0
+	.equ CFlag, 1
+	.equ ZFlag, 2
+	.equ SFlag, 3
+	.equ HFlag, 4
+	.equ NFlag, 5
+	.equ Flag3, 6
+	.equ Flag5, 7
+
+	.equ Z80_CFlag, 0
+	.equ Z80_NFlag, 1
+	.equ Z80_VFlag, 2
+	.equ Z80_Flag3, 3
+	.equ Z80_HFlag, 4
+	.equ Z80_Flag5, 5
+	.equ Z80_ZFlag, 6
+	.equ Z80_SFlag, 7
+
+	.equ Z80_IF1, 1<<0
+	.equ Z80_IF2, 1<<1
+	.equ Z80_HALT, 1<<2
+
 ;@---------------------------------------
+
+.text
 
 .macro fetch cycs
 	subs z80_icount,z80_icount,#\cycs
@@ -1050,77 +1124,9 @@ DrZ80Ver: .long 0x0001
 ;@---------------------------------------
 
 
-;@ --------------------------- Defines ----------------------------
-;@ Make sure that regs/pointers for z80pc to z80sp match up!
-
-	opcodes .req r3
-	z80_icount .req r4
-	cpucontext .req r5
-	z80pc .req r6
-	z80a .req r7
-	z80f .req r8
-	z80bc .req r9
-	z80de .req r10
-	z80hl .req r11
-	z80sp .req r12	
-	z80xx .req lr
-
-	.equ z80pc_pointer,           0                  ;@  0
-	.equ z80a_pointer,            z80pc_pointer+4    ;@  4
-	.equ z80f_pointer,            z80a_pointer+4     ;@  8
-	.equ z80bc_pointer,           z80f_pointer+4     ;@  
-	.equ z80de_pointer,           z80bc_pointer+4
-	.equ z80hl_pointer,           z80de_pointer+4
-	.equ z80sp_pointer,           z80hl_pointer+4
-	.equ z80pc_base,              z80sp_pointer+4
-	.equ z80sp_base,              z80pc_base+4
-	.equ z80ix,                   z80sp_base+4
-	.equ z80iy,                   z80ix+4
-	.equ z80i,                    z80iy+4
-	.equ z80a2,                   z80i+4
-	.equ z80f2,                   z80a2+4
-	.equ z80bc2,                  z80f2+4
-	.equ z80de2,                  z80bc2+4
-	.equ z80hl2,                  z80de2+4
-	.equ cycles_pointer,          z80hl2+4     
-	.equ z80irq,                  cycles_pointer+4
-	.equ z80if,                   z80irq+1
-	.equ z80im,                   z80if+1
-	.equ z80r,                    z80im+1
-	.equ z80irqvector,            z80r+1
-	.equ z80irqcallback,          z80irqvector+4
-	.equ z80_write8,              z80irqcallback+4
-	.equ z80_write16,             z80_write8+4
-	.equ z80_in,                  z80_write16+4
-	.equ z80_out,                 z80_in+4
-	.equ z80_read8,               z80_out+4
-	.equ z80_read16,              z80_read8+4
-	.equ z80_rebaseSP,            z80_read16+4
-	.equ z80_rebasePC,            z80_rebaseSP+4
-
-	.equ VFlag, 0
-	.equ CFlag, 1
-	.equ ZFlag, 2
-	.equ SFlag, 3
-	.equ HFlag, 4
-	.equ NFlag, 5
-	.equ Flag3, 6
-	.equ Flag5, 7
-
-	.equ Z80_CFlag, 0
-	.equ Z80_NFlag, 1
-	.equ Z80_VFlag, 2
-	.equ Z80_Flag3, 3
-	.equ Z80_HFlag, 4
-	.equ Z80_Flag5, 5
-	.equ Z80_ZFlag, 6
-	.equ Z80_SFlag, 7
-
-	.equ Z80_IF1, 1<<0
-	.equ Z80_IF2, 1<<1
-	.equ Z80_HALT, 1<<2
-
 ;@ --------------------------- Framework --------------------------
+
+.text
     
 DrZ80Run:
 	;@ r0 = pointer to cpu context
@@ -1164,7 +1170,6 @@ DoInterrupt:
 	ldmfd sp!,{r3,r4,r5,lr}					;@ load regs from stack
 	;@ reload regs from DrZ80 context
 	ldmia cpucontext,{z80pc-z80sp}			;@ load Z80 registers
-DoInterrupt_continue:
 .endif
 	ldrb r0,[cpucontext,#z80irq]
 	tst r0,r0
@@ -1329,6 +1334,9 @@ DoInterrupt_end:
 	mov pc,r0    ;@ call callback function
 	ldmfd sp!,{r3,r12}
 	ldmfd sp!,{pc} ;@ return
+
+.data
+.align 4
 
 DAATable: .hword  (0x00<<8)|(1<<ZFlag)|(1<<VFlag)
          .hword  (0x01<<8)                  
@@ -3378,6 +3386,8 @@ DAATable: .hword  (0x00<<8)|(1<<ZFlag)|(1<<VFlag)
          .hword  (0x97<<8)|(1<<SFlag)               |(1<<NFlag)|(1<<CFlag)
          .hword  (0x98<<8)|(1<<SFlag)            |(1<<NFlag)|(1<<CFlag)
          .hword  (0x99<<8)|(1<<SFlag)         |(1<<VFlag)|(1<<NFlag)|(1<<CFlag)
+
+.align 4
          
 AF_Z80:  .byte (0<<Z80_CFlag)|(0<<Z80_NFlag)|(0<<Z80_VFlag)|(0<<Z80_HFlag)|(0<<Z80_ZFlag)|(0<<Z80_SFlag) ;@ 0
          .byte (0<<Z80_CFlag)|(0<<Z80_NFlag)|(1<<Z80_VFlag)|(0<<Z80_HFlag)|(0<<Z80_ZFlag)|(0<<Z80_SFlag) ;@ 1
@@ -3636,6 +3646,8 @@ AF_Z80:  .byte (0<<Z80_CFlag)|(0<<Z80_NFlag)|(0<<Z80_VFlag)|(0<<Z80_HFlag)|(0<<Z
          .byte (1<<Z80_CFlag)|(1<<Z80_NFlag)|(0<<Z80_VFlag)|(1<<Z80_HFlag)|(1<<Z80_ZFlag)|(1<<Z80_SFlag) ;@ 254
          .byte (1<<Z80_CFlag)|(1<<Z80_NFlag)|(1<<Z80_VFlag)|(1<<Z80_HFlag)|(1<<Z80_ZFlag)|(1<<Z80_SFlag) ;@ 255
 
+.align 4
+
 AF_ARM:  .byte (0<<CFlag)|(0<<NFlag)|(0<<VFlag)|(0<<HFlag)|(0<<ZFlag)|(0<<SFlag)  ;@ 0
          .byte (1<<CFlag)|(0<<NFlag)|(0<<VFlag)|(0<<HFlag)|(0<<ZFlag)|(0<<SFlag)  ;@ 1
          .byte (0<<CFlag)|(1<<NFlag)|(0<<VFlag)|(0<<HFlag)|(0<<ZFlag)|(0<<SFlag)  ;@ 2
@@ -3893,6 +3905,8 @@ AF_ARM:  .byte (0<<CFlag)|(0<<NFlag)|(0<<VFlag)|(0<<HFlag)|(0<<ZFlag)|(0<<SFlag)
          .byte (0<<CFlag)|(1<<NFlag)|(1<<VFlag)|(1<<HFlag)|(1<<ZFlag)|(1<<SFlag)  ;@ 254
          .byte (1<<CFlag)|(1<<NFlag)|(1<<VFlag)|(1<<HFlag)|(1<<ZFlag)|(1<<SFlag)  ;@ 255
 
+.align 4
+
 PZSTable_data: .byte (1<<ZFlag)|(1<<VFlag),0,0,(1<<VFlag),0,(1<<VFlag),(1<<VFlag),0
 	.byte  0,(1<<VFlag),(1<<VFlag),0,(1<<VFlag),0,0,(1<<VFlag)
 	.byte  0,(1<<VFlag),(1<<VFlag),0,(1<<VFlag),0,0,(1<<VFlag),(1<<VFlag),0,0,(1<<VFlag),0,(1<<VFlag),(1<<VFlag),0
@@ -3934,6 +3948,9 @@ PZSTable_data: .byte (1<<ZFlag)|(1<<VFlag),0,0,(1<<VFlag),0,(1<<VFlag),(1<<VFlag
 	.byte  (1<<SFlag),(1<<SFlag)|(1<<VFlag),(1<<SFlag)|(1<<VFlag),(1<<SFlag)
 	.byte  (1<<SFlag),(1<<SFlag)|(1<<VFlag),(1<<SFlag)|(1<<VFlag),(1<<SFlag)
 	.byte  (1<<SFlag)|(1<<VFlag),(1<<SFlag),(1<<SFlag),(1<<SFlag)|(1<<VFlag)       
+
+.align 4
+
 MAIN_opcodes:	
 	.word opcode_0_0,opcode_0_1,opcode_0_2,opcode_0_3,opcode_0_4,opcode_0_5,opcode_0_6,opcode_0_7
 	.word opcode_0_8,opcode_0_9,opcode_0_A,opcode_0_B,opcode_0_C,opcode_0_D,opcode_0_E,opcode_0_F
@@ -3968,6 +3985,8 @@ MAIN_opcodes:
 	.word opcode_F_0,opcode_F_1,opcode_F_2,opcode_F_3,opcode_F_4,opcode_F_5,opcode_F_6,opcode_F_7
 	.word opcode_F_8,opcode_F_9,opcode_F_A,opcode_F_B,opcode_F_C,opcode_F_D,opcode_F_E,opcode_F_F
 
+.align 4
+
 EI_DUMMY_opcodes:
 	.word ei_return,ei_return,ei_return,ei_return,ei_return,ei_return,ei_return,ei_return ;@0
 	.word ei_return,ei_return,ei_return,ei_return,ei_return,ei_return,ei_return,ei_return ;@0
@@ -4001,6 +4020,9 @@ EI_DUMMY_opcodes:
 	.word ei_return,ei_return,ei_return,ei_return,ei_return,ei_return,ei_return,ei_return ;@E
 	.word ei_return,ei_return,ei_return,ei_return,ei_return,ei_return,ei_return,ei_return ;@F
 	.word ei_return,ei_return,ei_return,ei_return,ei_return,ei_return,ei_return,ei_return ;@F
+
+.text
+.align 4
 
 ;@NOP
 opcode_0_0:
@@ -6445,10 +6467,12 @@ opcode_DD_NF:
 ;@	orr r0,r0,r1
 ;@	b end_loop
 opcode_DD_NF2:
-	mov r0,#0xDD0000
-	orr r0,r0,#0xCB00
-	orr r0,r0,r1
-	b end_loop
+	fetch 15
+;@ notaz: we don't want to deadlock here
+;@	mov r0,#0xDD0000
+;@	orr r0,r0,#0xCB00
+;@	orr r0,r0,r1
+;@	b end_loop
 
 ;@ADD IX,BC
 opcode_DD_09:
@@ -7854,8 +7878,8 @@ opcode_ED_BB:
 ;@from the DD location but the address of the IY reg is passed instead
 ;@of IX
 
-end_loop:
-     b end_loop
+;@end_loop:
+;@     b end_loop
 
 
 

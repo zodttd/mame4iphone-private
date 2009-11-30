@@ -1,3 +1,6 @@
+#include "../machine/stactics.cpp"
+#include "../vidhrdw/stactics.cpp"
+
 /****************************************************************************
 
 Sega "Space Tactics" Driver

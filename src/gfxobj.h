@@ -54,7 +54,7 @@ struct gfx_object {
 	int		draw_x;			/* x adjusted position */
 	int		draw_y;			/* y adjusted position */
 	struct rectangle clip; /* clipping object size with visible area */
-};
+} __attribute__ ((__aligned__ (32)));
 
 /* object list */
 struct gfx_object_list {

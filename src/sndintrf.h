@@ -18,6 +18,9 @@ struct MachineSound
 #if (HAS_DAC)
 #include "sound/dac.h"
 #endif
+#if (HAS_DISCRETE)
+#include "sound/discrete.h"
+#endif
 #if (HAS_AY8910)
 #include "sound/ay8910.h"
 #endif
@@ -102,6 +105,9 @@ struct MachineSound
 #if (HAS_K053260)
 #include "sound/k053260.h"
 #endif
+#if (HAS_K054539)
+#include "sound/k054539.h"
+#endif
 #if (HAS_SEGAPCM)
 #include "sound/segapcm.h"
 #endif
@@ -136,6 +142,9 @@ enum
 #endif
 #if (HAS_DAC)
 	SOUND_DAC,
+#endif
+#if (HAS_DISCRETE)
+        SOUND_DISCRETE,
 #endif
 #if (HAS_AY8910)
 	SOUND_AY8910,
@@ -235,6 +244,9 @@ enum
 #endif
 #if (HAS_K053260)
 	SOUND_K053260,	/* Konami 053260 */
+#endif
+#if (HAS_K054539)
+	SOUND_K054539,
 #endif
 #if (HAS_SEGAPCM)
 	SOUND_SEGAPCM,

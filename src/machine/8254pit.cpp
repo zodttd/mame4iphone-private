@@ -13,6 +13,7 @@ void pit8254_init (pit8254_interface *intf)
 
 void pit8254_w (int which, int offset, int data)
 {
+    /*
 	switch (offset)
 	{
 		case 0:
@@ -36,10 +37,12 @@ void pit8254_w (int which, int offset, int data)
 
 			break;
 	}
+	*/
 }
 
 int pit8254_r (int which, int offset)
 {
+	/*
 	switch (offset)
 	{
 		case 0:
@@ -56,7 +59,7 @@ int pit8254_r (int which, int offset)
 			logerror("PIT8254#%d read from control\n", which);
 			break;
 	}
-
+    */
 	return 0;
 }
 

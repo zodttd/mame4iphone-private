@@ -1,3 +1,5 @@
+#include "../vidhrdw/shootout.cpp"
+
 /*******************************************************************************
 
 	Shoot Out (USA)				(c) 1985 Data East USA		DE-0219

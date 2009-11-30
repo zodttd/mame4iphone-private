@@ -1,3 +1,5 @@
+#include "../vidhrdw/bloodbro.cpp"
+
 /**************************************************************************
 Blood Bros, West Story.
 TAD Corporation 1990/Datsu 1991

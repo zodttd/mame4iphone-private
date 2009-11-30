@@ -1,3 +1,5 @@
+#include "../vidhrdw/arcadecl.cpp"
+
 /***************************************************************************
 
 	Atari Arcade Classics hardware (prototypes)

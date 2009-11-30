@@ -1,3 +1,5 @@
+#include "../vidhrdw/mitchell.cpp"
+
 /***************************************************************************
 
 "Mitchell hardware". Actually used mostly by Capcom.
@@ -279,7 +281,7 @@ static WRITE_HANDLER( input_w )
 	{
 		case 0:
 		default:
-logerror("PC %04x: write %02x to port 01\n",cpu_get_pc(),data);
+//logerror("PC %04x: write %02x to port 01\n",cpu_get_pc(),data);
 			break;
 		case 1:
 			mahjong_input_select_w(offset,data);

@@ -138,7 +138,7 @@ extern struct OKIM6295interface atarijsa_okim6295s_interface_REGION_SOUND1;
 		ATARI_CLOCK_14MHz/8,								\
 		atarijsa1_readmem,atarijsa1_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((float)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
 	}
 
 #define JSA_II_CPU											\
@@ -147,7 +147,7 @@ extern struct OKIM6295interface atarijsa_okim6295s_interface_REGION_SOUND1;
 		ATARI_CLOCK_14MHz/8,								\
 		atarijsa2_readmem,atarijsa2_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((float)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
 	}
 
 #define JSA_III_CPU											\
@@ -156,7 +156,7 @@ extern struct OKIM6295interface atarijsa_okim6295s_interface_REGION_SOUND1;
 		ATARI_CLOCK_14MHz/8,								\
 		atarijsa3_readmem,atarijsa3_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((float)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
 	}
 
 #define JSA_IIIS_CPU										\
@@ -165,7 +165,7 @@ extern struct OKIM6295interface atarijsa_okim6295s_interface_REGION_SOUND1;
 		ATARI_CLOCK_14MHz/8,								\
 		atarijsa3s_readmem,atarijsa3s_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
+		atarigen_6502_irq_gen,(UINT32)(1000000000.0/((float)ATARI_CLOCK_14MHz/4/4/16/16/14)) \
 	}
 
 

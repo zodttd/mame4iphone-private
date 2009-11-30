@@ -3,7 +3,7 @@
 /*********************************************************/
 
 #include "driver.h"
-
+#include "osinline.h"
 #include <math.h>
 
 #define  PCM_NORMALIZE
@@ -248,11 +248,21 @@ static void SEGAPCMUpdate( int num, INT16 **buffer, int length )
 				spcm.add_addr[i] += spcm.step[i];
 				if( spcm.flag[i] == 1 )  break;
 #ifndef PCM_NORMALIZE
+#ifndef clip_short_ret
 				*(datap[0] + j) = ILimit( (int)*(datap[0] + j) + ((int)(*(pcm_buf + addr) - SPCM_CENTER)*lv), 32767, -32768 );
 				*(datap[1] + j) = ILimit( (int)*(datap[1] + j) + ((int)(*(pcm_buf + addr) - SPCM_CENTER)*rv), 32767, -32768 );
 #else
+				*(datap[0] + j) = clip_short_ret( (int)*(datap[0] + j) + ((int)(*(pcm_buf + addr) - SPCM_CENTER)*lv));
+				*(datap[1] + j) = clip_short_ret( (int)*(datap[1] + j) + ((int)(*(pcm_buf + addr) - SPCM_CENTER)*rv));
+#endif
+#else
+#ifndef clip_short_ret
 				*(datap[0] + j) = ILimit( (int)*(datap[0] + j) + (spcm.pcmd[i] * lv), 32767, -32768 );
 				*(datap[1] + j) = ILimit( (int)*(datap[1] + j) + (spcm.pcmd[i] * rv), 32767, -32768 );
+#else
+				*(datap[0] + j) = clip_short_ret( (int)*(datap[0] + j) + (spcm.pcmd[i] * lv));
+				*(datap[1] + j) = clip_short_ret( (int)*(datap[1] + j) + (spcm.pcmd[i] * rv));
+#endif
 #endif
 			}
 			/**** end of length ****/

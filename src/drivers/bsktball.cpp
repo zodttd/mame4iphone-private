@@ -1,3 +1,6 @@
+#include "../vidhrdw/bsktball.cpp"
+#include "../machine/bsktball.cpp"
+
 /***************************************************************************
 
 Atari Basketball Driver

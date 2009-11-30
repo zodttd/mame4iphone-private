@@ -1,3 +1,5 @@
+#include "../vidhrdw/m62.cpp"
+
 /****************************************************************************
 
 Irem "M62" system
@@ -89,7 +91,7 @@ WRITE_HANDLER( ldrun2_bankswitch_w )
 	{
 		if (data < 1 || data > 30)
 		{
-logerror("unknown bank select %02x\n",data);
+//logerror("unknown bank select %02x\n",data);
 			return;
 		}
 		bankaddress = 0x10000 + (banks[data-1] * 0x2000);

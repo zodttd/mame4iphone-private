@@ -6,23 +6,7 @@ architecture.  Really, it's not so bad!
 **********************************************************/
 
 #include "driver.h"
-#include "mamedbg.h"
 #include "ccpu.h"
-
-static UINT8 ccpu_reg_layout[] = {
-	CCPU_PC, CCPU_CFLAG, CCPU_CSTATE, CCPU_A, CCPU_B, CCPU_I, -1,
-	CCPU_P, CCPU_J, CCPU_ACC, CCPU_CMP, CCPU_PA0, 0,
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 ccpu_win_layout[] = {
-	25, 0,55, 2,	/* register window (top rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-    25, 3,55, 9,    /* memory #1 window (right, upper middle) */
-    25,13,55, 9,    /* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
 
 /* the MAME version of the CCPU registers */
 typedef struct ccpuRegs
@@ -231,63 +215,23 @@ void ccpu_set_irq_callback(int (*callback)(int irqline))
 
 const char *ccpu_info(void *context, int regnum)
 {
-	static char buffer[16][47+1];
-	static int which = 0;
-	CONTEXTCCPU *r = (CONTEXTCCPU *)context;
-
-	which = ++which % 16;
-    buffer[which][0] = '\0';
-	if( !context )
-	{
-        static CONTEXTCCPU tmp;
-		cGetContext(&tmp);
-		r = &tmp;
-	}
-
     switch( regnum )
 	{
-        case CPU_INFO_REG+CCPU_PC: sprintf(buffer[which], "PC:%04X", r->eRegPC); break;
-		case CPU_INFO_REG+CCPU_CFLAG: sprintf(buffer[which], "C:%02X", r->cFlag); break;
-        case CPU_INFO_REG+CCPU_CSTATE: sprintf(buffer[which], "S:%X", r->eCState); break;
-		case CPU_INFO_REG+CCPU_A: sprintf(buffer[which], "A:%03X", r->eRegA); break;
-		case CPU_INFO_REG+CCPU_B: sprintf(buffer[which], "B:%03X", r->eRegB); break;
-		case CPU_INFO_REG+CCPU_I: sprintf(buffer[which], "I:%03X", r->eRegI); break;
-        case CPU_INFO_REG+CCPU_P: sprintf(buffer[which], "P:%X", r->eRegP); break;
-		case CPU_INFO_REG+CCPU_J: sprintf(buffer[which], "J:%03X", r->eRegJ); break;
-		case CPU_INFO_REG+CCPU_ACC: sprintf(buffer[which], "ACC:%03X", r->accVal); break;
-        case CPU_INFO_REG+CCPU_CMP: sprintf(buffer[which], "CMP:%03X", r->cmpVal); break;
-        case CPU_INFO_REG+CCPU_PA0: sprintf(buffer[which], "PA0:%02X", r->pa0); break;
-			break;
-		case CPU_INFO_FLAGS:
-			/* TODO: no idea how the flags should look like */
-			sprintf(buffer[which], "%c-%c%c%c%c",
-				(r->cFlag) ? 'C' : 'c',
-                (r->eCState == state_A || r->eCState == state_AA) ? 'A':' ',
-                (r->eCState == state_A) ? 'A':' ',
-                (r->eCState == state_B || r->eCState == state_BB) ? 'B':' ',
-                (r->eCState == state_B) ? 'B':' ');
-            break;
 		case CPU_INFO_NAME: return "CCPU";
 		case CPU_INFO_FAMILY: return "Cinematronics CPU";
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright 1997/1998 Jeff Mitchell and the Retrocade Alliance\nCopyright 1997 Zonn Moore";
-		case CPU_INFO_REG_LAYOUT: return (const char *)ccpu_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)ccpu_win_layout;
     }
-	return buffer[which];
+	return "";
 
 }
 
 /* TODO: hook up the disassembler */
 unsigned ccpu_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return DasmCCPU(buffer,pc);
-#else
     sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 void ccpu_Config (int jmi, int msize, int monitor)
@@ -456,7 +400,7 @@ void ccpu_SetInputs(int inputs, int switches)
 #ifdef macintosh
 #define UNFINISHED(x)  { SysBeep (0); }
 #else
-#define UNFINISHED(x)  { logerror("UNFINISHED: %s\n", x); }
+#define UNFINISHED(x)  { /*logerror("UNFINISHED: %s\n", x);*/ }
 #endif
 
 /* Handy new operators ... */
@@ -542,7 +486,6 @@ CINELONG cineExec (CINELONG cycles)
    	{
    		int opcode;
 
-		CALL_MAME_DEBUG;
 		/*
 		 * goto the correct piece of code
 		 * for the current opcode. That piece of code will set the state
@@ -1990,7 +1933,7 @@ CINESTATE opJNC_A_B (int opcode)
 CINESTATE opJDR_A_B (int opcode)
 {
 	/* register_PC++; */
-	logerror("The hell? No PC incrementing?\n");
+	//logerror("The hell? No PC incrementing?\n");
 	return state_B;
 }
 
@@ -2179,7 +2122,7 @@ CINESTATE tJPP_A_B (int opcode)
 		case CCPU_MEMSIZE_32K:
 			return opJPP32_A_B (opcode);
 	}
-	logerror("Out of range JPP!\n");
+	//logerror("Out of range JPP!\n");
 	return opJPP32_A_B (opcode);
 }
 
@@ -2196,7 +2139,7 @@ CINESTATE tJPP_B_BB (int opcode)
 		case CCPU_MEMSIZE_32K:
 			return opJPP32_B_BB (opcode);
 	}
-	logerror("Out of range JPP!\n");
+	//logerror("Out of range JPP!\n");
 	return state;
 }
 

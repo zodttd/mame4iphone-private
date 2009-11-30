@@ -280,7 +280,7 @@ struct cpu_interface
 	unsigned num_irqs;
 	int default_vector;
 	int *icount;
-	double overclock;
+	float overclock;
 	int no_int, irq_int, nmi_int;
 	mem_read_handler memory_read;
 	mem_write_handler memory_write;
@@ -288,7 +288,7 @@ struct cpu_interface
 	int address_shift;
 	unsigned address_bits, endianess, align_unit, max_inst_len;
 	unsigned abits1, abits2, abitsmin;
-};
+}  __attribute__ ((__aligned__ (32)));
 
 extern struct cpu_interface cpuintf[];
 
@@ -361,9 +361,9 @@ int cpu_scalebyfcount(int value);
 /* Returns the current scanline number */
 int cpu_getscanline(void);
 /* Returns the amount of time until a given scanline */
-double cpu_getscanlinetime(int scanline);
+timer_tm cpu_getscanlinetime(int scanline);
 /* Returns the duration of a single scanline */
-double cpu_getscanlineperiod(void);
+timer_tm cpu_getscanlineperiod(void);
 /* Returns the duration of a single scanline in cycles */
 int cpu_getscanlinecycles(void);
 /* Returns the number of cycles since the beginning of this frame */
@@ -387,7 +387,7 @@ int cpu_getcurrentframe(void);
 
 
 /* generate a trigger after a specific period of time */
-void cpu_triggertime (double duration, int trigger);
+void cpu_triggertime (timer_tm duration, int trigger);
 /* generate a trigger now */
 void cpu_trigger (int trigger);
 
@@ -398,7 +398,7 @@ void cpu_spinuntil_int (void);
 /* burn CPU cycles until our timeslice is up */
 void cpu_spin (void);
 /* burn CPU cycles for a specific period of time */
-void cpu_spinuntil_time (double duration);
+void cpu_spinuntil_time (timer_tm duration);
 
 /* yield our timeslice for a specific period of time */
 void cpu_yielduntil_trigger (int trigger);
@@ -407,7 +407,7 @@ void cpu_yielduntil_int (void);
 /* yield our current timeslice */
 void cpu_yield (void);
 /* yield our timeslice for a specific period of time */
-void cpu_yielduntil_time (double duration);
+void cpu_yielduntil_time (timer_tm duration);
 
 /* set the NMI line state for a CPU, normally use PULSE_LINE */
 void cpu_set_nmi_line(int cpunum, int state);
@@ -482,20 +482,11 @@ const char *cpu_core_version(void);
 const char *cpu_core_file(void);
 /* Return credits info for of the active CPU */
 const char *cpu_core_credits(void);
-/* Return register layout definition for the active CPU */
-const char *cpu_reg_layout(void);
-/* Return (debugger) window layout definition for the active CPU */
-const char *cpu_win_layout(void);
 
 /* Disassemble an instruction at PC into the given buffer */
 unsigned cpu_dasm(char *buffer, unsigned pc);
 /* Return a string describing the currently set flag (status) bits of the active CPU */
 const char *cpu_flags(void);
-/* Return a string with a register name and hex value for the active CPU */
-/* regnum is a value defined in the CPU cores header files */
-const char *cpu_dump_reg(int regnum);
-/* Return a string describing the active CPUs current state */
-const char *cpu_dump_state(void);
 
 /***************************************************************************
  * Get information for a specific CPU type
@@ -525,10 +516,6 @@ const char *cputype_core_version(int cputype);
 const char *cputype_core_file(int cputype);
 /* Return credits for the CPU core */
 const char *cputype_core_credits(int cputype);
-/* Return register layout definition for the CPU core */
-const char *cputype_reg_layout(int cputype);
-/* Return (debugger) window layout definition for the CPU core */
-const char *cputype_win_layout(int cputype);
 
 /***************************************************************************
  * Get (or set) information for a numbered CPU of the running machine
@@ -550,19 +537,9 @@ unsigned cpunum_get_reg(int cpunum, int regnum);
 /* Set a register value for the specified CPU number of the running machine */
 void cpunum_set_reg(int cpunum, int regnum, unsigned val);
 
-/* Return (debugger) register layout definition for the CPU core */
-const char *cpunum_reg_layout(int cpunum);
-/* Return (debugger) window layout definition for the CPU core */
-const char *cpunum_win_layout(int cpunum);
-
 unsigned cpunum_dasm(int cpunum,char *buffer,unsigned pc);
 /* Return a string describing the currently set flag (status) bits of the CPU */
 const char *cpunum_flags(int cpunum);
-/* Return a string with a register name and value */
-/* regnum is a value defined in the CPU cores header files */
-const char *cpunum_dump_reg(int cpunum, int regnum);
-/* Return a string describing the CPUs current state */
-const char *cpunum_dump_state(int cpunum);
 /* Return a name for the specified cpu number */
 const char *cpunum_name(int cpunum);
 /* Return a family name for the specified cpu number */
@@ -573,9 +550,6 @@ const char *cpunum_core_version(int cpunum);
 const char *cpunum_core_file(int cpunum);
 /* Return a the credits for the specified cpu number */
 const char *cpunum_core_credits(int cpunum);
-
-/* Dump all of the running machines CPUs state to stderr */
-void cpu_dump_states(void);
 
 /* daisy-chain link */
 typedef struct {

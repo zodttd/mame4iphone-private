@@ -209,7 +209,8 @@ static INT32 feedback2;		/* connect for SLOT 2 */
 
 #define LOG_LEVEL LOG_INF
 
-#define LOG(n,x) if( (n)>=LOG_LEVEL ) logerror x
+//#define LOG(n,x) if( (n)>=LOG_LEVEL ) logerror x
+#define LOG(n,x)
 
 /* --------------------- subroutines  --------------------- */
 
@@ -706,7 +707,7 @@ static void OPL_initalize(FM_OPL *OPL)
 	/* frequency base */
 	OPL->freqbase = (OPL->rate) ? ((double)OPL->clock / OPL->rate) / 72  : 0;
 	/* Timer base time */
-	OPL->TimerBase = 1.0/((double)OPL->clock / 72.0 );
+	OPL->TimerBase = (float)TIME_ONE_SEC/((float)OPL->clock / 72.0 );
 	/* make time tables */
 	init_timetables( OPL , OPL_ARRATE , OPL_DRRATE );
 	/* make fnumber -> increment counter table */
@@ -769,14 +770,14 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 				/* timer 2 */
 				if(OPL->st[1] != st2)
 				{
-					double interval = st2 ? (double)OPL->T[1]*OPL->TimerBase : 0.0;
+					timer_tm interval = st2 ? (timer_tm)OPL->T[1]*OPL->TimerBase : 0;
 					OPL->st[1] = st2;
 					if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam+1,interval);
 				}
 				/* timer 1 */
 				if(OPL->st[0] != st1)
 				{
-					double interval = st1 ? (double)OPL->T[0]*OPL->TimerBase : 0.0;
+					timer_tm interval = st1 ? (double)OPL->T[0]*OPL->TimerBase : 0;
 					OPL->st[0] = st1;
 					if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam+0,interval);
 				}
@@ -1251,7 +1252,14 @@ int OPLWrite(FM_OPL *OPL,int a,int v)
 	}
 	else
 	{	/* data port */
+#ifndef MAME_FASTSOUND
 		if(OPL->UpdateHandler) OPL->UpdateHandler(OPL->UpdateParam,0);
+#else
+        {
+            extern int fast_sound;
+            if ((!fast_sound) && (OPL->UpdateHandler)) OPL->UpdateHandler(OPL->UpdateParam,0);
+        }
+#endif
 		OPLWriteReg(OPL,OPL->address,v);
 	}
 	return OPL->status>>7;
@@ -1313,6 +1321,6 @@ int OPLTimerOver(FM_OPL *OPL,int c)
 		}
 	}
 	/* reload timer */
-	if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam+c,(double)OPL->T[c]*OPL->TimerBase);
+	if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam+c,(timer_tm)OPL->T[c]*OPL->TimerBase);
 	return OPL->status>>7;
 }

@@ -1,3 +1,7 @@
+#include "../machine/cchasm.cpp"
+#include "../vidhrdw/cchasm.cpp"
+#include "../sndhrdw/cchasm.cpp"
+
 /*
  * Cosmic Chasm driver
  *

@@ -142,9 +142,6 @@ struct ipd inputport_defaults[] =
 	{ IPT_UI_THROTTLE,          "Throttle",          SEQ_DEF_1(KEYCODE_F10) },
 	{ IPT_UI_SHOW_FPS,          "Show FPS",          SEQ_DEF_5(KEYCODE_F11, CODE_NOT, KEYCODE_LCONTROL, CODE_NOT, KEYCODE_LSHIFT) },
 	{ IPT_UI_SHOW_PROFILER,     "Show Profiler",     SEQ_DEF_2(KEYCODE_F11, KEYCODE_LSHIFT) },
-#ifdef MAME_DEBUG
-	{ IPT_UI_SHOW_COLORS,       "Show Colors",	 SEQ_DEF_2(KEYCODE_F11, KEYCODE_LCONTROL) },
-#endif
 #ifdef MESS
 	{ IPT_UI_TOGGLE_UI,         "UI Toggle",         SEQ_DEF_1(KEYCODE_SCRLOCK) },
 #endif
@@ -192,10 +189,10 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON8             | IPF_PLAYER1, "P1 Button 8",    SEQ_DEF_1(KEYCODE_V) },
 	{ IPT_BUTTON9             | IPF_PLAYER1, "P1 Button 9",    SEQ_DEF_1(KEYCODE_B) },
 	{ IPT_BUTTON10            | IPF_PLAYER1, "P1 Button 10",   SEQ_DEF_1(KEYCODE_N) },
-	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1, "P1 Right/Up",    SEQ_DEF_3(KEYCODE_I, CODE_OR, JOYCODE_1_BUTTON2) },
-	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1, "P1 Right/Down",  SEQ_DEF_3(KEYCODE_K, CODE_OR, JOYCODE_1_BUTTON3) },
-	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1, "P1 Right/Left",  SEQ_DEF_3(KEYCODE_J, CODE_OR, JOYCODE_1_BUTTON1) },
-	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1, "P1 Right/Right", SEQ_DEF_3(KEYCODE_L, CODE_OR, JOYCODE_1_BUTTON4) },
+	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1, "P1 Right/Up",    SEQ_DEF_3(KEYCODE_I, CODE_OR, JOYCODE_1_BUTTON4) },
+	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1, "P1 Right/Down",  SEQ_DEF_3(KEYCODE_K, CODE_OR, JOYCODE_1_BUTTON2) },
+	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1, "P1 Right/Left",  SEQ_DEF_3(KEYCODE_J, CODE_OR, JOYCODE_1_BUTTON3) },
+	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1, "P1 Right/Right", SEQ_DEF_3(KEYCODE_L, CODE_OR, JOYCODE_1_BUTTON1) },
 	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1, "P1 Left/Up",     SEQ_DEF_3(KEYCODE_E, CODE_OR, JOYCODE_1_UP) },
 	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1, "P1 Left/Down",   SEQ_DEF_3(KEYCODE_D, CODE_OR, JOYCODE_1_DOWN) },
 	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1, "P1 Left/Left",   SEQ_DEF_3(KEYCODE_S, CODE_OR, JOYCODE_1_LEFT) },
@@ -1829,7 +1826,7 @@ InputSeq af_fire_off= { KEYCODE_DEL, CODE_NONE };
 static char af_autofire[MAX_AUTOFIRE_BUTTON];
 static char af_noautofire[MAX_AUTOFIRE_BUTTON];
 static char af_autopressed[MAX_AUTOFIRE_BUTTON]; 
-static int af_record_first_insert = 1;
+//static int af_record_first_insert = 1;
 
 int autofire_menu(struct osd_bitmap *bitmap, int selected)
 {
@@ -1966,9 +1963,11 @@ int autofire_menu(struct osd_bitmap *bitmap, int selected)
 void AfButton(int impport)
 {
     int no;
+#if 0
     int i;
     char msg[100];
     char tmp[10];
+#endif
 	
     switch (impport) {
     case IPT_BUTTON1:

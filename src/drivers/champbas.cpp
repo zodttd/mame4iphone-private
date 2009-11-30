@@ -1,3 +1,5 @@
+#include "../vidhrdw/champbas.cpp"
+
 /***************************************************************************
 
 Championship Baseball

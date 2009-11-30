@@ -154,8 +154,4 @@ extern int tms34010_ICount;
 /* Use this macro in the memory definitions to specify bit-based addresses */
 #define TOBYTE(bitaddr) ((offs_t)(bitaddr) >> 3)
 
-#ifdef MAME_DEBUG
-unsigned Dasm34010(char *buff, unsigned _pc);
-#endif
-
 #endif /* _TMS34010_H */

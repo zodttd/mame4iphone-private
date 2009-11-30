@@ -184,18 +184,6 @@ static int wardner_interrupt(void)
 	else return ignore_interrupt();
 }
 
-
-static WRITE_HANDLER( CRTC_add_w )
-{
-	crtc6845_address_w(offset, data);
-}
-
-static WRITE_HANDLER( CRTC_data_w )
-{
-	crtc6845_register_w(0, data);
-	twincobr_display_on = 1;
-}
-
 static READ_HANDLER( wardner_sprite_r )
 {
 	return spriteram[offset];

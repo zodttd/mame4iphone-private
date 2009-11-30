@@ -1,3 +1,6 @@
+#include "../vidhrdw/leland.cpp"
+#include "../sndhrdw/leland.cpp"
+
 /***************************************************************************
 
 	Cinemat/Leland driver
@@ -412,15 +415,6 @@ static int master_interrupt(void)
 	return ignore_interrupt();
 }
 
-
-static READ_HANDLER( master_nmi_clear_r )
-{
-	cpu_set_nmi_line(0, CLEAR_LINE);
-	return 0;
-}
-
-
-
 /*************************************
  *
  *	Master CPU bankswitch handlers
@@ -430,9 +424,9 @@ static READ_HANDLER( master_nmi_clear_r )
 static WRITE_HANDLER( master_alt_bankswitch_w )
 {
 	/* update any bankswitching */
-	if (LOG_BANKSWITCHING_M)
+	/*if (LOG_BANKSWITCHING_M)
 		if ((alternate_bank ^ data) & 0x0f)
-			logerror("%04X:alternate_bank = %02X\n", cpu_getpreviouspc(), data & 0x0f);
+			logerror("%04X:alternate_bank = %02X\n", cpu_getpreviouspc(), data & 0x0f);*/
 	alternate_bank = data & 15;
 	(*update_master_bank)();
 
@@ -523,7 +517,7 @@ static void viper_bankswitch(void)
 	address = &master_base[bank_list[alternate_bank & 3]];
 	if (bank_list[alternate_bank & 3] >= master_length)
 	{
-		logerror("%04X:Master bank %02X out of range!\n", cpu_getpreviouspc(), alternate_bank & 3);
+		//logerror("%04X:Master bank %02X out of range!\n", cpu_getpreviouspc(), alternate_bank & 3);
 		address = &master_base[bank_list[0]];
 	}
 	cpu_setbank(1, address);
@@ -544,7 +538,7 @@ static void offroad_bankswitch(void)
 	address = &master_base[bank_list[alternate_bank & 7]];
 	if (bank_list[alternate_bank & 7] >= master_length)
 	{
-		logerror("%04X:Master bank %02X out of range!\n", cpu_getpreviouspc(), alternate_bank & 7);
+		//logerror("%04X:Master bank %02X out of range!\n", cpu_getpreviouspc(), alternate_bank & 7);
 		address = &master_base[bank_list[0]];
 	}
 	cpu_setbank(1, address);
@@ -661,11 +655,11 @@ static WRITE_HANDLER( battery_ram_w )
 {
 	if (battery_ram_enable)
 	{
-		if (LOG_BATTERY_RAM) logerror("%04X:BatteryW@%04X=%02X\n", cpu_getpreviouspc(), offset, data);
+		//if (LOG_BATTERY_RAM) logerror("%04X:BatteryW@%04X=%02X\n", cpu_getpreviouspc(), offset, data);
 		battery_ram[offset] = data;
 	}
-	else
-		logerror("%04X:BatteryW@%04X (invalid!)\n", cpu_getpreviouspc(), offset, data);
+	/*else
+		logerror("%04X:BatteryW@%04X (invalid!)\n", cpu_getpreviouspc(), offset, data);*/
 }
 
 
@@ -742,7 +736,7 @@ static int keycard_r(void)
 {
 	int result = 0;
 
-	if (LOG_KEYCARDS_FULL) logerror("  (%04X:keycard_r)\n", cpu_getpreviouspc());
+	//if (LOG_KEYCARDS_FULL) logerror("  (%04X:keycard_r)\n", cpu_getpreviouspc());
 
 	/* if we have a valid keycard read state, we're reading from the keycard */
 	if (keycard_state & 0x80)
@@ -751,12 +745,12 @@ static int keycard_r(void)
 		if (keycard_bit == 1)
 		{
 			keycard_shift = 0xff;	/* no data, but this is where we would clock it in */
-			if (LOG_KEYCARDS) logerror("  (clocked in %02X)\n", keycard_shift);
+			//if (LOG_KEYCARDS) logerror("  (clocked in %02X)\n", keycard_shift);
 		}
 
 		/* clock in the bit */
 		result = (~keycard_shift & 1) << ((keycard_state >> 4) & 3);
-		if (LOG_KEYCARDS) logerror("  (read %02X)\n", result);
+		//if (LOG_KEYCARDS) logerror("  (read %02X)\n", result);
 	}
 	return result;
 }
@@ -766,20 +760,20 @@ static void keycard_w(int data)
 	int new_state = data & 0xb0;
 	int new_clock = data & 0x40;
 
-	if (LOG_KEYCARDS_FULL) logerror("  (%04X:keycard_w=%02X)\n", cpu_getpreviouspc(), data);
+	//if (LOG_KEYCARDS_FULL) logerror("  (%04X:keycard_w=%02X)\n", cpu_getpreviouspc(), data);
 
 	/* check for going active */
 	if (!keycard_state && new_state)
 	{
 		keycard_command[0] = keycard_command[1] = keycard_command[2] = 0;
-		if (LOG_KEYCARDS) logerror("keycard going active (state=%02X)\n", new_state);
+		//if (LOG_KEYCARDS) logerror("keycard going active (state=%02X)\n", new_state);
 	}
 
 	/* check for going inactive */
 	else if (keycard_state && !new_state)
 	{
 		keycard_command[0] = keycard_command[1] = keycard_command[2] = 0;
-		if (LOG_KEYCARDS) logerror("keycard going inactive\n");
+		//if (LOG_KEYCARDS) logerror("keycard going inactive\n");
 	}
 
 	/* check for clocks */
@@ -795,7 +789,7 @@ static void keycard_w(int data)
 		/* look for a bit write */
 		else if (!new_clock && !keycard_clock && !(data & 0x80))
 		{
-			if (LOG_KEYCARDS) logerror("  (write %02X)\n", data);
+			//if (LOG_KEYCARDS) logerror("  (write %02X)\n", data);
 
 			keycard_shift &= ~0x80;
 			if (data & (1 << ((new_state >> 4) & 3)))
@@ -804,25 +798,25 @@ static void keycard_w(int data)
 			/* clock out the data on the last bit */
 			if (keycard_bit == 7)
 			{
-				if (LOG_KEYCARDS) logerror("  (clocked out %02X)\n", keycard_shift);
+				//if (LOG_KEYCARDS) logerror("  (clocked out %02X)\n", keycard_shift);
 				keycard_command[0] = keycard_command[1];
 				keycard_command[1] = keycard_command[2];
 				keycard_command[2] = keycard_shift;
 				if (keycard_command[0] == 0x62 && keycard_command[1] == 0x00 && keycard_command[2] == 0x80)
 				{
-					if (LOG_KEYCARDS) logerror("  (got command $62)\n");
+					//if (LOG_KEYCARDS) logerror("  (got command $62)\n");
 				}
 			}
 		}
 	}
 
 	/* error case */
-	else
-	{
+	//else
+	//{
 		/* only an error if the selected bit changes; read/write transitions are okay */
-		if ((new_state & 0x30) != (keycard_state & 0x30))
-			if (LOG_KEYCARDS) logerror("ERROR: Caught keycard state transition %02X -> %02X\n", keycard_state, new_state);
-	}
+		//if ((new_state & 0x30) != (keycard_state & 0x30))
+			//if (LOG_KEYCARDS) logerror("ERROR: Caught keycard state transition %02X -> %02X\n", keycard_state, new_state);
+	//}
 
 	keycard_state = new_state;
 	keycard_clock = new_clock;
@@ -874,9 +868,9 @@ static WRITE_HANDLER( master_analog_key_w )
 			analog_result = readinputport((data & 15) + 4);
 
 			/* update top board banking for some games */
-			if (LOG_BANKSWITCHING_M)
+			/*if (LOG_BANKSWITCHING_M)
 				if ((top_board_bank ^ data) & 0xc0)
-					logerror("%04X:top_board_bank = %02X\n", cpu_getpreviouspc(), data & 0xc0);
+					logerror("%04X:top_board_bank = %02X\n", cpu_getpreviouspc(), data & 0xc0);*/
 			top_board_bank = data & 0xc0;
 			(*update_master_bank)();
 			break;
@@ -927,12 +921,12 @@ static READ_HANDLER( master_input_r )
 
 		case 0x11:	/* /GIN1 */
 			result = readinputport(3);
-			if (LOG_EEPROM) logerror("%04X:EE read\n", cpu_getpreviouspc());
+			//if (LOG_EEPROM) logerror("%04X:EE read\n", cpu_getpreviouspc());
 			result = (result & ~0x01) | EEPROM_read_bit();
 			break;
 
 		default:
-			logerror("Master I/O read offset %02X\n", offset);
+			//logerror("Master I/O read offset %02X\n", offset);
 			break;
 	}
 	return result;
@@ -949,8 +943,8 @@ static WRITE_HANDLER( master_output_w )
 			cpu_set_nmi_line  (1,    (data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
 			cpu_set_irq_line  (1, 0, (data & 0x08) ? CLEAR_LINE : ASSERT_LINE);
 
-			if (LOG_EEPROM) logerror("%04X:EE write %d%d%d\n", cpu_getpreviouspc(),
-					(data >> 6) & 1, (data >> 5) & 1, (data >> 4) & 1);
+			/*if (LOG_EEPROM) logerror("%04X:EE write %d%d%d\n", cpu_getpreviouspc(),
+					(data >> 6) & 1, (data >> 5) & 1, (data >> 4) & 1);*/
 			EEPROM_write_bit     ((data & 0x10) >> 4);
 			EEPROM_set_clock_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 			EEPROM_set_cs_line  ((~data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
@@ -972,7 +966,7 @@ static WRITE_HANDLER( master_output_w )
 			break;
 
 		default:
-			logerror("Master I/O write offset %02X=%02X\n", offset, data);
+			//logerror("Master I/O write offset %02X=%02X\n", offset, data);
 			break;
 	}
 }
@@ -1028,9 +1022,9 @@ static WRITE_HANDLER( sound_port_w )
 	leland_dac_control &= data & 3;
 
     /* some bankswitching occurs here */
-	if (LOG_BANKSWITCHING_M)
+	/*if (LOG_BANKSWITCHING_M)
 		if ((sound_port_bank ^ data) & 0x24)
-			logerror("%04X:sound_port_bank = %02X\n", cpu_getpreviouspc(), data & 0x24);
+			logerror("%04X:sound_port_bank = %02X\n", cpu_getpreviouspc(), data & 0x24);*/
     sound_port_bank = data & 0x24;
     (*update_master_bank)();
 }
@@ -1049,12 +1043,12 @@ static WRITE_HANDLER( slave_small_banksw_w )
 
 	if (bankaddress >= slave_length)
 	{
-		logerror("%04X:Slave bank %02X out of range!", cpu_getpreviouspc(), data & 1);
+		//logerror("%04X:Slave bank %02X out of range!", cpu_getpreviouspc(), data & 1);
 		bankaddress = 0x10000;
 	}
 	cpu_setbank(3, &slave_base[bankaddress]);
 
-	if (LOG_BANKSWITCHING_S) logerror("%04X:Slave bank = %02X (%05X)\n", cpu_getpreviouspc(), data & 1, bankaddress);
+	//if (LOG_BANKSWITCHING_S) logerror("%04X:Slave bank = %02X (%05X)\n", cpu_getpreviouspc(), data & 1, bankaddress);
 }
 
 
@@ -1064,12 +1058,12 @@ static WRITE_HANDLER( slave_large_banksw_w )
 
 	if (bankaddress >= slave_length)
 	{
-		logerror("%04X:Slave bank %02X out of range!", cpu_getpreviouspc(), data & 15);
+		//logerror("%04X:Slave bank %02X out of range!", cpu_getpreviouspc(), data & 15);
 		bankaddress = 0x10000;
 	}
 	cpu_setbank(3, &slave_base[bankaddress]);
 
-	if (LOG_BANKSWITCHING_S) logerror("%04X:Slave bank = %02X (%05X)\n", cpu_getpreviouspc(), data & 15, bankaddress);
+	//if (LOG_BANKSWITCHING_S) logerror("%04X:Slave bank = %02X (%05X)\n", cpu_getpreviouspc(), data & 15, bankaddress);
 }
 
 
@@ -2935,67 +2929,6 @@ void leland_rotate_memory(int cpunum)
 		startaddr += 0x8000;
 	}
 }
-
-
-#ifdef MAME_DEBUG
-/*
-Copy this code into the init function and modify:
-{
-	UINT8 *ram = memory_region(REGION_CPU1);
-	FILE *output;
-
-	output = fopen("indyheat.m", "w");
-	dasm_chunk("Resident", 		&ram[0x00000], 0x0000, 0x2000, output);
-	dasm_chunk("Bank 0x02000:", &ram[0x02000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x10000:", &ram[0x10000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x18000:", &ram[0x18000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x20000:", &ram[0x20000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x28000:", &ram[0x28000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x30000:", &ram[0x30000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x38000:", &ram[0x38000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x40000:", &ram[0x40000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x48000:", &ram[0x48000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x50000:", &ram[0x50000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x58000:", &ram[0x58000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x60000:", &ram[0x60000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x68000:", &ram[0x68000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x70000:", &ram[0x70000], 0x2000, 0x8000, output);
-	dasm_chunk("Bank 0x78000:", &ram[0x78000], 0x2000, 0x8000, output);
-	fclose(output);
-}
-*/
-static void dasm_chunk(char *tag, UINT8 *base, UINT16 pc, UINT32 length, FILE *output)
-{
-	extern unsigned DasmZ80(char *buffer, unsigned _pc);
-
-	UINT8 *old_rom = OP_ROM;
-	UINT8 *old_ram = OP_RAM;
-	char buffer[256];
-	int count, offset, i;
-
-	fprintf(output, "\n\n\n%s:\n", tag);
-	OP_ROM = OP_RAM = &base[-pc];
-	for (offset = 0; offset < length; offset += count)
-	{
-		count = DasmZ80(buffer, pc);
-		for (i = 0; i < 4; i++)
-			if (i < count)
-				fprintf(output, "%c", (OP_ROM[pc + i] >= 32 && OP_ROM[pc + i] < 127) ? OP_ROM[pc + i] : ' ');
-			else
-				fprintf(output, " ");
-		fprintf(output, " %04X: ", pc);
-		for (i = 0; i < 4; i++)
-			if (i < count)
-				fprintf(output, "%02X ", OP_ROM[pc++]);
-			else
-				fprintf(output, "   ");
-		fprintf(output, "%s\n", buffer);
-	}
-	OP_ROM = old_rom;
-	OP_RAM = old_ram;
-}
-#endif
-
 
 static void init_master_ports(UINT8 mvram_base, UINT8 io_base)
 {

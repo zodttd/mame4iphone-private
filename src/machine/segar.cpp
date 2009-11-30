@@ -82,10 +82,10 @@ WRITE_HANDLER( segar_w )
 	{
 		segar_characterram2_w(off - 0xF800,data);
 	}
-	else
+	/*else
 	{
 		logerror("unmapped write at %04X:%02X\n",off,data);
-	}
+	}*/
 }
 
 

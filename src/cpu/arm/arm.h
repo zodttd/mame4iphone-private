@@ -83,9 +83,5 @@ extern void arm_set_irq_callback(int (*callback)(int irqline));
 extern const char *arm_info(void *context, int regnum);
 extern unsigned arm_dasm(char *buffer, unsigned pc);
 
-#ifdef MAME_DEBUG
-extern unsigned DasmARM(char *buffer, unsigned pc);
-#endif
-
 #endif /* _ARM_H */
 

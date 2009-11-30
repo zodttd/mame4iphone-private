@@ -40,7 +40,6 @@ addresses take place.
 #include <stdio.h>
 #include "driver.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "m6509.h"
 
 #include "ops02.h"
@@ -57,22 +56,6 @@ addresses take place.
 #else
 #define LOG(x)
 #endif
-
-/* Layout of the registers in the debugger */
-static UINT8 m6509_reg_layout[] = {
-	M6509_A,M6509_X,M6509_Y,M6509_S,M6509_PC, M6509_P,-1,
-	M6509_PC_BANK, M6509_IND_BANK, M6509_EA, M6509_ZP, -1,
-	M6509_NMI_STATE, M6509_IRQ_STATE, M6509_SO_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6509_win_layout[] = {
-	25, 0,55, 3,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 4,55, 8,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 typedef struct {
 	UINT8	subtype;		/* currently selected cpu sub type */
@@ -284,8 +267,6 @@ int m6509_execute(int cycles)
 		UINT8 op;
 		PPC = PCD;
 
-		CALL_MAME_DEBUG;
-
 		/* if an irq is pending, take it now */
 		if( m6509.pending_irq )
 			m6509_take_irq();
@@ -406,41 +387,8 @@ void m6509_state_load(void *file)
  ****************************************************************************/
 const char *m6509_info(void *context, int regnum)
 {
-	static char buffer[16][47+1];
-	static int which = 0;
-	m6509_Regs *r = context;
-
-	which = ++which % 16;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &m6509;
-
 	switch( regnum )
 	{
-		case CPU_INFO_REG+M6509_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+M6509_S: sprintf(buffer[which], "S:%02X", r->sp.b.l); break;
-		case CPU_INFO_REG+M6509_P: sprintf(buffer[which], "P:%02X", r->p); break;
-		case CPU_INFO_REG+M6509_A: sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+M6509_X: sprintf(buffer[which], "X:%02X", r->x); break;
-		case CPU_INFO_REG+M6509_Y: sprintf(buffer[which], "Y:%02X", r->y); break;
-		case CPU_INFO_REG+M6509_PC_BANK: sprintf(buffer[which], "0:%01X", r->pc_bank.b.h2); break;
-		case CPU_INFO_REG+M6509_IND_BANK: sprintf(buffer[which], "1:%01X", r->ind_bank.b.h2); break;
-		case CPU_INFO_REG+M6509_EA: sprintf(buffer[which], "EA:%05X", r->ea.d); break;
-		case CPU_INFO_REG+M6509_ZP: sprintf(buffer[which], "ZP:%05X", r->zp.d); break;
-		case CPU_INFO_REG+M6509_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+M6509_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_REG+M6509_SO_STATE: sprintf(buffer[which], "SO:%X", r->so_state); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->p & 0x80 ? 'N':'.',
-				r->p & 0x40 ? 'V':'.',
-				r->p & 0x20 ? 'R':'.',
-				r->p & 0x10 ? 'B':'.',
-				r->p & 0x08 ? 'D':'.',
-				r->p & 0x04 ? 'I':'.',
-				r->p & 0x02 ? 'Z':'.',
-				r->p & 0x01 ? 'C':'.');
-			break;
 		case CPU_INFO_NAME: return "M6509";
 		case CPU_INFO_FAMILY: return "MOS Technology 6509";
 		case CPU_INFO_VERSION: return "1.0beta";
@@ -449,20 +397,14 @@ const char *m6509_info(void *context, int regnum)
 				"Copyright (c) 2000 Peter Trauner\n"
 				"all rights reserved.";
 		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_REG_LAYOUT: return (const char*)m6509_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m6509_win_layout;
 	}
 	return buffer[which];
 }
 
 unsigned m6509_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm6509( buffer, pc );
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 

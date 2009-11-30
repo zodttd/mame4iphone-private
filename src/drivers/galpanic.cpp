@@ -1,3 +1,5 @@
+#include "../vidhrdw/galpanic.cpp"
+
 /***************************************************************************
 
 The current ROM set is strange because two ROMs overlap two others replacing

@@ -1,3 +1,7 @@
+#include "../machine/geebee.cpp"
+#include "../vidhrdw/geebee.cpp"
+#include "../sndhrdw/geebee.cpp"
+
 /****************************************************************************
  *
  * geebee.c

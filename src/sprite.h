@@ -11,11 +11,9 @@
 #define SPRITE_SHADOW					0x40
 #define SPRITE_PARTIAL_SHADOW			0x80
 
-typedef enum {
-	SPRITE_TYPE_STACK = 0,
-	SPRITE_TYPE_UNPACK,
-	SPRITE_TYPE_ZOOM
-} SpriteType;
+#define SPRITE_TYPE_STACK 0
+#define SPRITE_TYPE_UNPACK 1
+#define SPRITE_TYPE_ZOOM 2
 
 struct sprite {
 	int priority, flags;
@@ -35,7 +33,7 @@ struct sprite {
 
 	/* private */ const struct sprite *next;
 	/* private */ long mask_offset;
-};
+} __attribute__ ((__aligned__ (32)));
 
 /* sprite list flags */
 #define SPRITE_LIST_BACK_TO_FRONT	0x0
@@ -45,7 +43,7 @@ struct sprite {
 #define SPRITE_LIST_FLIPY			0x8
 
 struct sprite_list {
-	SpriteType sprite_type;
+	int sprite_type;
 	int num_sprites;
 	int flags;
 	int max_priority;

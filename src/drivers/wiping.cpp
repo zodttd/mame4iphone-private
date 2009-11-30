@@ -1,3 +1,6 @@
+#include "../vidhrdw/wiping.cpp"
+#include "../sndhrdw/wiping.cpp"
+
 /***************************************************************************
 				Wiping
 			    (C) 1982 Nichibutsu

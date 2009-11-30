@@ -1,3 +1,6 @@
+#include "../machine/lsasquad.cpp"
+#include "../vidhrdw/lsasquad.cpp"
+
 /***************************************************************************
 
 Land Sea Air Squad / Storming Party  (c) 1986 Taito

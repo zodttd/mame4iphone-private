@@ -1,3 +1,5 @@
+#include "../vidhrdw/kaneko16.cpp"
+
 /***************************************************************************
 
 						-= Kaneko 16 Bit Games =-
@@ -190,9 +192,9 @@ void gtmr_mcu_run(void)
 {
 	int mcu_command	=	READ_WORD(&mcu_ram[0x0010]);
 	int mcu_offset	=	READ_WORD(&mcu_ram[0x0012]);
-	int mcu_data	=	READ_WORD(&mcu_ram[0x0014]);
+	//int mcu_data	=	READ_WORD(&mcu_ram[0x0014]);
 
-	logerror("CPU #0 PC %06X : MCU executed command: %04X %04X %04X\n",cpu_get_pc(),mcu_command,mcu_offset,mcu_data);
+	//logerror("CPU #0 PC %06X : MCU executed command: %04X %04X %04X\n",cpu_get_pc(),mcu_command,mcu_offset,mcu_data);
 
 	switch (mcu_command >> 8)
 	{
@@ -297,8 +299,8 @@ void shogwarr_mcu_run(void)
 
 	if (!mcu_command) return;
 
-	logerror("CPU #0 PC %06X : MCU executed command at %04X: %04X\n",
-	 	cpu_get_pc(),shogwarr_mcu_command_offset,mcu_command);
+	/*logerror("CPU #0 PC %06X : MCU executed command at %04X: %04X\n",
+	 	cpu_get_pc(),shogwarr_mcu_command_offset,mcu_command);*/
 
 	switch (mcu_command)
 	{

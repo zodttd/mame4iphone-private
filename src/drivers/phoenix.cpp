@@ -1,3 +1,6 @@
+#include "../vidhrdw/phoenix.cpp"
+#include "../sndhrdw/phoenix.cpp"
+
 /***************************************************************************
 
 Phoenix memory map

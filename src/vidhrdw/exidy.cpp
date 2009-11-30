@@ -312,11 +312,11 @@ static void update_background(void)
  *
  *************************************/
 
-static double pixel_time(int x, int y)
+static timer_tm pixel_time(int x, int y)
 {
 	/* assuming this is called at refresh time, compute how long until we
 	 * hit the given x,y position */
-	return cpu_getscanlinetime(y) + (cpu_getscanlineperiod() * (double)x * (1.0 / 256.0));
+	return cpu_getscanlinetime(y) + (cpu_getscanlineperiod() * (timer_tm)x * (TIME_ONE_SEC / 256));
 }
 
 

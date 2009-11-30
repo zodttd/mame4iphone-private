@@ -183,7 +183,7 @@ READ_HANDLER( starwars_main_read_r )
 {
 	int res;
 
-	logerror("main_read_r\n");
+	//logerror("main_read_r\n");
 
 	port_A &= 0xbf;  /* ready to receive new commands from sound cpu */
 	res = main_data;

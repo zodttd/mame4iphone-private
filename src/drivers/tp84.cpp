@@ -1,3 +1,5 @@
+#include "../vidhrdw/tp84.cpp"
+
 /***************************************************************************
 
 Time Pilot 84 Memory Map (preliminary)

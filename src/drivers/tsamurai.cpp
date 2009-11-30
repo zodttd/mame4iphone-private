@@ -1,3 +1,5 @@
+#include "../vidhrdw/tsamurai.cpp"
+
 /****************************************************************************
 
 	Preliminary driver for Samurai, Nunchackun, Yuke Yuke Yamaguchi-kun

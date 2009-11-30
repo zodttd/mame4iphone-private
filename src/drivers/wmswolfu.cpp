@@ -1,3 +1,5 @@
+#include "../machine/wmswolfu.cpp"
+
 /*************************************************************************
 
 	Driver for Midway Wolf-unit games

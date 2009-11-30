@@ -1,3 +1,5 @@
+#include "../vidhrdw/magix.cpp"
+
 /***************************************************************************
 
 								-=  Magix  =-
@@ -67,7 +69,7 @@ WRITE_HANDLER( magix_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	int bank = data & 7;
-	if (bank != data)	logerror("CPU #0 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	//if (bank != data)	logerror("CPU #0 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
 
 	if (bank < 3)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-3) + 0x10000];
@@ -151,7 +153,7 @@ WRITE_HANDLER( magix_sound_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bank = data & 7;
 
-	if ( bank != (data&(~0x20)) ) 	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	//if ( bank != (data&(~0x20)) ) 	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
 
 	if (bank < 3)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-3) + 0x10000];

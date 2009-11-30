@@ -1,3 +1,5 @@
+#include "../vidhrdw/m79amb.cpp"
+
 /* Ramtek M79 Ambush */
 
 #include "driver.h"

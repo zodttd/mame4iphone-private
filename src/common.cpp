@@ -142,7 +142,6 @@ int readroms(void)
 				drv = Machine->gamedrv;
 				do
 				{
-					fprintf(stderr, "OSD_FILETYPE_ROM %s %s\n", drv->name,name);
 					f = osd_fopen(drv->name,name,OSD_FILETYPE_ROM,0);
 					drv = drv->clone_of;
 				} while (f == 0 && drv);

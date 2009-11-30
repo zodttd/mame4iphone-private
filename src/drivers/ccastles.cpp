@@ -1,3 +1,5 @@
+#include "../vidhrdw/ccastles.cpp"
+
 /***************************************************************************
 
 I'm in no mood to write documentation now, so if you have any questions

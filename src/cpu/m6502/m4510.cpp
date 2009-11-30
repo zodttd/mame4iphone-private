@@ -103,7 +103,6 @@ z:      xxxx address bits a19 .. a16 for memory accesses with a15 1 ?
 #include <stdio.h>
 #include "driver.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "m4510.h"
 
 #include "ops02.h"
@@ -118,26 +117,6 @@ z:      xxxx address bits a19 .. a16 for memory accesses with a15 1 ?
 #else
 #define LOG(x)
 #endif
-
-/* Layout of the registers in the debugger */
-static UINT8 m4510_reg_layout[] = {
-	M4510_A,M4510_X,M4510_Y,M4510_Z,M4510_S,M4510_PC,
-	M4510_MEM_LOW, 
-	-1,
-	M4510_EA,M4510_ZP,M4510_NMI_STATE,M4510_IRQ_STATE, M4510_B,
-	M4510_P, 
-	M4510_MEM_HIGH,
-	0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m4510_win_layout[] = {
-	25, 0,55, 2,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 typedef struct {
 	void	(**insn)(void); /* pointer to the function pointer table */
@@ -358,8 +337,6 @@ int m4510_execute(int cycles)
 		UINT8 op;
 		PPC = PCD;
 
-		CALL_MAME_DEBUG;
-
 		/* if an irq is pending, take it now */
 		if( m4510.pending_irq )
 			m4510_take_irq();
@@ -471,42 +448,8 @@ void m4510_state_load(void *file)
  ****************************************************************************/
 const char *m4510_info(void *context, int regnum)
 {
-	static char buffer[16][47+1];
-	static int which = 0;
-	m4510_Regs *r = context;
-
-	which = ++which % 16;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &m4510;
-
 	switch( regnum )
 	{
-		case CPU_INFO_REG+M4510_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+M4510_S: sprintf(buffer[which], "S:%04X", r->sp.w.l); break;
-		case CPU_INFO_REG+M4510_P: sprintf(buffer[which], "P:%02X", r->p); break;
-		case CPU_INFO_REG+M4510_MEM_LOW: sprintf(buffer[which], "LO:%04X", r->low); break;
-		case CPU_INFO_REG+M4510_MEM_HIGH: sprintf(buffer[which], "HI:%04X", r->high); break;
-		case CPU_INFO_REG+M4510_A: sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+M4510_X: sprintf(buffer[which], "X:%02X", r->x); break;
-		case CPU_INFO_REG+M4510_Y: sprintf(buffer[which], "Y:%02X", r->y); break;
-		case CPU_INFO_REG+M4510_Z: sprintf(buffer[which], "Z:%02X", r->z); break;
-		case CPU_INFO_REG+M4510_B: sprintf(buffer[which], "B:%02X", r->zp.b.h); break;
-		case CPU_INFO_REG+M4510_EA: sprintf(buffer[which], "EA:%04X", r->ea.w.l); break;
-		case CPU_INFO_REG+M4510_ZP: sprintf(buffer[which], "ZP:%04X", r->zp.w.l); break;
-		case CPU_INFO_REG+M4510_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+M4510_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->p & 0x80 ? 'N':'.',
-				r->p & 0x40 ? 'V':'.',
-				r->p & 0x20 ? 'E':'.',
-				r->p & 0x10 ? 'B':'.',
-				r->p & 0x08 ? 'D':'.',
-				r->p & 0x04 ? 'I':'.',
-				r->p & 0x02 ? 'Z':'.',
-				r->p & 0x01 ? 'C':'.');
-			break;
 		case CPU_INFO_NAME: return "M4510";
 		case CPU_INFO_FAMILY: return "CBM Semiconductor Group CSG 65CE02";
 		case CPU_INFO_VERSION: return "1.0beta";
@@ -515,20 +458,14 @@ const char *m4510_info(void *context, int regnum)
 				"Copyright (c) 2000 Peter Trauner\n"
 				"all rights reserved.";
 		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_REG_LAYOUT: return (const char*)m4510_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)m4510_win_layout;
 	}
-	return buffer[which];
+	return "";
 }
 
 unsigned m4510_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm4510( buffer, pc );
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 

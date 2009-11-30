@@ -315,29 +315,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "driver.h"
-#include "mamedbg.h"
 #include "pdp1.h"
 
 #define READ_PDP_18BIT(A) ((signed)cpu_readmem16(A))
 #define WRITE_PDP_18BIT(A,V) (cpu_writemem16(A,V))
-
-/* Layout of the registers in the debugger */
-static UINT8 pdp1_reg_layout[] =
-{
-	PDP1_PC, PDP1_AC, PDP1_IO, PDP1_Y, PDP1_IB, PDP1_OV, PDP1_F, -1,
-	PDP1_F1, PDP1_F2, PDP1_F3, PDP1_F4, PDP1_F5, PDP1_F6, -1,
-	PDP1_S1, PDP1_S2, PDP1_S3, PDP1_S4, PDP1_S5, PDP1_S6, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 pdp1_win_layout[] =
-{
-	 0,  0, 80,  4, /* register window (top rows) */
-	 0,  5, 24, 17, /* disassembler window (left colums) */
-	25,  5, 55,  8, /* memory #1 window (right, upper middle) */
-	25, 14, 55,  8, /* memory #2 window (right, lower middle) */
-	0,	23, 80,  1, /* command line window (bottom rows) */
-};
 
 int intern_iot (int *io, int md);
 int (*extern_iot) (int *, int) = intern_iot;
@@ -516,8 +497,6 @@ int pdp1_execute (int cycles)
 	do
 	{
 
-		CALL_MAME_DEBUG;
-
 		word18 = READ_PDP_18BIT (PC++);
 /*
 		logerror("PC:0%06o ",PC-1);
@@ -539,12 +518,8 @@ int pdp1_execute (int cycles)
 
 unsigned pdp1_dasm (char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return dasmpdp1 (buffer, pc);
-#else
 	sprintf (buffer, "0%06o", READ_PDP_18BIT (pc));
 	return 1;
-#endif
 }
 
 static int etime = 0;
@@ -572,51 +547,8 @@ INLINE void ea (void)
  ****************************************************************************/
 const char *pdp1_info (void *context, int regnum)
 {
-	static char buffer[16][47 + 1];
-	static int which = 0;
-	pdp1_Regs *r = context;
-
-	which = ++which % 16;
-	buffer[which][0] = '\0';
-	if (!context)
-		r = &pdp1;
-
 	switch (regnum)
 	{
-	case CPU_INFO_REG + PDP1_PC: sprintf (buffer[which], "PC:0%06o", r->pc); break;
-	case CPU_INFO_REG + PDP1_AC: sprintf (buffer[which], "AC:0%06o", r->ac); break;
-	case CPU_INFO_REG + PDP1_IO: sprintf (buffer[which], "IO:0%06o", r->io); break;
-	case CPU_INFO_REG + PDP1_Y:  sprintf (buffer[which], "Y :0%06o", r->y);  break;
-	case CPU_INFO_REG + PDP1_IB: sprintf (buffer[which], "IB:0%06o", r->ib); break;
-	case CPU_INFO_REG + PDP1_OV: sprintf (buffer[which], "OV:0%06o", r->ov); break;
-	case CPU_INFO_REG + PDP1_F:  sprintf (buffer[which], "F :0%06o", r->f);  break;
-	case CPU_INFO_REG + PDP1_F1: sprintf (buffer[which], "FLAG1:%X", r->flag[1]); break;
-	case CPU_INFO_REG + PDP1_F2: sprintf (buffer[which], "FLAG2:%X", r->flag[2]); break;
-	case CPU_INFO_REG + PDP1_F3: sprintf (buffer[which], "FLAG3:%X", r->flag[3]); break;
-	case CPU_INFO_REG + PDP1_F4: sprintf (buffer[which], "FLAG4:%X", r->flag[4]); break;
-	case CPU_INFO_REG + PDP1_F5: sprintf (buffer[which], "FLAG5:%X", r->flag[5]); break;
-	case CPU_INFO_REG + PDP1_F6: sprintf (buffer[which], "FLAG6:%X", r->flag[6]); break;
-	case CPU_INFO_REG + PDP1_S1: sprintf (buffer[which], "SENSE1:%X", r->sense[1]); break;
-	case CPU_INFO_REG + PDP1_S2: sprintf (buffer[which], "SENSE2:%X", r->sense[2]); break;
-	case CPU_INFO_REG + PDP1_S3: sprintf (buffer[which], "SENSE3:%X", r->sense[3]); break;
-	case CPU_INFO_REG + PDP1_S4: sprintf (buffer[which], "SENSE4:%X", r->sense[4]); break;
-	case CPU_INFO_REG + PDP1_S5: sprintf (buffer[which], "SENSE5:%X", r->sense[5]); break;
-	case CPU_INFO_REG + PDP1_S6: sprintf (buffer[which], "SENSE6:%X", r->sense[6]); break;
-    case CPU_INFO_FLAGS:
-		sprintf (buffer[which], "%c%c%c%c%c%c-%c%c%c%c%c%c",
-				 r->flag[6] ? '6' : '.',
-				 r->flag[5] ? '5' : '.',
-				 r->flag[4] ? '4' : '.',
-				 r->flag[3] ? '3' : '.',
-				 r->flag[2] ? '2' : '.',
-				 r->flag[1] ? '1' : '.',
-				 r->sense[6] ? '6' : '.',
-				 r->sense[5] ? '5' : '.',
-				 r->sense[4] ? '4' : '.',
-				 r->sense[3] ? '3' : '.',
-				 r->sense[2] ? '2' : '.',
-				 r->sense[1] ? '1' : '.');
-		break;
 	case CPU_INFO_NAME: return "PDP1";
 	case CPU_INFO_FAMILY: return "DEC PDP-1";
 	case CPU_INFO_VERSION: return "1.1";
@@ -625,10 +557,8 @@ const char *pdp1_info (void *context, int regnum)
 			"Brian Silverman (original Java Source)\n"
 			"Vadim Gerasimov (original Java Source)\n"
 			"Chris Salomon (MESS driver)\n";
-	case CPU_INFO_REG_LAYOUT: return (const char *) pdp1_reg_layout;
-	case CPU_INFO_WIN_LAYOUT: return (const char *) pdp1_win_layout;
 	}
-	return buffer[which];
+	return "";
 }
 
 
@@ -941,9 +871,9 @@ int execute_instruction (int md)
 				/* ignored till I emulate the extention switches... with
 				 * continue...
 				 */
-				logerror("PDP1 Program executed HALT: at ");
-				logerror("0%06o\n", PC - 1);
-				logerror("HALT ignored...\n");
+				//logerror("PDP1 Program executed HALT: at ");
+				//logerror("0%06o\n", PC - 1);
+				//logerror("HALT ignored...\n");
 				/* exit(1); */
 			}
 			nflag = Y & 7;

@@ -1,3 +1,5 @@
+#include "../vidhrdw/xexex.cpp"
+
 /***************************************************************************
 
 Xexex
@@ -137,34 +139,16 @@ static int sound_status = 0, sound_cmd = 0;
 
 static WRITE_HANDLER( sound_cmd_w )
 {
-	logerror("Sound command : %d\n", data & 0xff);
+	//logerror("Sound command : %d\n", data & 0xff);
 	sound_cmd = data & 0xff;
 	//	cpu_set_irq_line(1, 0, HOLD_LINE);
 	if(sound_cmd == 0xfe)
 	  sound_status = 0x7f;
 }
 
-static WRITE_HANDLER( sound_status_w )
-{
-	logerror("Sound status = %d\n", data);
-	sound_status = data;
-}
-
-static READ_HANDLER( sound_cmd_r )
-{
-	logerror("Sound CPU read command %d\n", sound_cmd & 0xff);
-	cpu_set_irq_line(1, 0, CLEAR_LINE);
-	return sound_cmd;
-}
-
 static READ_HANDLER( sound_status_r )
 {
 	return sound_status;
-}
-
-static WRITE_HANDLER( sound_bankswitch_w )
-{
-	cpu_setbank(3, memory_region(REGION_CPU2) + 0x10000 + (data&7)*0x2000);
 }
 
 static READ_HANDLER( back_ctrla_r )
@@ -176,7 +160,7 @@ static WRITE_HANDLER( back_ctrla_w )
 {
 	data &= 0xff;
 	if(data != cur_back_ctrla) {
-		logerror("Back: ctrla = %02x (%08x)\n", data, cpu_get_pc());
+		//logerror("Back: ctrla = %02x (%08x)\n", data, cpu_get_pc());
 		cur_back_ctrla = data;
 	}
 }
@@ -190,15 +174,15 @@ static WRITE_HANDLER( back_select_w )
 {
 	data &= 0xff;
 	if(data != cur_back_select) {
-		logerror("Back: select = %02x (%08x)\n", data, cpu_get_pc());
+		//logerror("Back: select = %02x (%08x)\n", data, cpu_get_pc());
 		cur_back_select = data;
 	}
 }
 
 static READ_HANDLER( backrom_r )
 {
-	if (!(cur_back_ctrla & 1))
-		logerror("Back: Reading rom memory with enable=0\n");
+	/*if (!(cur_back_ctrla & 1))
+		logerror("Back: Reading rom memory with enable=0\n");*/
 	return *(memory_region(REGION_GFX3) + 2048*cur_back_select + (offset>>2));
 }
 

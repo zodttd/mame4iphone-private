@@ -1,3 +1,5 @@
+#include "../vidhrdw/minivadr.cpp"
+
 /***************************************************************************
 
 Minivader (Space Invaders's mini game)

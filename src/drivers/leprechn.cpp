@@ -1,3 +1,5 @@
+#include "../vidhrdw/leprechn.cpp"
+
 /***************************************************************************
 
  Leprechaun memory map (preliminary)

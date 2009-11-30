@@ -186,7 +186,8 @@ WRITE_HANDLER( ginganin_vregs_w )
 					 cpu_cause_interrupt(1,M6809_INT_NMI);
 				   } break;
 
-		default  : {logerror("CPU #0 PC %06X : Warning, videoreg %04X <- %04X\n",cpu_get_pc(),offset,data);}
+		default  : //{logerror("CPU #0 PC %06X : Warning, videoreg %04X <- %04X\n",cpu_get_pc(),offset,data);}
+		    break;
 	}
 }
 
@@ -259,37 +260,6 @@ int i, offs;
 int layers_ctrl1;
 
 layers_ctrl1 = layers_ctrl;
-
-#ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z))
-{
-int msk = 0;
-char buf[80];
-static int posx,posy;
-
-	if (keyboard_pressed(KEYCODE_Q)) { msk |= 0xfff1;}
-	if (keyboard_pressed(KEYCODE_W)) { msk |= 0xfff2;}
-	if (keyboard_pressed(KEYCODE_E)) { msk |= 0xfff4;}
-	if (keyboard_pressed(KEYCODE_A))	{ msk |= 0xfff8;}
-	if (msk != 0) layers_ctrl1 &= msk;
-
-#define SETSCROLL \
-	tilemap_set_scrollx(bg_tilemap, 0, posx); \
-	tilemap_set_scrolly(bg_tilemap, 0, posy); \
-	tilemap_set_scrollx(fg_tilemap, 0, posx); \
-	tilemap_set_scrolly(fg_tilemap, 0, posy); \
-	sprintf(buf,"B>%04X:%04X F>%04X:%04X",posx%(BG_NX*16),posy%(BG_NY*16),posx%(FG_NX*16),posy%(FG_NY*16)); \
-	usrintf_showmessage(buf);
-
-	if (keyboard_pressed(KEYCODE_L))	{ posx +=8; SETSCROLL }
-	if (keyboard_pressed(KEYCODE_J))	{ posx -=8; SETSCROLL }
-	if (keyboard_pressed(KEYCODE_K))	{ posy +=8; SETSCROLL }
-	if (keyboard_pressed(KEYCODE_I))	{ posy -=8; SETSCROLL }
-	if (keyboard_pressed(KEYCODE_H))	{ posx = posy = 0;  SETSCROLL }
-
-}
-#endif
-
 
 	tilemap_update(ALL_TILEMAPS);
 

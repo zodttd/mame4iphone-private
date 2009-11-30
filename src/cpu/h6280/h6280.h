@@ -19,11 +19,6 @@ enum {
 	H6280_PC=1, H6280_S, H6280_P, H6280_A, H6280_X, H6280_Y,
 	H6280_IRQ_MASK, H6280_TIMER_STATE,
 	H6280_NMI_STATE, H6280_IRQ1_STATE, H6280_IRQ2_STATE, H6280_IRQT_STATE
-#ifdef MAME_DEBUG
-    ,
-	H6280_M1, H6280_M2, H6280_M3, H6280_M4,
-	H6280_M5, H6280_M6, H6280_M7, H6280_M8
-#endif
 };
 
 //#define LAZY_FLAGS  1
@@ -64,9 +59,5 @@ WRITE_HANDLER( H6280_irq_status_w );
 
 READ_HANDLER( H6280_timer_r );
 WRITE_HANDLER( H6280_timer_w );
-
-#ifdef MAME_DEBUG
-extern int Dasm6280(char *buffer, int pc);
-#endif
 
 #endif /* _H6280_H */

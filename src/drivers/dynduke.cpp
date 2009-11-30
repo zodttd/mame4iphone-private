@@ -1,3 +1,5 @@
+#include "../vidhrdw/dynduke.cpp"
+
 /***************************************************************************
 
 	Dynamite Duke						(c) 1989 Seibu Kaihatsu/Fabtek

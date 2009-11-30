@@ -1,3 +1,5 @@
+#include "../machine/rainbow.cpp"
+
 /***************************************************************************
   Rainbow Islands (and Jumping)
 

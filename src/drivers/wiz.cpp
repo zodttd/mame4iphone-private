@@ -1,3 +1,5 @@
+#include "../vidhrdw/wiz.cpp"
+
 /***************************************************************************
 
 Wiz/Stinger/Scion memory map (preliminary)

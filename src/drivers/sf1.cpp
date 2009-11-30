@@ -1,3 +1,5 @@
+#include "../vidhrdw/sf1.cpp"
+
 /***************************************************************************
 
   Street Fighter 1
@@ -166,8 +168,8 @@ static WRITE_HANDLER( protection_w )
 		}
 	default:
 		{
-			logerror("Write protection at %06x (%04x)\n", cpu_get_pc(), data&0xffff);
-			logerror("*** Unknown protection %d\n", cpu_readmem24bew(0xffc684));
+			//logerror("Write protection at %06x (%04x)\n", cpu_get_pc(), data&0xffff);
+			//logerror("*** Unknown protection %d\n", cpu_readmem24bew(0xffc684));
 			break;
 		}
 	}

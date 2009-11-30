@@ -208,11 +208,6 @@ actual code sent to the hardware.
 
 /* Variables only used here: */
 
-/* For debug purposes: */
-#ifdef MAME_DEBUG
-static int debugsprites;
-#endif
-
 /* Variables defined here, that have to be shared: */
 struct tilemap *megasys1_tmap_0, *megasys1_tmap_1, *megasys1_tmap_2;
 unsigned char *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
@@ -489,8 +484,6 @@ int old_data, new_data;
 		case 0x308   :	ms_soundlatch_w(0,new_data);
 						cpu_cause_interrupt(1,4);
 						break;
-
-		default		 :	SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
 	}
 
 }
@@ -545,8 +538,6 @@ int old_data, new_data;
 						ms_soundlatch_w(0,new_data);
 						cpu_cause_interrupt(1,2);
 						break;
-
-		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
 	}
 }
 
@@ -577,8 +568,6 @@ int old_data, new_data;
 		case 0x2200   :	megasys1_sprite_flag	=	new_data;		break;
 		case 0x2208   : megasys1_active_layers	=	new_data;		break;
 		case 0x2308   :	megasys1_screen_flag	=	new_data;		break;
-
-		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
 	}
 }
 
@@ -639,10 +628,6 @@ int color,code,sx,sy,flipx,flipy,attr,sprite,offs,color_mask;
 				if ( (attr & 0x08) == priority )	continue;	// priority
 				if (((attr & 0xc0)>>6) != sprite)	continue;	// flipping
 
-#ifdef MAME_DEBUG
-if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
-#endif
-
 				/* apply the position displacements */
 				sx = ( READ_WORD(&spritedata[0x0A]) + READ_WORD(&objectdata[0x02]) ) % 512;
 				sy = ( READ_WORD(&spritedata[0x0C]) + READ_WORD(&objectdata[0x04]) ) % 512;
@@ -685,10 +670,6 @@ if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 
 			attr = READ_WORD(&spritedata[0x08]);
 			if ( (attr & 0x08) == priority ) continue;
-
-#ifdef MAME_DEBUG
-if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
-#endif
 
 			sx = READ_WORD(&spritedata[0x0A]) % 512;
 			sy = READ_WORD(&spritedata[0x0C]) % 512;
@@ -957,7 +938,7 @@ void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,co
 	{
 		memcpy (megasys1_layers_order, priorities[i].priorities, 16 * sizeof(int));
 
-		logerror("WARNING: using an hand-crafted priorities scheme\n");
+		//logerror("WARNING: using an hand-crafted priorities scheme\n");
 
 		return;
 	}
@@ -1008,7 +989,7 @@ void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,co
 
 				if (result & 1)
 				{
-					logerror("WARNING, pri $%X split %d - layer %d's opaque pens not totally opaque\n",pri_code,offset,top);
+					//logerror("WARNING, pri $%X split %d - layer %d's opaque pens not totally opaque\n",pri_code,offset,top);
 
 					layers_order[offset] = 0xfffff;
 					break;
@@ -1016,7 +997,7 @@ void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,co
 
 				if  ((result & 6) == 6)
 				{
-					logerror("WARNING, pri $%X split %d - layer %d's transparent pens aren't always transparent nor always opaque\n",pri_code,offset,top);
+					//logerror("WARNING, pri $%X split %d - layer %d's transparent pens aren't always transparent nor always opaque\n",pri_code,offset,top);
 
 					layers_order[offset] = 0xfffff;
 					break;
@@ -1050,7 +1031,7 @@ void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,co
 					layer = layer0;
 					if (layer0 != layer1)
 					{
-						logerror("WARNING, pri $%X - 'sprite splitting' does not simply split sprites\n",pri_code);
+						//logerror("WARNING, pri $%X - 'sprite splitting' does not simply split sprites\n",pri_code);
 
 						order = 0xfffff;
 						break;
@@ -1125,15 +1106,6 @@ void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* get layers order */
 		pri = megasys1_layers_order[(megasys1_active_layers & 0x0f0f) >> 8];
 
-#ifdef MAME_DEBUG
-		if (pri == 0xfffff || keyboard_pressed(KEYCODE_Z))
-		{
-			char buf[40];
-			sprintf(buf,"Pri: %04X - Flag: %04X", megasys1_active_layers1, megasys1_sprite_flag);
-			usrintf_showmessage(buf);
-		}
-#endif
-
 		if (pri == 0xfffff) pri = 0x04132;
 
 		/* see what layers are really active (layers 4 & f will do no harm) */
@@ -1145,23 +1117,6 @@ void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	tilemap_set_flip( ALL_TILEMAPS, (megasys1_screen_flag & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0 );
-
-#ifdef MAME_DEBUG
-debugsprites = 0;
-if (keyboard_pressed(KEYCODE_Z))
-{
-int msk = 0;
-
-	if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0xfff1;}
-	if (keyboard_pressed(KEYCODE_W))	{ msk |= 0xfff2;}
-	if (keyboard_pressed(KEYCODE_E))	{ msk |= 0xfff4;}
-	if (keyboard_pressed(KEYCODE_A))	{ msk |= 0xfff8;}
-	if (keyboard_pressed(KEYCODE_S))	{ msk |= 0xfff8; debugsprites = 1;}
-	if (keyboard_pressed(KEYCODE_D))	{ msk |= 0xfff8; debugsprites = 2;}
-
-	if (msk != 0) megasys1_active_layers &= msk;
-}
-#endif
 
 	MEGASYS1_TMAP_SET_SCROLL(0)
 	MEGASYS1_TMAP_SET_SCROLL(1)

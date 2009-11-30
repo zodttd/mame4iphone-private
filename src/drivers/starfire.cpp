@@ -1,3 +1,5 @@
+#include "../vidhrdw/starfire.cpp"
+
 /***************************************************************************
 
 	Star Fire/Fire One system

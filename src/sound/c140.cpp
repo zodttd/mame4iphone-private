@@ -21,6 +21,7 @@ Unmapped registers:
 
 #include <math.h>
 #include "driver.h"
+#include "osinline.h"
 
 #define MAX_VOICE 24
 
@@ -105,8 +106,14 @@ static long find_sample( long adrs, long bank)
 
 WRITE_HANDLER( C140_w )
 {
+#ifndef MAME_FASTSOUND
 	stream_update(stream, 0);
-
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(stream, 0);
+    }
+#endif
 	offset&=0x1ff;
 
 	REG[offset]=data;
@@ -138,12 +145,16 @@ WRITE_HANDLER( C140_w )
 	}
 }
 
+#ifndef clip_short_ret
 INLINE int limit(INT32 in)
 {
 	if(in>0x7fff)		return 0x7fff;
 	else if(in<-0x8000)	return -0x8000;
 	return in;
 }
+#else
+#define limit clip_short_ret
+#endif
 
 static void update_stereo(int ch, INT16 **buffer, int length)
 {

@@ -65,8 +65,4 @@ extern int (* extern_iot)(int *, int);
 #define IOT 035
 #define OPR 037
 
-#ifdef MAME_DEBUG
-extern unsigned dasmpdp1(char *buffer, unsigned pc);
-#endif
-
 #endif /* _PDP1_H */

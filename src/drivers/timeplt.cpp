@@ -1,3 +1,6 @@
+#include "../sndhrdw/timeplt.cpp"
+#include "../vidhrdw/timeplt.cpp"
+
 /***************************************************************************
 
 Time Pilot memory map (preliminary)

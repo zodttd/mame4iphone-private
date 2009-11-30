@@ -13,7 +13,7 @@
 
 
 extern INT16 spyhunt_scrollx, spyhunt_scrolly;
-extern double mcr68_timing_factor;
+extern timer_tm mcr68_timing_factor;
 
 
 

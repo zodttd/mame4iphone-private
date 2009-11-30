@@ -16,7 +16,7 @@ static int VDC_register,vram_ptr;
 static unsigned char *HuC6270_vram,*tile_dirty,*sprite_dirty,*vram_dirty;
 static struct osd_bitmap *tile_bitmap,*front_bitmap;
 
-static int current_scanline,next_update_first_line,inc_value;
+static int current_scanline,/*next_update_first_line,*/inc_value;
 static int irq_enable,rcr_enable,sb_enable,bb_enable,bldwolf_vblank;
 
 /******************************************************************************/
@@ -285,7 +285,7 @@ WRITE_HANDLER( HuC6270_data_w )
 			case 16:
 			case 17:
 			case 18:
-				logerror("%04x: dma 2 %02x\n",cpu_get_pc(),data);
+				//logerror("%04x: dma 2 %02x\n",cpu_get_pc(),data);
 				break;
 
 			case 19: /* SATB */
@@ -347,7 +347,7 @@ WRITE_HANDLER( HuC6270_data_w )
 			case 16:
 			case 17:
 			case 18:
-				logerror("%04x: dma 2 %02x\n",cpu_get_pc(),data);
+				//logerror("%04x: dma 2 %02x\n",cpu_get_pc(),data);
 				break;
 
 			case 19: /* SATB - Sprites */
@@ -356,7 +356,7 @@ WRITE_HANDLER( HuC6270_data_w )
 			}
 			break;
 	}
-	logerror("%04x: unknown write to  VDC_register %02x (%02x) at %02x\n",cpu_get_pc(),VDC_register,data,offset);
+	//logerror("%04x: unknown write to  VDC_register %02x (%02x) at %02x\n",cpu_get_pc(),VDC_register,data,offset);
 }
 
 /******************************************************************************/
@@ -366,7 +366,7 @@ void battlera_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Nothing */
 }
 
-static void partial_refresh(struct osd_bitmap *bitmap,int current_line)
+/*static void partial_refresh(struct osd_bitmap *bitmap,int current_line)
 {
 	struct rectangle clip;
 
@@ -385,7 +385,7 @@ static void partial_refresh(struct osd_bitmap *bitmap,int current_line)
 	}
 
 	next_update_first_line = current_line + 1;
-}
+}*/
 
 void battlera_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int end_line)
 {

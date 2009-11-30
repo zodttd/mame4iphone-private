@@ -98,7 +98,7 @@
 /* keep lots of fractional bits */
 #define FRACTION_BITS		28
 #define FRACTION_ONE		(1 << FRACTION_BITS)
-#define FRACTION_ONE_D		((double)(1 << FRACTION_BITS))
+#define FRACTION_ONE_D		((float)(1 << FRACTION_BITS))
 #define FRACTION_MASK		(FRACTION_ONE - 1)
 #define FRACTION_MULT(a,b)	(((a) >> (FRACTION_BITS / 2)) * ((b) >> (FRACTION_BITS - FRACTION_BITS / 2)))
 
@@ -108,10 +108,10 @@ typedef struct
 {
 	unsigned char stream;			/* our stream */
 	void (*external)(int, int, short *);/* callback to generate external samples */
-	double vco_zero_freq;			/* frequency of VCO at 0.0V */
-	double filter_zero_freq;		/* frequency of filter at 0.0V */
+	float vco_zero_freq;			/* frequency of VCO at 0.0V */
+	float filter_zero_freq;		/* frequency of filter at 0.0V */
 
-	double values[8];				/* raw values of registers */
+	float values[8];				/* raw values of registers */
 	UINT8 wave_select;				/* flags which waveforms are enabled */
 
 	UINT32 volume;					/* linear overall volume (0-256) */
@@ -134,7 +134,7 @@ typedef struct
 static sound_chip chip_list[MAX_CEM3394];
 
 /* global sound parameters */
-static double inv_sample_rate;
+static float inv_sample_rate;
 static int sample_rate;
 
 static INT16 *mixer_buffer;
@@ -213,8 +213,8 @@ static void cem3394_update(int ch, INT16 *buffer, int length)
 	/* if there's internal stuff, generate it */
 	if (int_volume != 0)
 	{
-		if (chip->wave_select == 0 && !ext_volume)
-			logerror("%f V didn't cut it\n", chip->values[CEM3394_WAVE_SELECT]);
+		//if (chip->wave_select == 0 && !ext_volume)
+		//	logerror("%f V didn't cut it\n", chip->values[CEM3394_WAVE_SELECT]);
 
 		/* handle the pulse component; it maxes out at 0x1932, which is 27% smaller than */
 		/* the sawtooth (since the value is constant, this is the best place to have an */
@@ -337,7 +337,7 @@ int cem3394_sh_start(const struct MachineSound *msound)
 
 	/* copy global parameters */
 	sample_rate = Machine->sample_rate;
-	inv_sample_rate = 1.0 / (double)sample_rate;
+	inv_sample_rate = 1.0 / (float)sample_rate;
 
 	/* allocate stream channels, 1 per chip */
 	for (i = 0; i < intf->numchips; i++)
@@ -370,7 +370,7 @@ void cem3394_sh_stop(void)
 }
 
 
-INLINE double compute_db(double voltage)
+INLINE float compute_db(float voltage)
 {
 	/* assumes 0.0 == full off, 4.0 == full on, with linear taper, as described in the datasheet */
 
@@ -389,16 +389,16 @@ INLINE double compute_db(double voltage)
 	/* between 0.0 and 2.5, exponential to 20dB */
 	else
 	{
-		double temp = 20.0 * pow(2.0, 2.5 - voltage);
+		float temp = 20.0 * pow(2.0, 2.5 - voltage);
 		if (temp < 90.0) return 90.0;
 		else return temp;
 	}
 }
 
 
-INLINE UINT32 compute_db_volume(double voltage)
+INLINE UINT32 compute_db_volume(float voltage)
 {
-	double temp;
+	float temp;
 
 	/* assumes 0.0 == full off, 4.0 == full on, with linear taper, as described in the datasheet */
 
@@ -426,10 +426,10 @@ INLINE UINT32 compute_db_volume(double voltage)
 }
 
 
-void cem3394_set_voltage(int chipnum, int input, double voltage)
+void cem3394_set_voltage(int chipnum, int input, float voltage)
 {
 	sound_chip *chip = &chip_list[chipnum];
-	double temp;
+	float temp;
 
 	/* don't do anything if no change */
 	if (voltage == chip->values[input])
@@ -520,10 +520,10 @@ void cem3394_set_voltage(int chipnum, int input, double voltage)
 }
 
 
-double cem3394_get_parameter(int chipnum, int input)
+float cem3394_get_parameter(int chipnum, int input)
 {
 	sound_chip *chip = &chip_list[chipnum];
-	double voltage = chip->values[input];
+	float voltage = chip->values[input];
 
 	switch (input)
 	{

@@ -1,3 +1,5 @@
+#include "../vidhrdw/pbaction.cpp"
+
 /***************************************************************************
 
 Pinball Action memory map (preliminary)

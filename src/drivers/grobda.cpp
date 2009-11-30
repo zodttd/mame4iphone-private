@@ -1,3 +1,6 @@
+#include "../machine/grobda.cpp"
+#include "../vidhrdw/grobda.cpp"
+
 /***************************************************************************
 
 Grobda (c) Namco 1984

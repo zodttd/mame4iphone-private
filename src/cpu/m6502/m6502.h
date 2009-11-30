@@ -217,10 +217,6 @@ extern void m6510_state_load(void *file);
 extern const char *m6510_info(void *context, int regnum);
 extern unsigned m6510_dasm(char *buffer, unsigned pc);
 
-#ifdef MAME_DEBUG
-extern unsigned int Dasm6510( char *dst, unsigned pc );
-#endif
-
 #endif
 
 #ifdef HAS_M6510T
@@ -402,10 +398,6 @@ extern unsigned n2a03_dasm(char *buffer, unsigned pc);
    causes an IRQ to be generated.  This function allows the IRQ to be called
    from the PSG core when such an occasion arises. */
 extern void n2a03_irq(void);
-#endif
-
-#ifdef MAME_DEBUG
-extern unsigned Dasm6502( char *dst, unsigned pc );
 #endif
 
 #endif /* _M6502_H */

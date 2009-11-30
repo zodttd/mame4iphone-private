@@ -12,7 +12,6 @@
 #include "driver.h"
 #include "timer.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "hiscore.h"
 
 #if (HAS_Z80)
@@ -118,9 +117,7 @@
 #if (HAS_ARM)
 #include "cpu/arm/arm.h"
 #endif
-#if (GP2X)
-extern int __emulation_run;
-#endif
+
 
 /* these are triggers sent to the timer system for various interrupt events */
 #define TRIGGER_TIMESLICE		-1000
@@ -137,14 +134,6 @@ extern int __emulation_run;
 #define LOG(x)
 #endif
 
-#define CPUINFO_SIZE	(5*sizeof(int)+4*sizeof(void*)+2*sizeof(double))
-/* How do I calculate the next power of two from CPUINFO_SIZE using a macro? */
-#ifdef __LP64__
-#define CPUINFO_ALIGN	(128-CPUINFO_SIZE)
-#else
-#define CPUINFO_ALIGN	(64-CPUINFO_SIZE)
-#endif
-
 struct cpuinfo
 {
 	struct cpu_interface *intf; 	/* pointer to the interface functions */
@@ -153,13 +142,12 @@ struct cpuinfo
 	int vblankint_countdown;		/* number of vblank callbacks left until we interrupt */
 	int vblankint_multiplier;		/* number of vblank callbacks per interrupt */
 	void *vblankint_timer;			/* reference to elapsed time counter */
-	double vblankint_period;		/* timing period of the VBLANK interrupt */
+	timer_tm vblankint_period;		/* timing period of the VBLANK interrupt */
 	void *timedint_timer;			/* reference to this CPU's timer */
-	double timedint_period; 		/* timing period of the timed interrupt */
+	timer_tm timedint_period; 		/* timing period of the timed interrupt */
 	void *context;					/* dynamically allocated context buffer */
 	int save_context;				/* need to context switch this CPU? yes or no */
-	UINT8 filler[CPUINFO_ALIGN];	/* make the array aligned to next power of 2 */
-};
+} __attribute__ ((__aligned__ (32)));
 
 static struct cpuinfo cpu[MAX_CPU];
 
@@ -179,17 +167,15 @@ static int watchdog_counter;
 static void *vblank_timer;
 static int vblank_countdown;
 static int vblank_multiplier;
-static double vblank_period;
+static timer_tm vblank_period;
 
 static void *refresh_timer;
-static double refresh_period;
-static double refresh_period_inv;
+static timer_tm refresh_period;
 
 static void *timeslice_timer;
-static double timeslice_period;
+static timer_tm timeslice_period;
 
-static double scanline_period;
-static double scanline_period_inv;
+static timer_tm scanline_period;
 
 static int usres; /* removed from cpu_run and made global */
 static int vblank;
@@ -210,7 +196,7 @@ static void cpu_timeslicecallback(int param);
 static void cpu_vblankreset(void);
 static void cpu_vblankcallback(int param);
 static void cpu_updatecallback(int param);
-static double cpu_computerate(int value);
+static timer_tm cpu_computerate(int value);
 static void cpu_inittimers(void);
 
 
@@ -233,20 +219,11 @@ static int (*cpu_irq_callbacks[MAX_CPU])(int) = {
 /* and a list of driver interception hooks */
 static int (*drv_irq_callbacks[MAX_CPU])(int) = { NULL, };
 
-/* Default window layout for the debugger */
-UINT8 default_win_layout[] = {
-	 0, 0,80, 5,	/* register window (top rows) */
-	 0, 5,24,17,	/* disassembler window (left, middle columns) */
-	25, 5,55, 8,	/* memory #1 window (right, upper middle) */
-	25,14,55, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1 	/* command line window (bottom row) */
-};
-
 /* Dummy interfaces for non-CPUs */
 static void Dummy_reset(void *param);
 static void Dummy_exit(void);
 static int Dummy_execute(int cycles);
-static void Dummy_burn(int cycles);
+//static void Dummy_burn(int cycles);
 static unsigned Dummy_get_context(void *regs);
 static void Dummy_set_context(void *regs);
 static unsigned Dummy_get_pc(void);
@@ -631,29 +608,12 @@ logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
 			if ( i != j && !strcmp(cpunum_core_file(i),cpunum_core_file(j)) )
 				cpu[i].save_context = 1;
 
-		#ifdef MAME_DEBUG
-
-		/* or if we're running with the debugger */
-		{
-			extern int mame_debug;
-			cpu[i].save_context |= mame_debug;
-		}
-
-		#endif
-
 		for( j = 0; j < MAX_IRQ_LINES; j++ )
 		{
 			irq_line_state[i * MAX_IRQ_LINES + j] = CLEAR_LINE;
 			irq_line_vector[i * MAX_IRQ_LINES + j] = cpuintf[CPU_TYPE(i)].default_vector;
 		}
 	}
-
-#ifdef	MAME_DEBUG
-	/* Initialize the debugger */
-	if( mame_debug )
-		mame_debug_init();
-#endif
-
 
 reset:
 	/* read hi scores information from hiscore.dat */
@@ -725,7 +685,7 @@ logerror("Machine reset\n");
 
 	/* loop until the user quits */
 	usres = 0;
-	while (usres == 0 && __emulation_run != 0)
+	while (usres == 0)
 	{
 		int cpunum;
 
@@ -820,12 +780,6 @@ logerror("Machine reset\n");
 
 #ifdef MESS
 	if (Machine->drv->stop_machine) (*Machine->drv->stop_machine)();
-#endif
-
-#ifdef	MAME_DEBUG
-	/* Shut down the debugger */
-	if( mame_debug )
-		mame_debug_exit();
 #endif
 
 	/* shut down the CPU cores */
@@ -942,8 +896,7 @@ int cpu_getstatus(int cpunum)
 
 int cpu_getactivecpu(void)
 {
-	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return cpunum;
+	return (activecpu < 0) ? 0 : activecpu;
 }
 
 void cpu_setactivecpu(int cpunum)
@@ -1065,7 +1018,7 @@ int cpu_getfperiod(void)
 ***************************************************************************/
 int cpu_scalebyfcount(int value)
 {
-	int result = (int)((double)value * timer_timeelapsed(refresh_timer) * refresh_period_inv);
+    int result = ( ((INT64)value) * ((INT64)timer_timeelapsed(refresh_timer)) ) / ((INT64)refresh_period);
 	if (value >= 0) return (result < value) ? result : value;
 	else return (result > value) ? result : value;
 }
@@ -1083,27 +1036,27 @@ int cpu_scalebyfcount(int value)
 ***************************************************************************/
 int cpu_getscanline(void)
 {
-	return (int)(timer_timeelapsed(refresh_timer) * scanline_period_inv);
+    return (int)(timer_timeelapsed(refresh_timer)/scanline_period);
 }
 
 
-double cpu_getscanlinetime(int scanline)
+timer_tm cpu_getscanlinetime(int scanline)
 {
-	double ret;
-	double scantime = timer_starttime(refresh_timer) + (double)scanline * scanline_period;
-	double abstime = timer_get_time();
-	if (abstime >= scantime) scantime += TIME_IN_HZ(Machine->drv->frames_per_second);
-	ret = scantime - abstime;
-	if (ret < TIME_IN_NSEC(1))
-	{
-		ret = TIME_IN_HZ(Machine->drv->frames_per_second);
-	}
+	timer_tm ret;
+    timer_tm scantime = ((timer_entry *)refresh_timer)->start + scanline*scanline_period;
+    timer_tm abstime = getabsolutetime();
+    if (abstime >= scantime) scantime += TIME_IN_HZ(Machine->drv->frames_per_second);
+    ret = scantime - abstime;
+    if (ret < 1)
+    {
+        ret = TIME_IN_HZ(Machine->drv->frames_per_second);
+    }
 
 	return ret;
 }
 
 
-double cpu_getscanlineperiod(void)
+timer_tm cpu_getscanlineperiod(void)
 {
 	return scanline_period;
 }
@@ -1140,12 +1093,13 @@ int cpu_getcurrentcycles(void)
  ***************************************************************************/
 int cpu_gethorzbeampos(void)
 {
-	double elapsed_time = timer_timeelapsed(refresh_timer);
-	int scanline = (int)(elapsed_time * scanline_period_inv);
-	double time_since_scanline = elapsed_time -
-						 (double)scanline * scanline_period;
-	return (int)(time_since_scanline * scanline_period_inv *
-						 (double)Machine->drv->screen_width);
+    /*
+	timer_tm elapsed_time = timer_timeelapsed(refresh_timer);
+    int scanline = elapsed_time / scanline_period;
+	timer_tm time_since_scanline = elapsed_time - scanline * scanline_period;
+	*/
+	timer_tm time_since_scanline = timer_timeelapsed(refresh_timer) % scanline_period;
+    return ( ((INT64)time_since_scanline) * ((INT64)Machine->drv->screen_width) ) / ((INT64)scanline_period);
 }
 
 
@@ -1420,7 +1374,7 @@ void cpu_trigger(int trigger)
 }
 
 /* generate a trigger after a specific period of time */
-void cpu_triggertime(double duration, int trigger)
+void cpu_triggertime(timer_tm duration, int trigger)
 {
 	timer_set(duration, trigger, cpu_trigger);
 }
@@ -1448,7 +1402,7 @@ void cpu_spin(void)
 }
 
 /* burn CPU cycles for a specific period of time */
-void cpu_spinuntil_time(double duration)
+void cpu_spinuntil_time(timer_tm duration)
 {
 	static int timetrig = 0;
 
@@ -1480,7 +1434,7 @@ void cpu_yield(void)
 }
 
 /* yield our timeslice for a specific period of time */
-void cpu_yielduntil_time(double duration)
+void cpu_yielduntil_time(timer_tm duration)
 {
 	static int timetrig = 0;
 
@@ -1652,186 +1606,55 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 		}
 		else
 		{
-			int irq_line;
+			int irq_line=0;
 
 			switch (CPU_TYPE(cpunum))
 			{
-#if (HAS_Z80)
-			case CPU_Z80:				irq_line = 0; LOG(("Z80 IRQ\n")); break;
-#endif
-#if (HAS_DRZ80)
-			case CPU_DRZ80:				irq_line = 0; LOG(("Z80 IRQ\n")); break;
-#endif
-#if (HAS_8080)
-			case CPU_8080:
-				switch (num)
-				{
-				case I8080_INTR:		irq_line = 0; LOG(("I8080 INTR\n")); break;
-				default:				irq_line = 0; LOG(("I8080 unknown\n"));
-				}
-				break;
-#endif
 #if (HAS_8085A)
 			case CPU_8085A:
 				switch (num)
 				{
-				case I8085_INTR:		irq_line = 0; LOG(("I8085 INTR\n")); break;
-				case I8085_RST55:		irq_line = 1; LOG(("I8085 RST55\n")); break;
-				case I8085_RST65:		irq_line = 2; LOG(("I8085 RST65\n")); break;
-				case I8085_RST75:		irq_line = 3; LOG(("I8085 RST75\n")); break;
-				default:				irq_line = 0; LOG(("I8085 unknown\n"));
+				case I8085_RST55:		irq_line = 1; break;
+				case I8085_RST65:		irq_line = 2; break;
+				case I8085_RST75:		irq_line = 3; break;
 				}
 				break;
-#endif
-#if (HAS_M6502)
-			case CPU_M6502: 			irq_line = 0; LOG(("M6502 IRQ\n")); break;
-#endif
-#if (HAS_M65C02)
-			case CPU_M65C02:			irq_line = 0; LOG(("M65C02 IRQ\n")); break;
-#endif
-#if (HAS_M65SC02)
-			case CPU_M65SC02:			irq_line = 0; LOG(("M65SC02 IRQ\n")); break;
-#endif
-#if (HAS_M65CE02)
-			case CPU_M65CE02:			irq_line = 0; LOG(("M65CE02 IRQ\n")); break;
-#endif
-#if (HAS_M6509)
-			case CPU_M6509: 			irq_line = 0; LOG(("M6509 IRQ\n")); break;
-#endif
-#if (HAS_M6510)
-			case CPU_M6510: 			irq_line = 0; LOG(("M6510 IRQ\n")); break;
-#endif
-#if (HAS_M6510T)
-			case CPU_M6510T:			irq_line = 0; LOG(("M6510T IRQ\n")); break;
-#endif
-#if (HAS_M7501)
-			case CPU_M7501: 			irq_line = 0; LOG(("M7501 IRQ\n")); break;
-#endif
-#if (HAS_M8502)
-			case CPU_M8502: 			irq_line = 0; LOG(("M8502 IRQ\n")); break;
-#endif
-#if (HAS_N2A03)
-			case CPU_N2A03: 			irq_line = 0; LOG(("N2A03 IRQ\n")); break;
-#endif
-#if (HAS_M4510)
-			case CPU_M4510: 			irq_line = 0; LOG(("M4510 IRQ\n")); break;
 #endif
 #if (HAS_H6280)
 			case CPU_H6280:
 				switch (num)
 				{
-				case H6280_INT_IRQ1:	irq_line = 0; LOG(("H6280 INT 1\n")); break;
-				case H6280_INT_IRQ2:	irq_line = 1; LOG(("H6280 INT 2\n")); break;
-				case H6280_INT_TIMER:	irq_line = 2; LOG(("H6280 TIMER INT\n")); break;
-				default:				irq_line = 0; LOG(("H6280 unknown\n"));
+				case H6280_INT_IRQ2:	irq_line = 1; break;
+				case H6280_INT_TIMER:	irq_line = 2; break;
 				}
 				break;
-#endif
-#if (HAS_I86)
-			case CPU_I86:				irq_line = 0; LOG(("I86 IRQ\n")); break;
-#endif
-#if (HAS_I88)
-			case CPU_I88:				irq_line = 0; LOG(("I88 IRQ\n")); break;
-#endif
-#if (HAS_I186)
-			case CPU_I186:				irq_line = 0; LOG(("I186 IRQ\n")); break;
-#endif
-#if (HAS_I188)
-			case CPU_I188:				irq_line = 0; LOG(("I188 IRQ\n")); break;
-#endif
-#if (HAS_I286)
-			case CPU_I286:				irq_line = 0; LOG(("I286 IRQ\n")); break;
-#endif
-#if (HAS_V20)
-			case CPU_V20:				irq_line = 0; LOG(("V20 IRQ\n")); break;
-#endif
-#if (HAS_V30)
-			case CPU_V30:				irq_line = 0; LOG(("V30 IRQ\n")); break;
-#endif
-#if (HAS_V33)
-			case CPU_V33:				irq_line = 0; LOG(("V33 IRQ\n")); break;
-#endif
-#if (HAS_I8035)
-			case CPU_I8035: 			irq_line = 0; LOG(("I8035 IRQ\n")); break;
-#endif
-#if (HAS_I8039)
-			case CPU_I8039: 			irq_line = 0; LOG(("I8039 IRQ\n")); break;
-#endif
-#if (HAS_I8048)
-			case CPU_I8048: 			irq_line = 0; LOG(("I8048 IRQ\n")); break;
-#endif
-#if (HAS_N7751)
-			case CPU_N7751: 			irq_line = 0; LOG(("N7751 IRQ\n")); break;
-#endif
-#if (HAS_M6800)
-			case CPU_M6800: 			irq_line = 0; LOG(("M6800 IRQ\n")); break;
-#endif
-#if (HAS_M6801)
-			case CPU_M6801: 			irq_line = 0; LOG(("M6801 IRQ\n")); break;
-#endif
-#if (HAS_M6802)
-			case CPU_M6802: 			irq_line = 0; LOG(("M6802 IRQ\n")); break;
-#endif
-#if (HAS_M6803)
-			case CPU_M6803: 			irq_line = 0; LOG(("M6803 IRQ\n")); break;
-#endif
-#if (HAS_M6808)
-			case CPU_M6808: 			irq_line = 0; LOG(("M6808 IRQ\n")); break;
-#endif
-#if (HAS_HD63701)
-			case CPU_HD63701:			irq_line = 0; LOG(("HD63701 IRQ\n")); break;
-#endif
-#if (HAS_M6805)
-			case CPU_M6805: 			irq_line = 0; LOG(("M6805 IRQ\n")); break;
-#endif
-#if (HAS_M68705)
-			case CPU_M68705:			irq_line = 0; LOG(("M68705 IRQ\n")); break;
-#endif
-#if (HAS_HD63705)
-			case CPU_HD63705:			irq_line = 0; LOG(("HD68705 IRQ\n")); break;
 #endif
 #if (HAS_HD6309)
 			case CPU_HD6309:
-				switch (num)
-				{
-				case HD6309_INT_IRQ:	irq_line = 0; LOG(("M6309 IRQ\n")); break;
-				case HD6309_INT_FIRQ:	irq_line = 1; LOG(("M6309 FIRQ\n")); break;
-				default:				irq_line = 0; LOG(("M6309 unknown\n"));
-				}
-				break;
+			    if (num==HD6309_INT_FIRQ) irq_line = 1;
+			    break;
 #endif
 #if (HAS_M6809)
 			case CPU_M6809:
-				switch (num)
-				{
-				case M6809_INT_IRQ: 	irq_line = 0; LOG(("M6809 IRQ\n")); break;
-				case M6809_INT_FIRQ:	irq_line = 1; LOG(("M6809 FIRQ\n")); break;
-				default:				irq_line = 0; LOG(("M6809 unknown\n"));
-				}
+			    if (num==M6809_INT_FIRQ) irq_line = 1;
 				break;
 #endif
 #if (HAS_KONAMI)
 				case CPU_KONAMI:
-				switch (num)
-				{
-				case KONAMI_INT_IRQ:	irq_line = 0; LOG(("KONAMI IRQ\n")); break;
-				case KONAMI_INT_FIRQ:	irq_line = 1; LOG(("KONAMI FIRQ\n")); break;
-				default:				irq_line = 0; LOG(("KONAMI unknown\n"));
-				}
+				if (num==KONAMI_INT_FIRQ) irq_line = 1;
 				break;
 #endif
 #if (HAS_M68000)
 			case CPU_M68000:
 				switch (num)
 				{
-				case MC68000_IRQ_1: 	irq_line = 1; LOG(("M68K IRQ1\n")); break;
-				case MC68000_IRQ_2: 	irq_line = 2; LOG(("M68K IRQ2\n")); break;
-				case MC68000_IRQ_3: 	irq_line = 3; LOG(("M68K IRQ3\n")); break;
-				case MC68000_IRQ_4: 	irq_line = 4; LOG(("M68K IRQ4\n")); break;
-				case MC68000_IRQ_5: 	irq_line = 5; LOG(("M68K IRQ5\n")); break;
-				case MC68000_IRQ_6: 	irq_line = 6; LOG(("M68K IRQ6\n")); break;
-				case MC68000_IRQ_7: 	irq_line = 7; LOG(("M68K IRQ7\n")); break;
-				default:				irq_line = 0; LOG(("M68K unknown\n"));
+				case MC68000_IRQ_1: 	irq_line = 1; break;
+				case MC68000_IRQ_2: 	irq_line = 2; break;
+				case MC68000_IRQ_3: 	irq_line = 3; break;
+				case MC68000_IRQ_4: 	irq_line = 4; break;
+				case MC68000_IRQ_5: 	irq_line = 5; break;
+				case MC68000_IRQ_6: 	irq_line = 6; break;
+				case MC68000_IRQ_7: 	irq_line = 7; break;
 				}
 				/* until now only auto vector interrupts supported */
 				num = MC68000_INT_ACK_AUTOVECTOR;
@@ -1841,14 +1664,13 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_CYCLONE:
 				switch (num)
 				{
-				case cyclone_IRQ_1: 	irq_line = 1; LOG(("M68K IRQ1\n")); break;
-				case cyclone_IRQ_2: 	irq_line = 2; LOG(("M68K IRQ2\n")); break;
-				case cyclone_IRQ_3: 	irq_line = 3; LOG(("M68K IRQ3\n")); break;
-				case cyclone_IRQ_4: 	irq_line = 4; LOG(("M68K IRQ4\n")); break;
-				case cyclone_IRQ_5: 	irq_line = 5; LOG(("M68K IRQ5\n")); break;
-				case cyclone_IRQ_6: 	irq_line = 6; LOG(("M68K IRQ6\n")); break;
-				case cyclone_IRQ_7: 	irq_line = 7; LOG(("M68K IRQ7\n")); break;
-				default:				irq_line = 0; LOG(("M68K unknown\n"));
+				case cyclone_IRQ_1: 	irq_line = 1; break;
+				case cyclone_IRQ_2: 	irq_line = 2; break;
+				case cyclone_IRQ_3: 	irq_line = 3; break;
+				case cyclone_IRQ_4: 	irq_line = 4; break;
+				case cyclone_IRQ_5: 	irq_line = 5; break;
+				case cyclone_IRQ_6: 	irq_line = 6; break;
+				case cyclone_IRQ_7: 	irq_line = 7; break;
 				}
 				/* until now only auto vector interrupts supported */
 				num = cyclone_INT_ACK_AUTOVECTOR;
@@ -1858,14 +1680,13 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_M68010:
 				switch (num)
 				{
-				case MC68010_IRQ_1: 	irq_line = 1; LOG(("M68010 IRQ1\n")); break;
-				case MC68010_IRQ_2: 	irq_line = 2; LOG(("M68010 IRQ2\n")); break;
-				case MC68010_IRQ_3: 	irq_line = 3; LOG(("M68010 IRQ3\n")); break;
-				case MC68010_IRQ_4: 	irq_line = 4; LOG(("M68010 IRQ4\n")); break;
-				case MC68010_IRQ_5: 	irq_line = 5; LOG(("M68010 IRQ5\n")); break;
-				case MC68010_IRQ_6: 	irq_line = 6; LOG(("M68010 IRQ6\n")); break;
-				case MC68010_IRQ_7: 	irq_line = 7; LOG(("M68010 IRQ7\n")); break;
-				default:				irq_line = 0; LOG(("M68010 unknown\n"));
+				case MC68010_IRQ_1: 	irq_line = 1; break;
+				case MC68010_IRQ_2: 	irq_line = 2; break;
+				case MC68010_IRQ_3: 	irq_line = 3; break;
+				case MC68010_IRQ_4: 	irq_line = 4; break;
+				case MC68010_IRQ_5: 	irq_line = 5; break;
+				case MC68010_IRQ_6: 	irq_line = 6; break;
+				case MC68010_IRQ_7: 	irq_line = 7; break;
 				}
 				/* until now only auto vector interrupts supported */
 				num = MC68000_INT_ACK_AUTOVECTOR;
@@ -1875,14 +1696,13 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_M68020:
 				switch (num)
 				{
-				case MC68020_IRQ_1: 	irq_line = 1; LOG(("M68020 IRQ1\n")); break;
-				case MC68020_IRQ_2: 	irq_line = 2; LOG(("M68020 IRQ2\n")); break;
-				case MC68020_IRQ_3: 	irq_line = 3; LOG(("M68020 IRQ3\n")); break;
-				case MC68020_IRQ_4: 	irq_line = 4; LOG(("M68020 IRQ4\n")); break;
-				case MC68020_IRQ_5: 	irq_line = 5; LOG(("M68020 IRQ5\n")); break;
-				case MC68020_IRQ_6: 	irq_line = 6; LOG(("M68020 IRQ6\n")); break;
-				case MC68020_IRQ_7: 	irq_line = 7; LOG(("M68020 IRQ7\n")); break;
-				default:				irq_line = 0; LOG(("M68020 unknown\n"));
+				case MC68020_IRQ_1: 	irq_line = 1; break;
+				case MC68020_IRQ_2: 	irq_line = 2; break;
+				case MC68020_IRQ_3: 	irq_line = 3; break;
+				case MC68020_IRQ_4: 	irq_line = 4; break;
+				case MC68020_IRQ_5: 	irq_line = 5; break;
+				case MC68020_IRQ_6: 	irq_line = 6; break;
+				case MC68020_IRQ_7: 	irq_line = 7; break;
 				}
 				/* until now only auto vector interrupts supported */
 				num = MC68000_INT_ACK_AUTOVECTOR;
@@ -1892,14 +1712,13 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_M68EC020:
 				switch (num)
 				{
-				case MC68EC020_IRQ_1:	irq_line = 1; LOG(("M68EC020 IRQ1\n")); break;
-				case MC68EC020_IRQ_2:	irq_line = 2; LOG(("M68EC020 IRQ2\n")); break;
-				case MC68EC020_IRQ_3:	irq_line = 3; LOG(("M68EC020 IRQ3\n")); break;
-				case MC68EC020_IRQ_4:	irq_line = 4; LOG(("M68EC020 IRQ4\n")); break;
-				case MC68EC020_IRQ_5:	irq_line = 5; LOG(("M68EC020 IRQ5\n")); break;
-				case MC68EC020_IRQ_6:	irq_line = 6; LOG(("M68EC020 IRQ6\n")); break;
-				case MC68EC020_IRQ_7:	irq_line = 7; LOG(("M68EC020 IRQ7\n")); break;
-				default:				irq_line = 0; LOG(("M68EC020 unknown\n"));
+				case MC68EC020_IRQ_1:	irq_line = 1; break;
+				case MC68EC020_IRQ_2:	irq_line = 2; break;
+				case MC68EC020_IRQ_3:	irq_line = 3; break;
+				case MC68EC020_IRQ_4:	irq_line = 4; break;
+				case MC68EC020_IRQ_5:	irq_line = 5; break;
+				case MC68EC020_IRQ_6:	irq_line = 6; break;
+				case MC68EC020_IRQ_7:	irq_line = 7; break;
 				}
 				/* until now only auto vector interrupts supported */
 				num = MC68000_INT_ACK_AUTOVECTOR;
@@ -1909,97 +1728,39 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_T11:
 				switch (num)
 				{
-				case T11_IRQ0:			irq_line = 0; LOG(("T11 IRQ0\n")); break;
-				case T11_IRQ1:			irq_line = 1; LOG(("T11 IRQ1\n")); break;
-				case T11_IRQ2:			irq_line = 2; LOG(("T11 IRQ2\n")); break;
-				case T11_IRQ3:			irq_line = 3; LOG(("T11 IRQ3\n")); break;
-				default:				irq_line = 0; LOG(("T11 unknown\n"));
+				case T11_IRQ0:			irq_line = 0; break;
+				case T11_IRQ1:			irq_line = 1; break;
+				case T11_IRQ2:			irq_line = 2; break;
+				case T11_IRQ3:			irq_line = 3; break;
 				}
 				break;
-#endif
-#if (HAS_S2650)
-			case CPU_S2650: 			irq_line = 0; LOG(("S2650 IRQ\n")); break;
 #endif
 #if (HAS_TMS34010)
 			case CPU_TMS34010:
-				switch (num)
-				{
-				case TMS34010_INT1: 	irq_line = 0; LOG(("TMS34010 INT1\n")); break;
-				case TMS34010_INT2: 	irq_line = 1; LOG(("TMS34010 INT2\n")); break;
-				default:				irq_line = 0; LOG(("TMS34010 unknown\n"));
-				}
-				break;
-#endif
-/*#if (HAS_TMS9900)
-			case CPU_TMS9900:	irq_line = 0; LOG(("TMS9900 IRQ\n")); break;
-#endif*/
-#if (HAS_TMS9900) || (HAS_TMS9940) || (HAS_TMS9980) || (HAS_TMS9985) \
-	|| (HAS_TMS9989) || (HAS_TMS9995) || (HAS_TMS99105A) || (HAS_TMS99110A)
-	#if (HAS_TMS9900)
-			case CPU_TMS9900:
-	#endif
-	#if (HAS_TMS9940)
-			case CPU_TMS9940:
-	#endif
-	#if (HAS_TMS9980)
-			case CPU_TMS9980:
-	#endif
-	#if (HAS_TMS9985)
-			case CPU_TMS9985:
-	#endif
-	#if (HAS_TMS9989)
-			case CPU_TMS9989:
-	#endif
-	#if (HAS_TMS9995)
-			case CPU_TMS9995:
-	#endif
-	#if (HAS_TMS99105A)
-			case CPU_TMS99105A:
-	#endif
-	#if (HAS_TMS99110A)
-			case CPU_TMS99110A:
-	#endif
-				LOG(("Please use the new interrupt scheme for your new developments !\n"));
-				irq_line = 0;
+			    if (num==TMS34010_INT2) irq_line = 1;
 				break;
 #endif
 #if (HAS_Z8000)
-			case CPU_Z8000:
-				switch (num)
-				{
-				case Z8000_NVI: 		irq_line = 0; LOG(("Z8000 NVI\n")); break;
-				case Z8000_VI:			irq_line = 1; LOG(("Z8000 VI\n")); break;
-				default:				irq_line = 0; LOG(("Z8000 unknown\n"));
-				}
+                if (num==Z8000_VI) irq_line = 1;
 				break;
 #endif
 #if (HAS_TMS320C10)
 			case CPU_TMS320C10:
-				switch (num)
-				{
-				case TMS320C10_ACTIVE_INT:	irq_line = 0; LOG(("TMS32010 INT\n")); break;
-				case TMS320C10_ACTIVE_BIO:	irq_line = 1; LOG(("TMS32010 BIO\n")); break;
-				default:					irq_line = 0; LOG(("TMS32010 unknown\n"));
-				}
+			    if (num==TMS320C10_ACTIVE_BIO) irq_line = 1;
 				break;
 #endif
 #if (HAS_ADSP2100)
 			case CPU_ADSP2100:
 				switch (num)
 				{
-				case ADSP2100_IRQ0: 		irq_line = 0; LOG(("ADSP2100 IRQ0\n")); break;
-				case ADSP2100_IRQ1: 		irq_line = 1; LOG(("ADSP2100 IRQ1\n")); break;
-				case ADSP2100_IRQ2: 		irq_line = 2; LOG(("ADSP2100 IRQ1\n")); break;
-				case ADSP2100_IRQ3: 		irq_line = 3; LOG(("ADSP2100 IRQ1\n")); break;
-				default:					irq_line = 0; LOG(("ADSP2100 unknown\n"));
+				case ADSP2100_IRQ1: 		irq_line = 1; break;
+				case ADSP2100_IRQ2: 		irq_line = 2; break;
+				case ADSP2100_IRQ3: 		irq_line = 3; break;
 				}
 				break;
 #endif
-			default:
-				irq_line = 0;
-				/* else it should be an IRQ type; assume line 0 and store vector */
-				LOG(("unknown IRQ\n"));
 			}
+			LOG(("IRQ %d\n",irq_line));
 			cpu_irq_line_vector_w(cpunum, irq_line, num);
 			cpu_manualirqcallback(irq_line | (cpunum << 3) | (HOLD_LINE << 6) );
 		}
@@ -2271,11 +2032,11 @@ logerror("reset caused by the watchdog\n");
 		rate < -10000  -> 'rate' nanoseconds
 
 ***************************************************************************/
-static double cpu_computerate(int value)
+static timer_tm cpu_computerate(int value)
 {
 	/* values equal to zero are zero */
 	if (value <= 0)
-		return 0.0;
+		return 0;
 
 	/* values above between 0 and 50000 are in Hz */
 	if (value < 50000)
@@ -2300,8 +2061,31 @@ static void cpu_timeslicecallback(int param)
 ***************************************************************************/
 static void cpu_inittimers(void)
 {
-	double first_time;
+	timer_tm first_time;
 	int i, max, ipf;
+
+/*
+#ifdef MAME_FASTSOUND
+{
+    extern int fast_sound;
+    if (fast_sound)
+    {
+        // M72 sound hack
+        if ((strcmp(Machine->gamedrv->name,"bchopper")==0) || (strcmp(Machine->gamedrv->name,"mrheli")==0) || (strcmp(Machine->gamedrv->name,"nspirit")==0) ||
+            (strcmp(Machine->gamedrv->name,"nspiritj")==0) || (strcmp(Machine->gamedrv->name,"imgfight")==0) || (strcmp(Machine->gamedrv->name,"loht")==0) ||
+            (strcmp(Machine->gamedrv->name,"xmultipl")==0) || (strcmp(Machine->gamedrv->name,"dbreed")==0) || (strcmp(Machine->gamedrv->name,"rtype2")==0) ||
+            (strcmp(Machine->gamedrv->name,"rtype2j")==0) || (strcmp(Machine->gamedrv->name,"majtitle")==0) || (strcmp(Machine->gamedrv->name,"hharry")==0) ||
+            (strcmp(Machine->gamedrv->name,"hharryu")==0) || (strcmp(Machine->gamedrv->name,"dkgensan")==0) || (strcmp(Machine->gamedrv->name,"kengo")==0) ||
+            (strcmp(Machine->gamedrv->name,"poundfor")==0) || (strcmp(Machine->gamedrv->name,"poundfou")==0) || (strcmp(Machine->gamedrv->name,"airduel")==0) ||
+            (strcmp(Machine->gamedrv->name,"gallop")==0))
+        {
+            int *ptr=(int *)&Machine->drv->cpu[1].vblank_interrupts_per_frame;
+            *ptr=1;
+        }
+    }
+}
+#endif
+*/
 
 	/* remove old timers */
 	if (timeslice_timer)
@@ -2320,16 +2104,14 @@ static void cpu_inittimers(void)
 
 	/* allocate an infinite timer to track elapsed time since the last refresh */
 	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
-	refresh_period_inv = 1.0 / refresh_period;
 	refresh_timer = timer_set(TIME_NEVER, 0, NULL);
 
 	/* while we're at it, compute the scanline times */
 	if (Machine->drv->vblank_duration)
 		scanline_period = (refresh_period - TIME_IN_USEC(Machine->drv->vblank_duration)) /
-				(double)(Machine->visible_area.max_y - Machine->visible_area.min_y + 1);
+				(timer_tm)(Machine->visible_area.max_y - Machine->visible_area.min_y + 1);
 	else
-		scanline_period = refresh_period / (double)Machine->drv->screen_height;
-	scanline_period_inv = 1.0 / scanline_period;
+		scanline_period = refresh_period / (timer_tm)Machine->drv->screen_height;
 
 	/*
 	 *		The following code finds all the CPUs that are interrupting in sync with the VBLANK
@@ -2595,26 +2377,6 @@ const char *cpu_core_credits(void)
 }
 
 /***************************************************************************
-  Returns the register layout for the active CPU (debugger)
-***************************************************************************/
-const char *cpu_reg_layout(void)
-{
-	if( activecpu >= 0 )
-		return CPUINFO(activecpu,NULL,CPU_INFO_REG_LAYOUT);
-	return "";
-}
-
-/***************************************************************************
-  Returns the window layout for the active CPU (debugger)
-***************************************************************************/
-const char *cpu_win_layout(void)
-{
-	if( activecpu >= 0 )
-		return CPUINFO(activecpu,NULL,CPU_INFO_WIN_LAYOUT);
-	return "";
-}
-
-/***************************************************************************
   Returns a dissassembled instruction for the active CPU
 ***************************************************************************/
 unsigned cpu_dasm(char *buffer, unsigned pc)
@@ -2632,61 +2394,6 @@ const char *cpu_flags(void)
 	if( activecpu >= 0 )
 		return CPUINFO(activecpu,NULL,CPU_INFO_FLAGS);
 	return "";
-}
-
-/***************************************************************************
-  Returns a specific register string for the currently active CPU
-***************************************************************************/
-const char *cpu_dump_reg(int regnum)
-{
-	if( activecpu >= 0 )
-		return CPUINFO(activecpu,NULL,CPU_INFO_REG+regnum);
-	return "";
-}
-
-/***************************************************************************
-  Returns a state dump for the currently active CPU
-***************************************************************************/
-const char *cpu_dump_state(void)
-{
-	static char buffer[1024+1];
-	unsigned addr_width = (cpu_address_bits() + 3) / 4;
-	char *dst = buffer;
-	const char *src;
-	const INT8 *regs;
-	int width;
-
-	dst += sprintf(dst, "CPU #%d [%s]\n", activecpu, cputype_name(CPU_TYPE(activecpu)));
-	width = 0;
-	regs = (INT8 *)cpu_reg_layout();
-	while( *regs )
-	{
-		if( *regs == -1 )
-		{
-			dst += sprintf(dst, "\n");
-			width = 0;
-		}
-		else
-		{
-			src = cpu_dump_reg( *regs );
-			if( *src )
-			{
-				if( width + strlen(src) + 1 >= 80 )
-				{
-					dst += sprintf(dst, "\n");
-					width = 0;
-				}
-				dst += sprintf(dst, "%s ", src);
-				width += strlen(src) + 1;
-			}
-		}
-		regs++;
-	}
-	dst += sprintf(dst, "\n%0*X: ", addr_width, cpu_get_pc());
-	cpu_dasm( dst, cpu_get_pc() );
-	strcat(dst, "\n\n");
-
-	return buffer;
 }
 
 /***************************************************************************
@@ -2811,30 +2518,6 @@ const char *cputype_core_credits(int cpu_type)
 }
 
 /***************************************************************************
-  Returns the register layout for a specific CPU type (debugger)
-***************************************************************************/
-const char *cputype_reg_layout(int cpu_type)
-{
-	cpu_type &= ~CPU_FLAGS_MASK;
-	if( cpu_type < CPU_COUNT )
-		return IFC_INFO(cpu_type,NULL,CPU_INFO_REG_LAYOUT);
-	return "";
-}
-
-/***************************************************************************
-  Returns the window layout for a specific CPU type (debugger)
-***************************************************************************/
-const char *cputype_win_layout(int cpu_type)
-{
-	cpu_type &= ~CPU_FLAGS_MASK;
-	if( cpu_type < CPU_COUNT )
-		return IFC_INFO(cpu_type,NULL,CPU_INFO_WIN_LAYOUT);
-
-	/* just in case... */
-	return (const char *)default_win_layout;
-}
-
-/***************************************************************************
   Returns the number of address bits for a specific CPU number
 ***************************************************************************/
 unsigned cpunum_address_bits(int cpunum)
@@ -2932,26 +2615,6 @@ const char *cpunum_core_credits(int cpunum)
 	if( cpunum < totalcpu )
 		return cputype_core_credits(CPU_TYPE(cpunum));
 	return "";
-}
-
-/***************************************************************************
-  Returns (debugger) register layout for a specific CPU number
-***************************************************************************/
-const char *cpunum_reg_layout(int cpunum)
-{
-	if( cpunum < totalcpu )
-		return cputype_reg_layout(CPU_TYPE(cpunum));
-	return "";
-}
-
-/***************************************************************************
-  Returns (debugger) window layout for a specific CPU number
-***************************************************************************/
-const char *cpunum_win_layout(int cpunum)
-{
-	if( cpunum < totalcpu )
-		return cputype_win_layout(CPU_TYPE(cpunum));
-	return (const char *)default_win_layout;
 }
 
 /***************************************************************************
@@ -3087,83 +2750,6 @@ const char *cpunum_flags(int cpunum)
 }
 
 /***************************************************************************
-  Return a specific register string for a specific CPU
-***************************************************************************/
-const char *cpunum_dump_reg(int cpunum, int regnum)
-{
-	const char *result;
-	int oldactive;
-
-	if( cpunum == activecpu )
-		return cpu_dump_reg(regnum);
-
-	/* swap to the CPU's context */
-	if (activecpu >= 0)
-		if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
-	oldactive = activecpu;
-	activecpu = cpunum;
-	memorycontextswap(activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
-
-	result = CPUINFO(activecpu,NULL,CPU_INFO_REG+regnum);
-
-	/* update the CPU's context */
-	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
-	activecpu = oldactive;
-	if (activecpu >= 0)
-	{
-		memorycontextswap(activecpu);
-		if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
-	}
-
-	return result;
-}
-
-/***************************************************************************
-  Return a state dump for a specific CPU
-***************************************************************************/
-const char *cpunum_dump_state(int cpunum)
-{
-	static char buffer[1024+1];
-	int oldactive;
-
-	/* swap to the CPU's context */
-	if (activecpu >= 0)
-		if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
-	oldactive = activecpu;
-	activecpu = cpunum;
-	memorycontextswap(activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
-
-	strcpy( buffer, cpu_dump_state() );
-
-	/* update the CPU's context */
-	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
-	activecpu = oldactive;
-	if (activecpu >= 0)
-	{
-		memorycontextswap(activecpu);
-		if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
-	}
-
-	return buffer;
-}
-
-/***************************************************************************
-  Dump all CPU's state to stdout
-***************************************************************************/
-void cpu_dump_states(void)
-{
-	int i;
-
-	for( i = 0; i < totalcpu; i++ )
-	{
-		puts( cpunum_dump_state(i) );
-	}
-	fflush(stdout);
-}
-
-/***************************************************************************
 
   Dummy interfaces for non-CPUs
 
@@ -3171,7 +2757,7 @@ void cpu_dump_states(void)
 static void Dummy_reset(void *param) { }
 static void Dummy_exit(void) { }
 static int Dummy_execute(int cycles) { return cycles; }
-static void Dummy_burn(int cycles) { }
+//static void Dummy_burn(int cycles) { }
 static unsigned Dummy_get_context(void *regs) { return 0; }
 static void Dummy_set_context(void *regs) { }
 static unsigned Dummy_get_pc(void) { return 0; }

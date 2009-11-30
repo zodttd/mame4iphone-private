@@ -105,7 +105,7 @@ READ_HANDLER( seta_sound_r )
 			case 0:
 				return ( mixer_is_sample_playing(firstchannel + channel) ? 1 : 0 );
 			default:
-				logerror("PC: %06X - X1-010 channel %X, register %X read!\n",cpu_get_pc(),channel,reg);
+				//logerror("PC: %06X - X1-010 channel %X, register %X read!\n",cpu_get_pc(),channel,reg);
 				return seta_reg[channel][reg];
 		}
 	}
@@ -145,7 +145,7 @@ WRITE_HANDLER( seta_sound_w )
 
 		case 0:
 
-			DUMP_REGS
+			//DUMP_REGS
 
 			if (data & 1)	// key on
 			{
@@ -159,15 +159,15 @@ WRITE_HANDLER( seta_sound_w )
 
 				if (!( (start < end) && (end <= maxlen) ))
 				{
-					logerror("PC: %06X - X1-010 OUT OF RANGE SAMPLE: %06X - %06X, channel %X\n",cpu_get_pc(),start,end,channel);
-					DUMP_REGS
+					//logerror("PC: %06X - X1-010 OUT OF RANGE SAMPLE: %06X - %06X, channel %X\n",cpu_get_pc(),start,end,channel);
+					//DUMP_REGS
 					return;
 				}
 
 #if 1
 /* Print some more debug info */
-logerror("PC: %06X - Play 16 bit sample %06X - %06X, channel %X\n",cpu_get_pc(),start, end, channel);
-DUMP_REGS
+//logerror("PC: %06X - Play 16 bit sample %06X - %06X, channel %X\n",cpu_get_pc(),start, end, channel);
+//DUMP_REGS
 #endif
 
 				/*

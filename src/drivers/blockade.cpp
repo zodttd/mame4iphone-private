@@ -1,3 +1,5 @@
+#include "../vidhrdw/blockade.cpp"
+
 /****************************************************************************
 
 Blockade/Comotion/Blasto/Hustle Memory MAP
@@ -193,7 +195,7 @@ static WRITE_HANDLER( blockade_videoram_w )
 	videoram_w(offset, data);
 	if (input_port_3_r(0) & 0x80)
 	{
-		logerror("blockade_videoram_w: scanline %d\n", cpu_getscanline());
+		//logerror("blockade_videoram_w: scanline %d\n", cpu_getscanline());
 		cpu_spinuntil_int();
 	}
 }

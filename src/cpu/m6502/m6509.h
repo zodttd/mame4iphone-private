@@ -71,10 +71,6 @@ extern READ_HANDLER ( m6509_read_00001 );
 extern WRITE_HANDLER ( m6509_write_00000 );
 extern WRITE_HANDLER ( m6509_write_00001 );
 
-#ifdef MAME_DEBUG
-extern unsigned int Dasm6509( char *dst, unsigned pc );
-#endif
-
 #endif /* _M6509_H */
 
 

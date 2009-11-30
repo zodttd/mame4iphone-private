@@ -1,3 +1,5 @@
+#include "../vidhrdw/tagteam.cpp"
+
 /***************************************************************************
 
 Tag Team Wrestling hardware description:

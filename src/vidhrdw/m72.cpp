@@ -39,9 +39,9 @@ void poundfor_init_machine(void)
 
 int m72_interrupt(void)
 {
-	int line = 255 - cpu_getiloops();
+	int line = 15 - cpu_getiloops();
 
-	if (line == 255)	/* vblank */
+	if (line == 15)	/* vblank */
 	{
 		rastersplit = 0;
 		interrupt_vector_w(0,irq1);
@@ -49,10 +49,10 @@ int m72_interrupt(void)
 	}
 	else
 	{
-		if (line != splitline - 128)
+		if (line != ((splitline - 128)>>4))
 			return ignore_interrupt();
 
-		rastersplit = line + 1;
+		rastersplit = splitline - 128 + 1;
 
 		/* this is used to do a raster effect and show the score display at
 		   the bottom of the screen or other things. The line where the

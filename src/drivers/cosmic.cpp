@@ -1,3 +1,5 @@
+#include "../vidhrdw/cosmic.cpp"
+
 /***************************************************************************
 
 Universal board numbers (found on the schematics)
@@ -180,10 +182,6 @@ static WRITE_HANDLER( panic_sound_output_w )
         case 17: if (data) sample_start(0, 10, 0); break;	/* Coin - Not triggered by software */
         }
     }
-
-    #ifdef MAME_DEBUG
- 	logerror("Sound output %x=%x\n",offset,data);
-	#endif
 }
 
 WRITE_HANDLER( panic_sound_output2_w )
@@ -250,10 +248,6 @@ WRITE_HANDLER( cosmicg_output_w )
 		case 15: if (data) sample_start(5, 14, 0); break;	/* Coin Extend (extra base) */
         }
     }
-
-	#ifdef MAME_DEBUG
- 	if (offset != 11) logerror("Output %x=%x\n",offset,data);
-    #endif
 }
 
 static int panic_interrupt(void)

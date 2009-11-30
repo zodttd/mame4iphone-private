@@ -1,3 +1,5 @@
+#include "../vidhrdw/gng.cpp"
+
 /***************************************************************************
 
 GHOST AND GOBLINS HARDWARE.  ( Doc By Roberto Ventura )

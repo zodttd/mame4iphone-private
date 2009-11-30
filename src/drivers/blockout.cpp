@@ -1,3 +1,5 @@
+#include "../vidhrdw/blockout.cpp"
+
 /***************************************************************************
 
 Block Out
@@ -52,7 +54,7 @@ READ_HANDLER( blockout_input_r )
 		case 8:
 			return input_port_4_r(offset);
 		default:
-logerror("PC %06x - read input port %06x\n",cpu_get_pc(),0x100000+offset);
+//logerror("PC %06x - read input port %06x\n",cpu_get_pc(),0x100000+offset);
 			return 0;
 	}
 }
@@ -62,7 +64,7 @@ WRITE_HANDLER( blockout_sound_command_w )
 	switch (offset)
 	{
 		case 0:
-			soundlatch_w(offset,data);
+			soundlatch_w(offset,data & 0xff);
 			cpu_cause_interrupt(1,Z80_NMI_INT);
 			break;
 		case 2:
@@ -229,7 +231,7 @@ static struct MachineDriver machine_driver_blockout =
 	{
 		{
 			CPU_M68000,
-			8760000,       /* MRH - 8.76 makes gfx/adpcm samples sync better */
+			10000000,  
 			readmem,writemem,0,0,
 			blockout_interrupt,2
 		},
@@ -240,7 +242,7 @@ static struct MachineDriver machine_driver_blockout =
 			ignore_interrupt,1	/* NMIs are triggered by the main CPU, IRQs by the YM2151 */
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	58, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 

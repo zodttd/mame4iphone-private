@@ -1,3 +1,5 @@
+#include "../vidhrdw/cbuster.cpp"
+
 /***************************************************************************
 
   Crude Buster (World version FX)		(c) 1990 Data East Corporation
@@ -94,7 +96,7 @@ static WRITE_HANDLER( twocrude_control_w )
 
 		break;
 	}
-	logerror("Warning %04x- %02x written to control %02x\n",cpu_get_pc(),data,offset);
+	//logerror("Warning %04x- %02x written to control %02x\n",cpu_get_pc(),data,offset);
 }
 
 READ_HANDLER( twocrude_control_r )
@@ -108,7 +110,7 @@ READ_HANDLER( twocrude_control_r )
 			return (readinputport(3) + (readinputport(4) << 8));
 
 		case 4: /* Protection */
-			logerror("%04x : protection control read at 30c000 %d\n",cpu_get_pc(),offset);
+			//logerror("%04x : protection control read at 30c000 %d\n",cpu_get_pc(),offset);
 			return prot;
 
 		case 6: /* Credits, VBL in byte 7 */

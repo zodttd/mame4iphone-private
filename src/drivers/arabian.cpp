@@ -1,3 +1,5 @@
+#include "../vidhrdw/arabian.cpp"
+
 /***************************************************************************
 
 Arabian memory map (preliminary)
@@ -102,7 +104,7 @@ static WRITE_HANDLER( arabian_portB_w )
 
 	pc = cpu_get_pc();
 	if ((pc == 0x0a7a) || (pc == 0x002a)) pc = cpu_geturnpc();
-	if ((data & 0xec) != last) logerror("Port B written  %02X  PC=%04X\n",data,pc);
+	//if ((data & 0xec) != last) logerror("Port B written  %02X  PC=%04X\n",data,pc);
 	last = data & 0xec;
 
 	coin_counter_w(0, ~data & 0x01);
@@ -127,7 +129,7 @@ static READ_HANDLER( arabian_input_port_r )
 		case 6:  pom = arabian_clock >> 4; break;
 		case 8:  pom = arabian_clock & 0x0f; break;
 		default:
-			logerror("Input Port %04X read.  PC=%04X\n", offset+0xd7f0, cpu_get_pc());
+			//logerror("Input Port %04X read.  PC=%04X\n", offset+0xd7f0, cpu_get_pc());
 			pom = 0;
 			break;
 		}

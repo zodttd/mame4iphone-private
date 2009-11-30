@@ -1,3 +1,6 @@
+#include "../vidhrdw/polyplay.cpp"
+#include "../sndhrdw/polyplay.cpp"
+
 /***************************************************************************
 
       Poly-Play

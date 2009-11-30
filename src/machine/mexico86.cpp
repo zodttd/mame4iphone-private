@@ -111,14 +111,14 @@ WRITE_HANDLER( mexico86_68705_portB_w )
 //		cpu_set_irq_line(0,0,HOLD_LINE);
 		cpu_set_irq_line(0,0,PULSE_LINE);
 	}
-	if ((ddrB & 0x40) && (~data & 0x40) && (portB_out & 0x40))
+	/*if ((ddrB & 0x40) && (~data & 0x40) && (portB_out & 0x40))
 	{
 logerror("%04x: 68705 unknown port B bit %02x\n",cpu_get_pc(),data);
 	}
 	if ((ddrB & 0x80) && (~data & 0x80) && (portB_out & 0x80))
 	{
 logerror("%04x: 68705 unknown port B bit %02x\n",cpu_get_pc(),data);
-	}
+	}*/
 
 	portB_out = data;
 }

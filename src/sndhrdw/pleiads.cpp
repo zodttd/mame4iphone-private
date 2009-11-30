@@ -7,6 +7,7 @@
  *
  ****************************************************************************/
 #include "driver.h"
+#include "osinline.h"
 
 #define VMIN	0
 #define VMAX	32767
@@ -25,20 +26,20 @@ static int polybit;
 
 /* some resistor and capacitor dependent values which
    vary between the (otherwise identical) boards. */
-static double pa5_charge_time;
-static double pa5_discharge_time;
+static float pa5_charge_time;
+static float pa5_discharge_time;
 
-static double pa6_charge_time;
-static double pa6_discharge_time;
+static float pa6_charge_time;
+static float pa6_discharge_time;
 
-static double pb4_charge_time;
-static double pb4_discharge_time;
+static float pb4_charge_time;
+static float pb4_discharge_time;
 
-static double pc4_charge_time;
-static double pc4_discharge_time;
+static float pc4_charge_time;
+static float pc4_discharge_time;
 
-static double pc5_charge_time;
-static double pc5_discharge_time;
+static float pc5_charge_time;
+static float pc5_discharge_time;
 
 static int pa5_resistor;
 static int pc5_resistor;
@@ -399,7 +400,11 @@ static void pleiads_sound_update(int param, INT16 *buffer, int length)
 	while( length-- > 0 )
 	{
 		int sum = tone1(rate)/2 + tone23(rate)/2 + tone4(rate) + noise(rate);
+#ifndef clip_short_ret		
 		*buffer++ = sum < 32768 ? sum > -32768 ? sum : -32768 : 32767;
+#else
+        *buffer++ = clip_short_ret(sum);
+#endif
 	}
 }
 
@@ -408,7 +413,7 @@ WRITE_HANDLER( pleiads_sound_control_a_w )
 	if (data == sound_latch_a)
 		return;
 
-	logerror("pleiads_sound_control_b_w $%02x\n", data);
+	//logerror("pleiads_sound_control_b_w $%02x\n", data);
 
 	stream_update(channel,0);
 	sound_latch_a = data;
@@ -427,7 +432,7 @@ WRITE_HANDLER( pleiads_sound_control_b_w )
 	if (data == sound_latch_b)
 		return;
 
-	logerror("pleiads_sound_control_b_w $%02x\n", data);
+	//logerror("pleiads_sound_control_b_w $%02x\n", data);
 
 	if (pitch == 3)
 		pitch = 2;	/* 2 and 3 are the same */
@@ -444,7 +449,7 @@ WRITE_HANDLER( pleiads_sound_control_c_w )
 	if (data == sound_latch_c)
 		return;
 
-	logerror("pleiads_sound_control_c_w $%02x\n", data);
+	//logerror("pleiads_sound_control_c_w $%02x\n", data);
 	stream_update(channel,0);
 	sound_latch_c = data;
 }

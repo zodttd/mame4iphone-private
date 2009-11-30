@@ -1,3 +1,5 @@
+#include "../vidhrdw/yiear.cpp"
+
 /***************************************************************************
 
 	Yie Ar Kung-Fu memory map (preliminary)

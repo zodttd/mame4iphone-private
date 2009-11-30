@@ -1,3 +1,5 @@
+#include "../vidhrdw/psychic5.cpp"
+
 /**************************
  *** PSYCHIC 5 hardware ***		(by Roberto Ventura)
  **************************

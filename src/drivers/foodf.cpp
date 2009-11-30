@@ -1,3 +1,6 @@
+#include "../machine/foodf.cpp"
+#include "../vidhrdw/foodf.cpp"
+
 /***************************************************************************
 
 Food Fight Memory Map

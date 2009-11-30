@@ -8,7 +8,6 @@
 #include "host.h"
 #include "cpuintrf.h"
 #include "memory.h"
-#include "mamedbg.h"
 #include "mame.h"
 
 
@@ -20,57 +19,6 @@
 
 #include "i286.h"
 #include "i286intf.h"
-
-
-static UINT8 i286_reg_layout[] = {
-	I286_FLAGS, 
-	I286_MSW,
-	I286_TR,
-	I286_TR_2,
-	I286_GDTR,
-	I286_GDTR_2,
-	-1,
-	I286_AX, 
-	I286_BP,
-	I286_LDTR,
-	I286_LDTR_2,
-	I286_IDTR,
-	I286_IDTR_2,
-	-1,
-	I286_BX,
-	I286_SP,
-	I286_SS, 
-	I286_SS_2,
-	I286_IRQ_STATE, 
-	I286_VECTOR, 
-	-1,
-	I286_CX, 
-	I286_IP, 
-	I286_CS, 
-	I286_CS_2,
-	I286_NMI_STATE, 
-	-1,
-	I286_DX, 
-	I286_SI, 
-	I286_DS, 
-	I286_DS_2,
-	-1,
-	I286_EMPTY,
-	I286_DI, 
-	I286_ES,
-	I286_ES_2, 
-	0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i286_win_layout[] = {
-     0, 0,80, 6,    /* register window (top rows) */
-	 0, 7,40,15,	/* disassembler window (left colums) */
-	41, 7,39, 7,	/* memory #1 window (right, upper middle) */
-	41,15,39, 7,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
 
 #include "i86time.c"
 
@@ -402,8 +350,6 @@ int i286_execute(int num_cycles)
 		printf("[%04x:%04x]=%02x\tF:%04x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x %d%d%d%d%d%d%d%d%d\n",I.sregs[CS],I.pc - I.base[CS],ReadByte(I.pc),I.flags,I.regs.w[AX],I.regs.w[BX],I.regs.w[CX],I.regs.w[DX], I.AuxVal?1:0, I.OverVal?1:0, I.SignVal?1:0, I.ZeroVal?1:0, I.CarryVal?1:0, I.ParityVal?1:0,I.TF, I.IF, I.DirVal<0?1:0);
 #endif
 		
-		CALL_MAME_DEBUG;
-		
 		seg_prefix=FALSE;
 		I.prevpc = I.pc;
 		
@@ -422,109 +368,19 @@ int i286_execute(int num_cycles)
  ****************************************************************************/
 const char *i286_info(void *context, int regnum)
 {
-	static char buffer[32][63+1];
-	static int which = 0;
-	i286_Regs *r = context;
-
-	which = ++which % 32;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &I;
-
 	switch( regnum )
 	{
-	case CPU_INFO_REG+I286_IP: sprintf(buffer[which], "IP:%04X", r->pc - r->base[CS]); break;
-	case CPU_INFO_REG+I286_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
-	case CPU_INFO_REG+I286_FLAGS: sprintf(buffer[which], "F:%04X", r->flags); break;
-	case CPU_INFO_REG+I286_AX: sprintf(buffer[which], "AX:%04X", r->regs.w[AX]); break;
-	case CPU_INFO_REG+I286_CX: sprintf(buffer[which], "CX:%04X", r->regs.w[CX]); break;
-	case CPU_INFO_REG+I286_DX: sprintf(buffer[which], "DX:%04X", r->regs.w[DX]); break;
-	case CPU_INFO_REG+I286_BX: sprintf(buffer[which], "BX:%04X", r->regs.w[BX]); break;
-	case CPU_INFO_REG+I286_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
-	case CPU_INFO_REG+I286_SI: sprintf(buffer[which], "SI:%04X", r->regs.w[SI]); break;
-	case CPU_INFO_REG+I286_DI: sprintf(buffer[which], "DI:%04X", r->regs.w[DI]); break;
-	case CPU_INFO_REG+I286_ES: 
-		sprintf(buffer[which], "ES:  %04X %02X", r->sregs[ES], r->rights[ES]); 
-		break;
-	case CPU_INFO_REG+I286_ES_2:
-		sprintf(buffer[which],"%06X %04X", r->base[ES], r->limit[ES]); 
-		break;
-	case CPU_INFO_REG+I286_CS: 
-		sprintf(buffer[which], "CS:  %04X %02X", r->sregs[CS], r->rights[CS]); 
-		break;
-	case CPU_INFO_REG+I286_CS_2:  
-		sprintf(buffer[which],"%06X %04X", r->base[CS], r->limit[CS]); 
-		break;
-	case CPU_INFO_REG+I286_SS: 
-		sprintf(buffer[which], "SS:  %04X %02X", r->sregs[SS], r->rights[SS]); 
-		break;
-	case CPU_INFO_REG+I286_SS_2:  
-		sprintf(buffer[which],"%06X %04X", r->base[SS], r->limit[SS]); 
-		break;
-	case CPU_INFO_REG+I286_DS: 
-		sprintf(buffer[which], "DS:  %04X %02X", r->sregs[DS], r->rights[DS]); 
-		break;
-	case CPU_INFO_REG+I286_DS_2:  
-		sprintf(buffer[which],"%06X %04X", r->base[DS], r->limit[DS]); 
-		break;
-	case CPU_INFO_REG+I286_MSW: sprintf(buffer[which],"MSW:%04X", r->msw); break;
-	case CPU_INFO_REG+I286_GDTR: sprintf(buffer[which],"GDTR: %06X", r->gdtr.base); break;
-	case CPU_INFO_REG+I286_GDTR_2: sprintf(buffer[which],"%04X", r->gdtr.limit); break;
-	case CPU_INFO_REG+I286_IDTR: sprintf(buffer[which],"IDTR: %06X", r->idtr.base); break;
-	case CPU_INFO_REG+I286_IDTR_2: sprintf(buffer[which],"%04X", r->idtr.limit); break;
-	case CPU_INFO_REG+I286_LDTR: 
-		sprintf(buffer[which],"LDTR:%04X %02X", r->ldtr.sel, r->ldtr.rights); 
-		break;
-	case CPU_INFO_REG+I286_LDTR_2: 
-		sprintf(buffer[which],"%06X %04X", r->ldtr.base, r->ldtr.limit);
-		break;
-	case CPU_INFO_REG+I286_TR:
-		sprintf(buffer[which],"TR:  %04X %02X", r->tr.sel, r->tr.rights); 
-		break;
-	case CPU_INFO_REG+I286_TR_2: 
-		sprintf(buffer[which],"%06X %04X", r->tr.base, r->tr.limit);
-		break;
-	case CPU_INFO_REG+I286_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
-	case CPU_INFO_REG+I286_PENDING: sprintf(buffer[which], "P:%X", r->irq_state); break;
-	case CPU_INFO_REG+I286_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-	case CPU_INFO_REG+I286_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-	case CPU_INFO_FLAGS:
-		r->flags = CompressFlags();
-		sprintf(buffer[which], "%c%c %c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->flags & 0x8000 ? '?':'.',
-				r->flags & 0x4000 ? '?':'.',
-				((r->flags & 0x3000)>>12)+'0',
-				r->flags & 0x0800 ? 'O':'.',
-				r->flags & 0x0400 ? 'D':'.',
-				r->flags & 0x0200 ? 'I':'.',
-				r->flags & 0x0100 ? 'T':'.',
-				r->flags & 0x0080 ? 'S':'.',
-				r->flags & 0x0040 ? 'Z':'.',
-				r->flags & 0x0020 ? '?':'.',
-				r->flags & 0x0010 ? 'A':'.',
-				r->flags & 0x0008 ? '?':'.',
-				r->flags & 0x0004 ? 'P':'.',
-				r->flags & 0x0002 ? 'N':'.',
-				r->flags & 0x0001 ? 'C':'.');
-		break;
-	case CPU_INFO_REG+I286_EMPTY: sprintf(buffer[which]," ");break;
 	case CPU_INFO_NAME: return "I286";
 	case CPU_INFO_FAMILY: return "Intel 80286";
 	case CPU_INFO_VERSION: return "1.4";
 	case CPU_INFO_FILE: return __FILE__;
 	case CPU_INFO_CREDITS: return "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work I.based on David Hedley's pcemu)";
-	case CPU_INFO_REG_LAYOUT: return (const char*)i286_reg_layout;
-	case CPU_INFO_WIN_LAYOUT: return (const char*)i286_win_layout;
 	}
-	return buffer[which];
+	return "";
 }
 
 unsigned i286_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-    return DasmI286(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }

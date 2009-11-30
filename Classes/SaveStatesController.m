@@ -1,13 +1,10 @@
-//
-//  BookmarksController.m
-//  ShoutOut
-//
-//  Created by ME on 9/13/08.
-//  Copyright 2008 __MyCompanyName__. All rights reserved.
-//
-
 #import "SOApplication.h"
 
+#ifdef WITH_ADS	
+static const int section_offset = 1;
+#else
+static const int section_offset = 0;
+#endif
 
 @implementation SaveStatesController
 
@@ -16,79 +13,131 @@
 	self.navigationItem.prompt = @"www.zodttd.com";
 	
 	adNotReceived = 0;
+  arrayOfCharacters = [[NSMutableArray alloc] init];
+  objectsForCharacters = [[NSMutableDictionary alloc] init];
+  
+  alphabetIndex = [[NSArray arrayWithArray:
+     [@"A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|#"
+           componentsSeparatedByString:@"|"]] retain];
+}
+
+- (void)startSaveData:(float)secs
+{
+ 	//[NSThread detachNewThreadSelector:@selector(initRootData) toTarget:self withObject:nil]; 
+
+	NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:secs
+											 target:self
+										   selector:@selector(initSaveData)
+										   userInfo:nil
+											 repeats:NO];
+}
+
+- (void)reload
+{
+  [tableview reloadData];
+}
+
+- (void)initSaveData
+{
+  //NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 	
-	browseArray = [[NSMutableArray alloc] init];
-	
-	currentPath = [[NSString alloc] initWithString:[NSString stringWithCString:get_documents_path("/")]];
+	currentPath = [[NSString alloc] initWithCString:get_documents_path("")];
 	[ self refreshData:currentPath ];
+	
+  //[pool release];
 }
 
 - (void)refreshData:(NSString*)path 
 {
   NSString* prevPath;
-	[browseArray removeAllObjects];
+	[arrayOfCharacters removeAllObjects];
+	[objectsForCharacters removeAllObjects];
 	prevPath = [[NSString alloc] initWithString:path];
 	[currentPath release];
-	
 	if([[prevPath substringWithRange:NSMakeRange([prevPath length]-1,1)] compare:@"/"] == NSOrderedSame)
 	{
-		currentPath = [[NSString alloc] initWithFormat:@"%@",prevPath];
+    currentPath = [[NSString alloc] initWithFormat:@"%@",prevPath];
 	}
 	else
 	{
 		currentPath = [[NSString alloc] initWithFormat:@"%@/",prevPath];
 	}
-	
+
 	int i;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-  NSInteger entries = [[fileManager directoryContentsAtPath: currentPath] count];
-	
-	for ( i = 0; i < entries; i++ ) 
+  NSArray* dirContents = [fileManager directoryContentsAtPath: currentPath];
+	NSInteger entries = [dirContents count];
+  int characterLUT[27];
+  NSMutableArray* arrayOfIndexedFiles[27];
+  
+  for(i = 0; i < 27; i++)
   {
-		if([[[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] substringWithRange:NSMakeRange([[[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ] length]-4,4)] caseInsensitiveCompare:@".svs"] != NSOrderedSame)
+    characterLUT[i] = 0;
+    arrayOfIndexedFiles[i] = [[NSMutableArray alloc] init];
+  }
+  
+  for ( i = 0; i < entries; i++ ) 
+  {
+		if(([[dirContents  objectAtIndex: i] length] < 4) ||
+		    [[[dirContents  objectAtIndex: i ] substringWithRange:NSMakeRange([[dirContents  objectAtIndex: i ] length]-3,3)] caseInsensitiveCompare:@".sv"] != NSOrderedSame)
 		{
-			continue;
-		}
-		//checks if directory
-		BOOL isDir = FALSE;
-		NSMutableString* dummyString;
-		dummyString = [[NSMutableString alloc] initWithString: currentPath];
-		if([[dummyString substringWithRange:NSMakeRange([dummyString length]-1,1)] compare:@"/"] == NSOrderedSame)
-		{
-			[dummyString appendString: [[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ]];			
+      // Do nothing currently.
 		}
 		else
 		{
-			[dummyString stringByAppendingPathComponent: [[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ]];
+      NSString* objectTitle = [dirContents  objectAtIndex: i ];
+      NSString* objectIndexer = [[objectTitle substringWithRange:NSMakeRange(0,1)] uppercaseString];
+      NSUInteger objectIndex = [objectIndexer rangeOfCharacterFromSet:[NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZ"]].location;
+
+		  if(objectIndex == NSNotFound)
+		  {
+        objectIndex = 26;
+		  }
+		  else
+		  {
+        char* objectLetter = [objectIndexer UTF8String];
+        objectIndex = objectLetter[0] - 'A';
+  		  if(objectIndex > 25)
+  		  {
+          objectIndex = 25;
+  		  }
+		  }
+
+		  if(characterLUT[objectIndex] == 0)
+		  {
+        characterLUT[objectIndex] = 1;
+		  }
+
+      [arrayOfIndexedFiles[objectIndex] addObject:[dirContents objectAtIndex:i]];
 		}
-		
-		[fileManager fileExistsAtPath:dummyString isDirectory:&isDir];
-		
-		//NSLog(@"isDir %d", isDir);
-		
-		if(!isDir)
-		{
-			[browseArray addObject:[NSDictionary dictionaryWithObjectsAndKeys:
-									NSLocalizedString(currentPath, @""), @"path",
-									NSLocalizedString([[fileManager directoryContentsAtPath: currentPath]  objectAtIndex: i ], @""), @"object",
-									@"0", @"directory",
-									@"1", @"file",
-									nil]];
-		}
-		
-		[ dummyString release ];
   }
-	
-	[self setupIndexedData];
-	[tableview reloadData];
-	
-	self.navigationItem.prompt = currentPath;
+
+  for(i = 0; i < 27; i++)
+  {
+    if(characterLUT[i] == 1)
+    {
+      NSString* characters = [NSString stringWithString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZ#"];
+      NSString* characterIndex = [characters substringWithRange:NSMakeRange(i,1)];
+      [arrayOfCharacters addObject:characterIndex];
+      [objectsForCharacters setObject:arrayOfIndexedFiles[i] forKey:characterIndex];
+    }
+    [arrayOfIndexedFiles[i] release];
+  }
+  
+  [tableview reloadData];
+    
+  self.navigationItem.prompt = currentPath;  
+
   [prevPath release];
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-	UITableViewCell			*cell;
-	
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath 
+{
+	UITableViewCell*      cell;
+  NSMutableDictionary*  objects;
+  
+  objects = objectsForCharacters;
+  
 #ifdef WITH_ADS
 	if(indexPath.section < 1) 
 	{
@@ -100,54 +149,57 @@
 			cell = nil;
 		}
     */
-    
 		if(cell == nil)
 		{
 			cell = [[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:@"adCell"];
 			// Request an ad for this table view cell
-		  altAds = [SOApp.delegate getAdViewWithIndex:0];
+		  altAds = [SOApp.delegate getAdViewWithIndex:2];
 			[cell.contentView addSubview:altAds];
 		}
 		else
 		{
-		  altAds = [SOApp.delegate getAdViewWithIndex:0];
+		  altAds = [SOApp.delegate getAdViewWithIndex:2];
 			[cell.contentView addSubview:altAds];
 		}
 		
+		cell.accessoryType = UITableViewCellAccessoryNone;  	
 		cell.text = @"";
 	}
 	else
 #endif
-	{
-		cell = [tableview dequeueReusableCellWithIdentifier:@"labelCell"];
-		if (cell == nil) 
-		{
-			cell = [[[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:@"labelCell"] autorelease];
-		}
-#ifdef WITH_ADS
-		NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section - 1];
-#else
-		NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section];
-#endif
-		NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];
-		cell.accessoryType = UITableViewCellAccessoryNone;
-		
-		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 320, 44)];
-		label.numberOfLines = 1;
-		label.adjustsFontSizeToFitWidth = YES;
-		label.minimumFontSize = 9.0f;
-		label.lineBreakMode = UILineBreakModeMiddleTruncation;
-		label.text = [[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"];
-		[cell.contentView addSubview:label];
-		[label release];		
-	}
+  {
+  	cell = [tableview dequeueReusableCellWithIdentifier:@"labelCell"];
+  	if (cell == nil) 
+  	{
+  		cell = [[[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:@"labelCell"] autorelease];
+  		UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 320, 44)];
+    	label.numberOfLines = 1;
+    	label.adjustsFontSizeToFitWidth = YES;
+    	label.minimumFontSize = 9.0f;
+    	label.lineBreakMode = UILineBreakModeMiddleTruncation;
+    	label.tag = 1;
+    	[cell.contentView addSubview:label];
+    	[label release];
+  	}
+				
+  	cell.accessoryType = UITableViewCellAccessoryNone;				
 	
+    if([arrayOfCharacters count] <= 0)
+    {
+      cell.text = @"";
+      return cell;
+    }
+	
+  	UILabel* tempLabel = (UILabel *)[cell viewWithTag:1];
+    tempLabel.text = [[objects objectForKey:[arrayOfCharacters objectAtIndex:indexPath.section-section_offset]] objectAtIndex:indexPath.row];
+  }
 	// Set up the cell
 	return cell;
 }
 
 
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath 
+{
 #ifdef WITH_ADS
 	if( indexPath.section < 1 )
 	{
@@ -155,108 +207,73 @@
 	}
 #endif
 
-#ifdef WITH_ADS
-	NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section - 1];
-#else
-	NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section];
-#endif
-	NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];
-	
-	NSMutableString *listingsPath = [[NSMutableString alloc] initWithString:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"path"]];
-	if([[listingsPath substringWithRange:NSMakeRange([listingsPath length]-1,1)] compare:@"/"] == NSOrderedSame)
-	{
-		[listingsPath appendString:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"]];
-	}
-	else
-	{
-		[listingsPath stringByAppendingPathComponent:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"]];
-	}
+  if([arrayOfCharacters count] <= 0)
+  {
+    return;
+  }
+
+  NSMutableDictionary*  objects;
+  
+  [tableview deselectRowAtIndexPath:indexPath animated:YES];
+  
+  objects = objectsForCharacters;
+
+  NSMutableString *listingsPath = [[NSMutableString alloc] initWithCString:get_documents_path("")];
+  if([[listingsPath substringWithRange:NSMakeRange([listingsPath length]-1,1)] compare:@"/"] == NSOrderedSame)
+  {
+    [listingsPath appendString:[[objects objectForKey:[arrayOfCharacters objectAtIndex:indexPath.section-section_offset]] objectAtIndex:indexPath.row]];
+  }
+  else
+  {
+    [listingsPath stringByAppendingPathComponent:[[objects objectForKey:[arrayOfCharacters objectAtIndex:indexPath.section-section_offset]] objectAtIndex:indexPath.row]];
+  }
+
+  [SOApp.recentView addRecent:listingsPath];
+
 	char *cListingsPath = (char*)[listingsPath UTF8String];
-	
-	if( [[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"directory"] compare:@"1"] == NSOrderedSame )
-	{
-		[self refreshData:listingsPath];
-		[listingsPath release];
-		return;
-	}
-	
-	[SOApp.recentView addRecent:listingsPath withFile:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"file"] 
-	 withDir:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"directory"]];
-	
-	[SOApp.nowPlayingView setCurrentStation:listingsPath 
-	 withFile:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"file"] 
-	 withDir:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"directory"]];
-	
-	[SOApp.nowPlayingView startEmu:cListingsPath];
-	[SOApp.delegate switchToNowPlaying];
-	//[tabBar didMoveToWindowNowPlaying];
-	
-	[listingsPath release];
+  [SOApp.nowPlayingView startEmu:cListingsPath];
+
+  [SOApp.delegate switchToNowPlaying];
+
+  [listingsPath release];
 }
 
 // Override if you support editing the list
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath { 
- if (editingStyle == UITableViewCellEditingStyleDelete) {
-	 // Delete the row from the data source
-#ifdef WITH_ADS
-	 if( indexPath.section < 1 )
-	 {
-		 return;
-	 }
-#endif
-
-#ifdef WITH_ADS
-	 NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section - 1];
-#else
-	 NSDictionary *letterDictionary = [displayList objectAtIndex:indexPath.section];
-#endif
-	 NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];
-	 
-	 NSMutableString *listingsPath = [[NSMutableString alloc] initWithString:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"path"]];
-	 if([[listingsPath substringWithRange:NSMakeRange([listingsPath length]-1,1)] compare:@"/"] == NSOrderedSame)
-	 {
-		 [listingsPath appendString:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"]];
-	 }
-	 else
-	 {
-		 [listingsPath stringByAppendingPathComponent:[[zonesForLetter objectAtIndex:indexPath.row] objectForKey:@"object"]];
-	 }
-	 char *cListingsPath = (char*)[listingsPath UTF8String];
-
-	 remove(cListingsPath);
-	 
-	 [listingsPath release];
-	 
-	 [ self refreshData:currentPath ];
- }
+/*
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+		
+	if (editingStyle == UITableViewCellEditingStyleDelete) {
+		// Delete the row from the data source
+		[tableview deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:YES];
+	}	
+	if (editingStyle == UITableViewCellEditingStyleInsert) {
+		// Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
+	}	
 }
+*/
 
 
 // Override if you support conditional editing of the list
 /*
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
- // Return NO if you do not want the specified item to be editable.
-	if( indexPath.section < 1 )
-	{
-		return NO;
-	}
-	return NO;
+	// Return NO if you do not want the specified item to be editable.
+	return YES;
 }
 */
+
 // Override if you support rearranging the list
 /*
- - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-
+- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
 }
 */
 
 // Override if you support conditional rearranging of the list
 /*
- - (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
- // Return NO if you do not want the item to be re-orderable.
- return YES;
- }
- */
+- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
+	// Return NO if you do not want the item to be re-orderable.
+	return YES;
+}
+*/
 
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
@@ -287,74 +304,81 @@
 
 - (void)dealloc {
 	[currentPath release];
-	[browseArray release];
-	
+	[arrayOfCharacters release];
+	[objectsForCharacters release];
+  [alphabetIndex release];
 	[super dealloc];
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-	// Number of sections is the number of region dictionaries
-	
-	if(displayList==nil) {
-		return 1;
-	} else {
 #ifdef WITH_ADS
-		return [displayList count] + 1;
+  if([arrayOfCharacters count] <= 0)
+  {
+    return 1;
+  }
+  return [arrayOfCharacters count] + 1;
 #else
-		return [displayList count];
+  if([arrayOfCharacters count] <= 0)
+  {
+    return 1;
+  }
+  return [arrayOfCharacters count];
 #endif
-	}
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-	if(displayList==nil) {
-		return 1;
-	}
-	
-#ifdef WITH_ADS
+#ifdef WITH_ADS	
 	if(section < 1)
 	{
 		return 1;
 	}
 #endif
-	// Number of rows is the number of names in the region dictionary for the specified section
+
+  if([arrayOfCharacters count] <= 0)
+  {
+    return 0;
+  }
+
+  NSMutableDictionary*  objects;
+  
+  objects = objectsForCharacters;
+
+  return [[objects objectForKey:[arrayOfCharacters objectAtIndex:section-section_offset]] count];
+}
+
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section 
+{
 #ifdef WITH_ADS
-	NSDictionary *letterDictionary = [displayList objectAtIndex:section - 1];
-#else
-	NSDictionary *letterDictionary = [displayList objectAtIndex:section];
+  if(section < 1)
+  {
+    return @"";
+  }
 #endif
-	NSMutableArray *zonesForLetter = [letterDictionary objectForKey:@"listings"];
-	return [zonesForLetter count];
+  if([arrayOfCharacters count] <= 0)
+    return @"";
+
+  return [arrayOfCharacters objectAtIndex:section-section_offset];
+}
+
+- (NSArray *)sectionIndexTitlesForTableView:(UITableView *)tableView 
+{
+  return alphabetIndex;
 }
 
 
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-#ifdef WITH_ADS
-	if(section < 1)
-	{
-		return @"";
-	}
-	NSDictionary *sectionDictionary = [displayList objectAtIndex:section - 1];
-#else
-	NSDictionary *sectionDictionary = [displayList objectAtIndex:section];
-#endif
-	return [sectionDictionary valueForKey:@"letter"];
-}
+- (NSInteger)tableView:(UITableView *)tableView sectionForSectionIndexTitle:(NSString *)title atIndex:(NSInteger)index {	
+  NSInteger count = 0;
+  
+  for(NSString *character in arrayOfCharacters)
+  {
+    if([character isEqualToString:title])
+      return count;
+    count++;
+  }
 
-#if 1
-- (NSArray *)sectionIndexTitlesForTableView:(UITableView *)tableView {
-	/*
-	 Return the index titles for each of the sections (e.g. "A", "B", "C"...).
-	 Use key-value coding to get the value for the key @"letter" in each of the dictionaries in list.
-	 */
-	return [displayList valueForKey:@"letter"];
+  return 0; // in case of some eror donot crash d application
 }
-
-
-- (NSInteger)tableView:(UITableView *)tableView sectionForSectionIndexTitle:(NSString *)title atIndex:(NSInteger)index {
-	return [indexedLetters indexOfObject:title];
-}
-#endif
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
 #ifdef WITH_ADS
@@ -363,67 +387,6 @@
 	}
 #endif
 	return 44.0; // this is the generic cell height
-}
-
-- (void)setupIndexedData {
-	int i;
-	NSMutableDictionary *indexedNames = [[NSMutableDictionary alloc] init];
-	for (i = 0;  i < [browseArray count]; i++) 
-	{
-		NSString *theLetter = [[[[browseArray objectAtIndex:i] objectForKey:@"object"] substringToIndex:1] lowercaseString];
-		NSCharacterSet *special = [NSCharacterSet characterSetWithCharactersInString:@"1234567890qwertyuiopasdfghjklzxcvbnm"];
-		NSRange range = [theLetter rangeOfCharacterFromSet:special options:NSLiteralSearch];
-		NSString *firstLetter = nil;
-		if( range.location == NSNotFound )
-		{
-			firstLetter = [[NSString alloc] initWithString: @"~"];
-		}
-		else
-		{
-			firstLetter = [[NSString alloc] initWithString: theLetter];
-		}
-		NSMutableArray *indexArray = [indexedNames objectForKey:firstLetter];
-		if (indexArray == nil) {
-			indexArray = [[NSMutableArray alloc] init];
-			[indexedNames setObject:indexArray forKey:firstLetter];
-			[indexArray release];
-		}
-		
-		[indexArray addObject:[browseArray objectAtIndex:i]];
-		
-		[ firstLetter release ];
-	}
-	NSMutableArray *listings = [[NSMutableArray alloc] init];
-	indexedLetters = (NSMutableArray*) [[[indexedNames allKeys] sortedArrayUsingSelector:@selector(compare:)] retain];
-	NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"object" ascending:YES];
-	NSArray *sortDescriptors = [NSArray arrayWithObject:sortDescriptor];
-	for (NSString *indexLetter in indexedLetters) {
-		NSMutableArray *arr = [indexedNames objectForKey:indexLetter];
-		[arr sortUsingDescriptors:sortDescriptors];
-		
-		NSDictionary *letterDictionary = [[NSDictionary alloc] initWithObjectsAndKeys:indexLetter, @"letter", arr, @"listings", nil];
-		[listings addObject:letterDictionary];
-		[letterDictionary release];
-	}
-	[sortDescriptor release];
-	displayList = [listings retain];
-	[listings release];
-	[indexedNames release];
-}
-
-- (NSMutableArray*)getDisplayList
-{
-	return displayList;
-}
-
-- (UITableView*)getTableview
-{
-	return tableview;
-}
-
-- (void)setCurrentlyPlaying:(NSString*) str
-{	
-	[SOApp.nowPlayingView setCurrentlyPlaying:str];
 }
 
 @end

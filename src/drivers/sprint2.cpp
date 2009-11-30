@@ -1,3 +1,6 @@
+#include "../machine/sprint2.cpp"
+#include "../vidhrdw/sprint2.cpp"
+
 /***************************************************************************
 
 Atari Sprint2 Driver

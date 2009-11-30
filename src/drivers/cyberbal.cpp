@@ -1,3 +1,5 @@
+#include "../vidhrdw/cyberbal.cpp"
+
 /***************************************************************************
 
 Cyberball Memory Map
@@ -89,7 +91,7 @@ extern UINT8 *cyberbal_playfieldram_2;
 
 
 /* internal prototypes and variables */
-static void update_sound_68k_interrupts(void);
+//static void update_sound_68k_interrupts(void);
 static void handle_68k_sound_command(int data);
 
 static UINT8 *bank_base;
@@ -300,7 +302,7 @@ static WRITE_HANDLER( sound_68k_6502_w )
  *
  *************************************/
 
-static void update_sound_68k_interrupts(void)
+/*static void update_sound_68k_interrupts(void)
 {
 #ifdef EMULATE_SOUND_68000
 	int newstate = 0;
@@ -315,10 +317,10 @@ static void update_sound_68k_interrupts(void)
 	else
 		cpu_set_irq_line(3, 7, CLEAR_LINE);
 #endif
-}
+}*/
 
 
-static int sound_68k_irq_gen(void)
+/*static int sound_68k_irq_gen(void)
 {
 	if (!fast_68k_int)
 	{
@@ -326,10 +328,10 @@ static int sound_68k_irq_gen(void)
 		update_sound_68k_interrupts();
 	}
 	return 0;
-}
+}*/
 
 
-static WRITE_HANDLER( io_68k_irq_ack_w )
+/*static WRITE_HANDLER( io_68k_irq_ack_w )
 {
 	(void)offset;
 	(void)data;
@@ -338,7 +340,7 @@ static WRITE_HANDLER( io_68k_irq_ack_w )
 		io_68k_int = 0;
 		update_sound_68k_interrupts();
 	}
-}
+}*/
 
 
 static READ_HANDLER( sound_68k_r )
@@ -365,7 +367,7 @@ static WRITE_HANDLER( sound_68k_w )
 }
 
 
-static WRITE_HANDLER( sound_68k_dac_w )
+/*static WRITE_HANDLER( sound_68k_dac_w )
 {
 	DAC_signed_data_w((offset >> 4) & 1, (INT16)data >> 8);
 
@@ -374,7 +376,7 @@ static WRITE_HANDLER( sound_68k_dac_w )
 		fast_68k_int = 0;
 		update_sound_68k_interrupts();
 	}
-}
+}*/
 
 
 /*************************************
@@ -538,9 +540,9 @@ static int samples_start(const struct MachineSound *msound)
 	/* build the volume table */
 	for (j = 0; j < 64; j++)
 	{
-		double factor = pow(0.5, (double)j * 0.25);
+		float factor = pow(0.5, (float)j * 0.25);
 		for (i = 0; i < 16; i++)
-			volume_table[j * 16 + i] = (INT16)(factor * (double)((INT16)(i << 12)));
+			volume_table[j * 16 + i] = (INT16)(factor * (float)((INT16)(i << 12)));
 	}
 
 	/* get stream channels */
@@ -1082,7 +1084,7 @@ static struct MachineDriver machine_driver_cyberbal =
 			ATARI_CLOCK_14MHz/8,
 			sound_readmem,sound_writemem,0,0,
 			0,0,
-			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14))
+			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((float)ATARI_CLOCK_14MHz/4/4/16/16/14))
 		},
 		{
 			CPU_M68000,		/* verified */

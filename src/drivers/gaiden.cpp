@@ -1,3 +1,5 @@
+#include "../vidhrdw/gaiden.cpp"
+
 /***************************************************************************
 
 Ninja Gaiden memory map (preliminary)
@@ -131,7 +133,7 @@ WRITE_HANDLER( tknight_protection_w )
 			jumpcode |= data & 0x0f;
 			if (jumpcode > 16)
 			{
-logerror("unknown jumpcode %02x\n",jumpcode);
+//logerror("unknown jumpcode %02x\n",jumpcode);
 				jumpcode = 0;
 			}
 			prot = 0x20;

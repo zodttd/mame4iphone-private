@@ -4,6 +4,7 @@
 
 #include "driver.h"
 #include <math.h>
+#include "osinline.h"
 
 #define PCM_NORMALIZE
 
@@ -169,8 +170,13 @@ static void RF5C68Update( int num, INT16 **buffer, int length )
 				rpcm.pcmx[0][i] = rpcm.pcmd[i] * ld;
 				rpcm.pcmx[1][i] = rpcm.pcmd[i] * rd;
 #endif
+#ifndef clip_short_ret
 				*(datap[RF_L_PAN] + j) = ILimit( ((int)*(datap[RF_L_PAN] + j) + ((rpcm.pcmx[0][i])>>4)), 32767, -32768 );
 				*(datap[RF_R_PAN] + j) = ILimit( ((int)*(datap[RF_R_PAN] + j) + ((rpcm.pcmx[1][i])>>4)), 32767, -32768 );
+#else
+				*(datap[RF_L_PAN] + j) = clip_short_ret( ((int)*(datap[RF_L_PAN] + j) + ((rpcm.pcmx[0][i])>>4)));
+				*(datap[RF_R_PAN] + j) = clip_short_ret( ((int)*(datap[RF_R_PAN] + j) + ((rpcm.pcmx[1][i])>>4)));
+#endif
 			}
 		}
 	}

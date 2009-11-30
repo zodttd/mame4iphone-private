@@ -127,43 +127,6 @@ READ_HANDLER( battlane_bitmap_r )
 	return battlane_bitmap[offset];
 }
 
-
-
-
-#ifdef MAME_DEBUG
-void battlane_dump_bitmap(void)
-{
-    int i;
-    FILE *fp=fopen("SCREEN.DMP", "w+b");
-    if (fp)
-    {
-        for ( i=0; i<0x20*8-1; i++)
-        {
-            fwrite(screen_bitmap->line[i], 0x20*8, 1, fp);
-        }
-        fclose(fp);
-    }
-	fp=fopen("SPRITES.DMP", "w+b");
-	if (fp)
-	{
-		fwrite(battlane_spriteram, 0x100, 1, fp);
-		fclose(fp);
-	}
-
-    fp=fopen("TILES.DMP", "w+b");
-	if (fp)
-	{
-        fwrite(battlane_tileram, 0x800, 1, fp);
-		fclose(fp);
-	}
-
-
-}
-#endif
-
-
-
-
 /***************************************************************************
 
   Start the video hardware emulation.
@@ -410,12 +373,4 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         }
 
     }
-
-#ifdef MAME_DEBUG
-    if (keyboard_pressed(KEYCODE_S))
-    {
-         battlane_dump_bitmap();
-    }
-#endif
-
 }

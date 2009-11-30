@@ -1097,25 +1097,7 @@ retry:
 
 	if (ran_out > 1)
 	{
-#ifdef MAME_DEBUG
-		char buf[80];
-
-		sprintf(buf,"Error: Palette overflow -%d",ran_out-1);
-		usrintf_showmessage(buf);
-#endif
 logerror("Error: no way to shrink the palette to 256 colors, left out %d colors.\n",ran_out-1);
-#if 0
-logerror("color list:\n");
-for (color = 0;color < Machine->drv->total_colors;color++)
-{
-	int r,g,b;
-	r = game_palette[3*color + 0];
-	g = game_palette[3*color + 1];
-	b = game_palette[3*color + 2];
-	if (palette_used_colors[color] & PALETTE_COLOR_VISIBLE)
-		logerror("%02x %02x %02x\n",r,g,b);
-}
-#endif
 	}
 
 	/* Reclaim unused pens; we do this AFTER allocating the new ones, to avoid */
@@ -1333,6 +1315,8 @@ WRITE_HANDLER( paletteram_BBGGRRII_w )
 }
 
 
+
+
 INLINE void changecolor_xxxxBBBBGGGGRRRR(int color,int data)
 {
 	int r,g,b;
@@ -1474,6 +1458,12 @@ WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_w )
 {
 	paletteram[offset] = data;
 	changecolor_xxxxRRRRGGGGBBBB(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));
+}
+
+WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_swap_w )
+{
+        paletteram[offset] = data;
+        changecolor_xxxxRRRRGGGGBBBB(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
 }
 
 WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_word_w )

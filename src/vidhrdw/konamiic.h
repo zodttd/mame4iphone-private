@@ -1,3 +1,6 @@
+#ifndef KONAMIIC_H
+#define KONAMIIC_H
+
 /* helper function to join two 16-bit ROMs and form a 32-bit data stream */
 void konami_rom_deinterleave_2(int mem_region);
 /* helper function to join four 16-bit ROMs and form a 64-bit data stream */
@@ -195,3 +198,4 @@ READ_HANDLER( K054000_r );
 WRITE_HANDLER( K051733_w );
 READ_HANDLER( K051733_r );
 
+#endif

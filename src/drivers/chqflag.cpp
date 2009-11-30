@@ -1,3 +1,5 @@
+#include "../vidhrdw/chqflag.cpp"
+
 /***************************************************************************
 
 Chequered Flag / Checkered Flag (GX717) (c) Konami 1988

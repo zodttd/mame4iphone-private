@@ -1,3 +1,6 @@
+#include "../vidhrdw/m72.cpp"
+#include "../sndhrdw/m72.cpp"
+
 /***************************************************************************
 
 IREM M72 board
@@ -451,10 +454,10 @@ static WRITE_HANDLER( m72_port02_w )
 {
 	if (offset != 0)
 	{
-		if (data) logerror("write %02x to port 03\n",data);
+		//if (data) logerror("write %02x to port 03\n",data);
 		return;
 	}
-	if (data & 0xec) logerror("write %02x to port 02\n",data);
+	//if (data & 0xec) logerror("write %02x to port 02\n",data);
 
 	/* bits 0/1 are coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -475,10 +478,10 @@ static WRITE_HANDLER( rtype2_port02_w )
 {
 	if (offset != 0)
 	{
-		if (data) logerror("write %02x to port 03\n",data);
+		//if (data) logerror("write %02x to port 03\n",data);
 		return;
 	}
-	if (data & 0xfc) logerror("write %02x to port 02\n",data);
+	//if (data & 0xfc) logerror("write %02x to port 02\n",data);
 
 	/* bits 0/1 are coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -1921,7 +1924,7 @@ static struct MachineDriver machine_driver_rtype =
 			CPU_V30,
 			8000000,	/* ?? */
 			rtype_readmem,rtype_writemem,readport,writeport,
-			m72_interrupt,256
+			m72_interrupt,16
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -1965,7 +1968,7 @@ static struct MachineDriver machine_driver_m72 =
 			CPU_V30,
 			8000000,	/* ?? */
 			m72_readmem,m72_writemem,readport,writeport,
-			m72_interrupt,256
+			m72_interrupt,16
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -2013,7 +2016,7 @@ static struct MachineDriver machine_driver_xmultipl =
 			CPU_V30,
 			8000000,	/* ?? */
 			xmultipl_readmem,xmultipl_writemem,readport,xmultipl_writeport,
-			m72_interrupt,256
+			m72_interrupt,16
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -2061,7 +2064,7 @@ static struct MachineDriver machine_driver_dbreed =
 			CPU_V30,
 			8000000,	/* ?? */
 			dbreed_readmem,dbreed_writemem,readport,xmultipl_writeport,
-			m72_interrupt,256
+			m72_interrupt,16
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -2109,7 +2112,7 @@ static struct MachineDriver machine_driver_rtype2 =
 			CPU_V30,
 			8000000,	/* ?? */
 			rtype2_readmem,rtype2_writemem,readport,rtype2_writeport,
-			m72_interrupt,256
+			m72_interrupt,16
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -2157,7 +2160,7 @@ static struct MachineDriver machine_driver_majtitle =
 			CPU_V30,
 			8000000,	/* ?? */
 			majtitle_readmem,majtitle_writemem,readport,rtype2_writeport,
-			m72_interrupt,256
+			m72_interrupt,16
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -2205,7 +2208,7 @@ static struct MachineDriver machine_driver_hharry =
 			CPU_V30,
 			8000000,	/* ?? */
 			hharry_readmem,hharry_writemem,readport,hharry_writeport,
-			m72_interrupt,256
+			m72_interrupt,16
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -2253,7 +2256,7 @@ static struct MachineDriver machine_driver_hharryu =
 			CPU_V30,
 			8000000,	/* ?? */
 			hharryu_readmem,hharryu_writemem,readport,rtype2_writeport,
-			m72_interrupt,256
+			m72_interrupt,16
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -2301,7 +2304,7 @@ static struct MachineDriver machine_driver_poundfor =
 			CPU_V30,
 			8000000,	/* ?? */
 			rtype2_readmem,rtype2_writemem,poundfor_readport,rtype2_writeport,
-			m72_interrupt,256
+			m72_interrupt,16
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,

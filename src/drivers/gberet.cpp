@@ -1,3 +1,5 @@
+#include "../vidhrdw/gberet.cpp"
+
 /***************************************************************************
 
 Green Beret memory map (preliminary)

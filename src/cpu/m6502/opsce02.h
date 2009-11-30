@@ -152,9 +152,7 @@
 /* 65ce02 ******************************************************
  *	map
  ***************************************************************/
-#define MAP 													\
- logerror("m65ce02 at pc:%.4x unknown op map a:%.2x x:%.2x y:%.2x z:%.2x\n", \
-  m65ce02.pc.w.l-1, m65ce02.a, m65ce02.x, m65ce02.y, m65ce02.z);
+#define MAP
 
 /* 65ce02 ******************************************************
  *	rts imm
@@ -162,8 +160,7 @@
 /* who knows 
    freeing local variables of procedure
    or freeing parameters of procedure call (more likely) */
-#define RTS_IMM 												\
- logerror("m65ce02 at pc:%.4x unknown op rts %.2x\n",m65ce02.pc.w.l-2,tmp);
+#define RTS_IMM
 
 /* 65ce02 ******************************************************
  *	NEG accu
@@ -172,7 +169,6 @@
 /* not sure about this */
 #if 1
 #define NEG 													\
- logerror("m65ce02 at pc:%.4x not sure neg\n",m65ce02.pc.w.l-1);\
 	A= (A^0xff)+1;												\
 	SET_NZ(A)
 #else

@@ -154,13 +154,27 @@ void K051649_sh_stop(void)
 
 WRITE_HANDLER( K051649_waveform_w )
 {
+#ifndef MAME_FASTSOUND
 	stream_update(stream,0);
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(stream,0);
+    }
+#endif
 	channel_list[offset>>5].waveform[offset&0x1f]=data;
 }
 
 WRITE_HANDLER( K051649_volume_w )
 {
+#ifndef MAME_FASTSOUND
 	stream_update(stream,0);
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(stream,0);
+    }
+#endif
 	channel_list[offset&0x7].volume=data&0xf;
 }
 
@@ -169,7 +183,14 @@ WRITE_HANDLER( K051649_frequency_w )
 	static int f[10];
 	f[offset]=data;
 
+#ifndef MAME_FASTSOUND
 	stream_update(stream,0);
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(stream,0);
+    }
+#endif
 	channel_list[offset>>1].frequency=(f[offset&0xe] + (f[offset|1]<<8))&0x3ff;
 
 	/* Channel 5 appears to share waveforms with channel 4 */

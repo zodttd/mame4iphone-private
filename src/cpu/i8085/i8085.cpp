@@ -46,7 +46,6 @@
 #include "driver.h"
 #include "state.h"
 #include "osd_cpu.h"
-#include "mamedbg.h"
 #include "i8085.h"
 #include "i8085cpu.h"
 #include "i8085daa.h"
@@ -58,23 +57,6 @@
 #else
 #define LOG(x)
 #endif
-
-/* Layout of the registers in the debugger */
-static UINT8 i8085_reg_layout[] = {
-	I8085_PC,I8085_SP,I8085_AF,I8085_BC,I8085_DE,I8085_HL, -1,
-	I8085_HALT,I8085_IM,I8085_IREQ,I8085_ISRV,I8085_VECTOR, -1,
-	I8085_TRAP_STATE,I8085_INTR_STATE,I8085_RST55_STATE,I8085_RST65_STATE,I8085_RST75_STATE,
-	0 };
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i8085_win_layout[] = {
-	25, 0,55, 3,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 4,55, 9,	/* memory #1 window (right, upper middle) */
-	25,14,55, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 
 typedef struct {
 	int 	cputype;	/* 0 8080, 1 8085A */
@@ -1134,7 +1116,6 @@ int i8085_execute(int cycles)
 	i8085_ICount = cycles;
 	do
 	{
-		CALL_MAME_DEBUG;
 		/* interrupts enabled or TRAP pending ? */
 		if ( (I.IM & IM_IEN) || (I.IREQ & IM_TRAP) )
 		{
@@ -1539,63 +1520,21 @@ void i8085_state_load(void *file)
  ****************************************************************************/
 const char *i8085_info(void *context, int regnum)
 {
-	static char buffer[16][47+1];
-	static int which = 0;
-	i8085_Regs *r = (i8085_Regs *)context;
-
-	which = ++which % 16;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &I;
-
 	switch( regnum )
 	{
-		case CPU_INFO_REG+I8085_AF: sprintf(buffer[which], "AF:%04X", r->AF.w.l); break;
-		case CPU_INFO_REG+I8085_BC: sprintf(buffer[which], "BC:%04X", r->BC.w.l); break;
-		case CPU_INFO_REG+I8085_DE: sprintf(buffer[which], "DE:%04X", r->DE.w.l); break;
-		case CPU_INFO_REG+I8085_HL: sprintf(buffer[which], "HL:%04X", r->HL.w.l); break;
-		case CPU_INFO_REG+I8085_SP: sprintf(buffer[which], "SP:%04X", r->SP.w.l); break;
-		case CPU_INFO_REG+I8085_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
-		case CPU_INFO_REG+I8085_IM: sprintf(buffer[which], "IM:%02X", r->IM); break;
-		case CPU_INFO_REG+I8085_HALT: sprintf(buffer[which], "HALT:%d", r->HALT); break;
-		case CPU_INFO_REG+I8085_IREQ: sprintf(buffer[which], "IREQ:%02X", I.IREQ); break;
-		case CPU_INFO_REG+I8085_ISRV: sprintf(buffer[which], "ISRV:%02X", I.ISRV); break;
-		case CPU_INFO_REG+I8085_VECTOR: sprintf(buffer[which], "VEC:%02X", I.INTR); break;
-		case CPU_INFO_REG+I8085_TRAP_STATE: sprintf(buffer[which], "TRAP:%X", I.nmi_state); break;
-		case CPU_INFO_REG+I8085_INTR_STATE: sprintf(buffer[which], "INTR:%X", I.irq_state[I8085_INTR_LINE]); break;
-		case CPU_INFO_REG+I8085_RST55_STATE: sprintf(buffer[which], "RST55:%X", I.irq_state[I8085_RST55_LINE]); break;
-		case CPU_INFO_REG+I8085_RST65_STATE: sprintf(buffer[which], "RST65:%X", I.irq_state[I8085_RST65_LINE]); break;
-		case CPU_INFO_REG+I8085_RST75_STATE: sprintf(buffer[which], "RST75:%X", I.irq_state[I8085_RST75_LINE]); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->AF.b.l & 0x80 ? 'S':'.',
-				r->AF.b.l & 0x40 ? 'Z':'.',
-				r->AF.b.l & 0x20 ? '?':'.',
-				r->AF.b.l & 0x10 ? 'H':'.',
-				r->AF.b.l & 0x08 ? '?':'.',
-				r->AF.b.l & 0x04 ? 'P':'.',
-				r->AF.b.l & 0x02 ? 'N':'.',
-				r->AF.b.l & 0x01 ? 'C':'.');
-			break;
 		case CPU_INFO_NAME: return "8085A";
 		case CPU_INFO_FAMILY: return "Intel 8080";
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char *)i8085_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)i8085_win_layout;
 	}
-	return buffer[which];
+	return "";
 }
 
 unsigned i8085_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm8085(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 
@@ -1603,22 +1542,6 @@ unsigned i8085_dasm(char *buffer, unsigned pc)
  * 8080 section
  **************************************************************************/
 #if (HAS_8080)
-/* Layout of the registers in the debugger */
-static UINT8 i8080_reg_layout[] = {
-	I8080_AF, I8080_BC, I8080_DE, I8080_HL, I8080_SP, I8080_PC, -1,
-	I8080_HALT, I8080_IREQ, I8080_ISRV, I8080_VECTOR, I8080_TRAP_STATE, I8080_INTR_STATE,
-	0 };
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i8080_win_layout[] = {
-	25, 0,55, 2,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 3,55,10,	/* memory #1 window (right, upper middle) */
-	25,14,55, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
 void i8080_reset(void *param)
 {
 	i8085_reset(param);
@@ -1695,20 +1618,14 @@ const char *i8080_info(void *context, int regnum)
 	{
 		case CPU_INFO_NAME: return "8080";
 		case CPU_INFO_VERSION: return "1.2";
-		case CPU_INFO_REG_LAYOUT: return (const char *)i8080_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)i8080_win_layout;
 	}
 	return i8085_info(context,regnum);
 }
 
 unsigned i8080_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm8085(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 #endif
 

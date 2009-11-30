@@ -106,7 +106,7 @@ int rallybik_vh_start(void)
 		return 1;
 	}
 
-	logerror("colorram_size: %08x\n", colorram1_size + colorram2_size);
+	//logerror("colorram_size: %08x\n", colorram1_size + colorram2_size);
 	if ((paletteram = (unsigned char*)calloc(colorram1_size + colorram2_size, 1)) == 0)
 	{
 		free(toaplan1_videoram3);
@@ -165,7 +165,7 @@ void rallybik_vh_stop(void)
 	for (i=16; i>=0; i--)
 	{
 		free(tile_list[i]);
-		logerror("max_list_size[%d]=%08x\n",i,max_list_size[i]);
+		//logerror("max_list_size[%d]=%08x\n",i,max_list_size[i]);
 	}
 
 	for (i=3; i>=0; i--)
@@ -408,10 +408,12 @@ WRITE_HANDLER( layers_offset_w )
 			break ;
 	}
 
+	/*
 	logerror("layers_offset[0]:%08x\n",layers_offset[0]);
 	logerror("layers_offset[1]:%08x\n",layers_offset[1]);
 	logerror("layers_offset[2]:%08x\n",layers_offset[2]);
 	logerror("layers_offset[3]:%08x\n",layers_offset[3]);
+	*/
 
 }
 

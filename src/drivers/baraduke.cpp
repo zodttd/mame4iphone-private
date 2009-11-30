@@ -1,3 +1,5 @@
+#include "../vidhrdw/baraduke.cpp"
+
 /***************************************************************************
 
 Baraduke/Metro-Cross (c) Namco 1985

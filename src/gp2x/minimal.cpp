@@ -16,7 +16,6 @@
 
 #include "minimal.h"
 
-#import <iControlpad.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -27,6 +26,7 @@
 #define AUDIO_BUFFERS 12
 
 extern "C" void app_MuteSound(void);
+extern "C" void updateScreen(void);
 
 typedef struct AQCallbackStruct {
     AudioQueueRef queue;
@@ -69,11 +69,13 @@ unsigned long gp2x_pad_status = 0;
 
 void gp2x_video_flip(void)
 {
+  updateScreen();
 }
 
 
 void gp2x_video_flip_single(void)
 {
+  updateScreen();
 }
 
 

@@ -1,3 +1,7 @@
+#include "../machine/capbowl.cpp"
+#include "../vidhrdw/capbowl.cpp"
+#include "../vidhrdw/tms34061.cpp"
+
 /***************************************************************************
 
   Coors Light Bowling/Bowl-O-Rama memory map

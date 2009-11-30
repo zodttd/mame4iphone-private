@@ -1,3 +1,5 @@
+#include "../vidhrdw/amidar.cpp"
+
 /***************************************************************************
 
 Amidar memory map (preliminary)

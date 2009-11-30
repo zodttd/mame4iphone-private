@@ -47,8 +47,4 @@ extern int s2650_get_flag(void);
 extern void s2650_set_sense(int state);
 extern int s2650_get_sense(void);
 
-#ifdef  MAME_DEBUG
-extern int Dasm2650(char *buff, int PC);
-#endif
-
 #endif

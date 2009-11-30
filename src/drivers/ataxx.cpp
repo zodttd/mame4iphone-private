@@ -205,7 +205,7 @@ static READ_HANDLER( indyheat_analog_r )
 			return 0;
 
 		case 3:
-			logerror("Unexpected analog read(%02X)\n", 8 + offset);
+			//logerror("Unexpected analog read(%02X)\n", 8 + offset);
 			break;
 	}
 	return 0xff;
@@ -222,7 +222,7 @@ static WRITE_HANDLER( indyheat_analog_w )
 		case 0:
 		case 1:
 		case 2:
-			logerror("Unexpected analog write(%02X) = %02X\n", 8 + offset, data);
+			//logerror("Unexpected analog write(%02X) = %02X\n", 8 + offset, data);
 			break;
 	}
 }
@@ -316,7 +316,7 @@ static void master_bankswitch(void)
 	address = &master_base[bank_list[master_bank & 15]];
 	if (bank_list[master_bank & 15] >= master_length)
 	{
-		logerror("%04X:Master bank %02X out of range!\n", cpu_getpreviouspc(), master_bank & 15);
+		//logerror("%04X:Master bank %02X out of range!\n", cpu_getpreviouspc(), master_bank & 15);
 		address = &master_base[bank_list[0]];
 	}
 	cpu_setbank(1, address);
@@ -411,13 +411,13 @@ static WRITE_HANDLER( battery_ram_w )
 {
 	if (battery_ram_enable)
 	{
-		if (LOG_BATTERY_RAM) logerror("%04X:BatteryW@%04X=%02X\n", cpu_getpreviouspc(), offset, data);
+		//if (LOG_BATTERY_RAM) logerror("%04X:BatteryW@%04X=%02X\n", cpu_getpreviouspc(), offset, data);
 		battery_ram[offset] = data;
 	}
 	else if ((master_bank & 0x30) == 0x20)
 		ataxx_qram[((master_bank & 0xc0) << 8) + offset] = data;
-	else
-		logerror("%04X:BatteryW@%04X (invalid!)\n", cpu_getpreviouspc(), offset, data);
+	/*else
+		logerror("%04X:BatteryW@%04X (invalid!)\n", cpu_getpreviouspc(), offset, data);*/
 }
 
 
@@ -465,7 +465,7 @@ static READ_HANDLER( master_input_r )
 			break;
 
 		default:
-			logerror("Master I/O read offset %02X\n", offset);
+			//logerror("Master I/O read offset %02X\n", offset);
 			break;
 	}
 	return result;
@@ -484,9 +484,9 @@ static WRITE_HANDLER( master_output_w )
 			break;
 
 		case 0x04:	/* /MBNK */
-			if (LOG_BANKSWITCHING_M)
+			/*if (LOG_BANKSWITCHING_M)
 				if ((master_bank ^ data) & 0xff)
-					logerror("%04X:master_bank = %02X\n", cpu_getpreviouspc(), data & 0xff);
+					logerror("%04X:master_bank = %02X\n", cpu_getpreviouspc(), data & 0xff);*/
 			master_bank = data;
 			master_bankswitch();
 			break;
@@ -504,7 +504,7 @@ static WRITE_HANDLER( master_output_w )
 			break;
 
 		default:
-			logerror("Master I/O write offset %02X=%02X\n", offset, data);
+			//logerror("Master I/O write offset %02X=%02X\n", offset, data);
 			break;
 	}
 }
@@ -513,15 +513,15 @@ static WRITE_HANDLER( master_output_w )
 static READ_HANDLER( eeprom_r )
 {
 	int port = readinputport(2);
-	if (LOG_EEPROM) logerror("%04X:EE read\n", cpu_getpreviouspc());
+	//if (LOG_EEPROM) logerror("%04X:EE read\n", cpu_getpreviouspc());
 	return (port & ~0x01) | EEPROM_read_bit();
 }
 
 
 static WRITE_HANDLER( eeprom_w )
 {
-	if (LOG_EEPROM) logerror("%04X:EE write %d%d%d\n", cpu_getpreviouspc(),
-			(data >> 6) & 1, (data >> 5) & 1, (data >> 4) & 1);
+	/*if (LOG_EEPROM) logerror("%04X:EE write %d%d%d\n", cpu_getpreviouspc(),
+			(data >> 6) & 1, (data >> 5) & 1, (data >> 4) & 1);*/
 	EEPROM_write_bit     ((data & 0x10) >> 4);
 	EEPROM_set_clock_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 	EEPROM_set_cs_line  ((~data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
@@ -544,22 +544,22 @@ static WRITE_HANDLER( paletteram_and_misc_w )
 	else if (offset == 0x7fc)
 	{
 		xrom1_addr = (xrom1_addr & 0xff00) | (data & 0x00ff);
-		if (LOG_XROM) logerror("%04X:XROM1 address low write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom1_addr);
+		/*if (LOG_XROM) logerror("%04X:XROM1 address low write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom1_addr);*/
 	}
 	else if (offset == 0x7fd)
 	{
 		xrom1_addr = (xrom1_addr & 0x00ff) | ((data << 8) & 0xff00);
-		if (LOG_XROM) logerror("%04X:XROM1 address high write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom1_addr);
+		/*if (LOG_XROM) logerror("%04X:XROM1 address high write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom1_addr);*/
 	}
 	else if (offset == 0x7fe)
 	{
 		xrom2_addr = (xrom2_addr & 0xff00) | (data & 0x00ff);
-		if (LOG_XROM) logerror("%04X:XROM2 address low write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom2_addr);
+		/*if (LOG_XROM) logerror("%04X:XROM2 address low write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom2_addr);*/
 	}
 	else if (offset == 0x7ff)
 	{
 		xrom2_addr = (xrom2_addr & 0x00ff) | ((data << 8) & 0xff00);
-		if (LOG_XROM) logerror("%04X:XROM2 address high write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom2_addr);
+		/*if (LOG_XROM) logerror("%04X:XROM2 address high write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom2_addr);*/
 	}
 	else
 		extra_tram[offset] = data;
@@ -573,13 +573,13 @@ static READ_HANDLER( paletteram_and_misc_r )
 	else if (offset == 0x7fc || offset == 0x7fd)
 	{
 		int result = xrom_base[0x00000 | xrom1_addr | ((offset & 1) << 16)];
-		if (LOG_XROM) logerror("%04X:XROM1 read(%d) = %02X (addr=%04X)\n", cpu_getpreviouspc(), offset - 0x7fc, result, xrom1_addr);
+		/*if (LOG_XROM) logerror("%04X:XROM1 read(%d) = %02X (addr=%04X)\n", cpu_getpreviouspc(), offset - 0x7fc, result, xrom1_addr);*/
 		return result;
 	}
 	else if (offset == 0x7fe || offset == 0x7ff)
 	{
 		int result = xrom_base[0x20000 | xrom2_addr | ((offset & 1) << 16)];
-		if (LOG_XROM) logerror("%04X:XROM2 read(%d) = %02X (addr=%04X)\n", cpu_getpreviouspc(), offset - 0x7fc, result, xrom2_addr);
+		/*if (LOG_XROM) logerror("%04X:XROM2 read(%d) = %02X (addr=%04X)\n", cpu_getpreviouspc(), offset - 0x7fc, result, xrom2_addr);*/
 		return result;
 	}
 	else
@@ -609,12 +609,12 @@ static WRITE_HANDLER( slave_banksw_w )
 
 	if (bankaddress >= slave_length)
 	{
-		logerror("%04X:Slave bank %02X out of range!", cpu_getpreviouspc(), data & 0x3f);
+		/*logerror("%04X:Slave bank %02X out of range!", cpu_getpreviouspc(), data & 0x3f);*/
 		bankaddress = 0x2000;
 	}
 	cpu_setbank(3, &slave_base[bankaddress]);
 
-	if (LOG_BANKSWITCHING_S) logerror("%04X:Slave bank = %02X (%05X)\n", cpu_getpreviouspc(), data, bankaddress);
+	/*if (LOG_BANKSWITCHING_S) logerror("%04X:Slave bank = %02X (%05X)\n", cpu_getpreviouspc(), data, bankaddress);*/
 }
 
 

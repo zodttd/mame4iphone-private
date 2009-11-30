@@ -92,7 +92,7 @@ void senjyo_sh_stop(void)
 
 void senjyo_sh_update(void)
 {
-	double period;
+	float period;
 
 	if (Machine->sample_rate == 0) return;
 

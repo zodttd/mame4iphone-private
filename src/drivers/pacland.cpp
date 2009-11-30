@@ -1,3 +1,5 @@
+#include "../vidhrdw/pacland.cpp"
+
 /***************************************************************************
 
 PacLand memory map (preliminary)

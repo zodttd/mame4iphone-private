@@ -398,7 +398,7 @@ static void srdarwin_drawsprites(struct osd_bitmap *bitmap, int pri)
 }
 
 /* Draw character tiles, each game has different colour masks */
-static void draw_characters(struct osd_bitmap *bitmap, int mask, int shift)
+/*static void draw_characters(struct osd_bitmap *bitmap, int mask, int shift)
 {
 	int mx,my,tile,color,offs;
 
@@ -415,7 +415,7 @@ static void draw_characters(struct osd_bitmap *bitmap, int mask, int shift)
 				tile,color,0,0,8*mx,8*my,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
-}
+}*/
 
 /******************************************************************************/
 

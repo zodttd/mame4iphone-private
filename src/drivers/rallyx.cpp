@@ -1,3 +1,5 @@
+#include "../vidhrdw/rallyx.cpp"
+
 /***************************************************************************
 
 Rally X memory map (preliminary)

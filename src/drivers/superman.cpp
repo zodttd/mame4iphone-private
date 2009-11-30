@@ -1,3 +1,5 @@
+#include "../vidhrdw/superman.cpp"
+
 /***************************************************************************
 
 Superman memory map
@@ -83,7 +85,7 @@ READ_HANDLER( superman_input_r )
 		case 0x06:
 			return readinputport (3);
 		default:
-			logerror("superman_input_r offset: %04x\n", offset);
+			//logerror("superman_input_r offset: %04x\n", offset);
 			return 0xff;
 	}
 }

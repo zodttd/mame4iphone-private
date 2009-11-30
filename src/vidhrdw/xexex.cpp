@@ -105,7 +105,7 @@ WRITE_HANDLER( K053157_ram_w )
 
 READ_HANDLER( K053157_r )
 {
-	logerror("K053157: unhandled read(%02x), pc=%08x\n", offset, cpu_get_pc());
+	//logerror("K053157: unhandled read(%02x), pc=%08x\n", offset, cpu_get_pc());
 	return 0;
 }
 
@@ -142,7 +142,8 @@ WRITE_HANDLER( K053157_w )
 			break;
 		default:
 			nb = 0;
-			logerror("Graphic bankswitching to unknown bank %02x (pc=%08x)\n", data, cpu_get_pc());
+			//logerror("Graphic bankswitching to unknown bank %02x (pc=%08x)\n", data, cpu_get_pc());
+			break;
 		}
 
 		K053157_cur_rambank = data;
@@ -158,7 +159,8 @@ WRITE_HANDLER( K053157_w )
 		break;
 	}
 	default:
-		logerror("K053157: unhandled write(%02x, %04x), pc=%08x\n", offset, data & 0xffff, cpu_get_pc());
+		//logerror("K053157: unhandled write(%02x, %04x), pc=%08x\n", offset, data & 0xffff, cpu_get_pc());
+		break;
 	}
 }
 

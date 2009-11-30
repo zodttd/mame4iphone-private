@@ -38,7 +38,6 @@
 #include <stdlib.h>
 #include "cpuintrf.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "konami.h"
 
 #define VERBOSE 0
@@ -48,21 +47,6 @@
 #else
 #define LOG(x)
 #endif
-
-
-static UINT8 konami_reg_layout[] = {
-	KONAMI_PC, KONAMI_S, KONAMI_CC, KONAMI_A, KONAMI_B, KONAMI_X, -1,
-	KONAMI_Y, KONAMI_U, KONAMI_DP, KONAMI_NMI_STATE, KONAMI_IRQ_STATE, KONAMI_FIRQ_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 konami_win_layout[] = {
-	27, 0,53, 4,	/* register window (top, right rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 /* Konami Registers */
 typedef struct
@@ -334,7 +318,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 	case 3: val = Y;	break; 			\
 	case 4: val = S; 	break; /* ? */	\
 	case 5: val = U;	break;			\
-	default: val = 0xff; logerror("Unknown TFR/EXG idx at PC:%04x\n", PC ); break; \
+	default: val = 0xff; break; \
 }
 
 #define SETREG(val,reg) 				\
@@ -345,7 +329,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 	case 3: Y = val;	break;			\
 	case 4: S = val;	break; /* ? */	\
 	case 5: U = val; 	break;			\
-	default: logerror("Unknown TFR/EXG idx at PC:%04x\n", PC ); break; \
+	default: break; \
 }
 
 /* opcode timings */
@@ -635,15 +619,6 @@ void konami_state_load(void *file) { state_load(file, "konami"); }
  ****************************************************************************/
 const char *konami_info(void *context, int regnum)
 {
-	static char buffer[16][47+1];
-	static int which = 0;
-	konami_Regs *r = (konami_Regs *)context;
-
-	which = ++which % 16;
-    buffer[which][0] = '\0';
-	if( !context )
-		r = &konami;
-
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "KONAMI";
@@ -651,44 +626,14 @@ const char *konami_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) The MAME Team 1999";
-		case CPU_INFO_REG_LAYOUT: return (const char*)konami_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)konami_win_layout;
-
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->cc & 0x80 ? 'E':'.',
-				r->cc & 0x40 ? 'F':'.',
-                r->cc & 0x20 ? 'H':'.',
-                r->cc & 0x10 ? 'I':'.',
-                r->cc & 0x08 ? 'N':'.',
-                r->cc & 0x04 ? 'Z':'.',
-                r->cc & 0x02 ? 'V':'.',
-                r->cc & 0x01 ? 'C':'.');
-            break;
-		case CPU_INFO_REG+KONAMI_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+KONAMI_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
-		case CPU_INFO_REG+KONAMI_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+KONAMI_U: sprintf(buffer[which], "U:%04X", r->u.w.l); break;
-		case CPU_INFO_REG+KONAMI_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
-		case CPU_INFO_REG+KONAMI_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
-		case CPU_INFO_REG+KONAMI_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
-		case CPU_INFO_REG+KONAMI_Y: sprintf(buffer[which], "Y:%04X", r->y.w.l); break;
-		case CPU_INFO_REG+KONAMI_DP: sprintf(buffer[which], "DP:%02X", r->dp.b.h); break;
-		case CPU_INFO_REG+KONAMI_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+KONAMI_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[KONAMI_IRQ_LINE]); break;
-		case CPU_INFO_REG+KONAMI_FIRQ_STATE: sprintf(buffer[which], "FIRQ:%X", r->irq_state[KONAMI_FIRQ_LINE]); break;
 	}
-	return buffer[which];
+	return "";
 }
 
 unsigned konami_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-    return Dasmknmi(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 /* includes the static function prototypes and the master opcode table */
@@ -712,8 +657,6 @@ int konami_execute(int cycles)
 		do
 		{
 			pPPC = pPC;
-
-			CALL_MAME_DEBUG;
 
 			konami.ireg = ROP(PCD);
 			PC++;

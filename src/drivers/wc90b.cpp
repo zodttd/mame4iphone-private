@@ -1,3 +1,5 @@
+#include "../vidhrdw/wc90b.cpp"
+
 /*
 World Cup 90 bootleg driver
 ---------------------------

@@ -1,3 +1,5 @@
+#include "../vidhrdw/blueprnt.cpp"
+
 /***************************************************************************
 
 Blue Print memory map (preliminary)

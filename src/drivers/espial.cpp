@@ -1,3 +1,5 @@
+#include "../vidhrdw/espial.cpp"
+
 /***************************************************************************
 
 Espial memory map (preliminary)

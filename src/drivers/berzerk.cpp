@@ -1,3 +1,7 @@
+#include "../machine/berzerk.cpp"
+#include "../vidhrdw/berzerk.cpp"
+#include "../sndhrdw/berzerk.cpp"
+
 /***************************************************************************
 
  Berzerk Driver by Zsolt Vasvari

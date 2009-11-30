@@ -14,8 +14,8 @@ struct TMS36XXinterface {
 	int mixing_level[MAX_TMS36XX];
 	int subtype[MAX_TMS36XX];
 	int basefreq[MAX_TMS36XX];		/* base frequecnies of the chips */
-	double decay[MAX_TMS36XX][6];	/* decay times for the six harmonic notes */
-	double speed[MAX_TMS36XX];		/* tune speed (meaningful for the TMS3615 only) */
+	float decay[MAX_TMS36XX][6];	/* decay times for the six harmonic notes */
+	float speed[MAX_TMS36XX];		/* tune speed (meaningful for the TMS3615 only) */
 };
 
 extern int tms36xx_sh_start(const struct MachineSound *msound);

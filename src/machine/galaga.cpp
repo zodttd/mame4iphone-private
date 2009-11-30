@@ -74,7 +74,7 @@ WRITE_HANDLER( galaga_customio_data_w )
 {
 	customio[offset] = data;
 
-logerror("%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
+//logerror("%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
 
 	switch (customio_command)
 	{
@@ -96,8 +96,8 @@ logerror("%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
 
 READ_HANDLER( galaga_customio_data_r )
 {
-	if (customio_command != 0x71)
-		logerror("%04x: custom IO read offset %02x\n",cpu_get_pc(),offset);
+	/*if (customio_command != 0x71)
+		logerror("%04x: custom IO read offset %02x\n",cpu_get_pc(),offset);*/
 
 	switch (customio_command)
 	{
@@ -171,8 +171,8 @@ void galaga_nmi_generate (int param)
 
 WRITE_HANDLER( galaga_customio_w )
 {
-	if (data != 0x10 && data != 0x71)
-		logerror("%04x: custom IO command %02x\n",cpu_get_pc(),data);
+	/*if (data != 0x10 && data != 0x71)
+		logerror("%04x: custom IO command %02x\n",cpu_get_pc(),data);*/
 
 	customio_command = data;
 

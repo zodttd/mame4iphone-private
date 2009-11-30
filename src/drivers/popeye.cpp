@@ -1,3 +1,5 @@
+#include "../vidhrdw/popeye.cpp"
+
 /***************************************************************************
 
 Popeye memory map (preliminary)

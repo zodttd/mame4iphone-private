@@ -36,7 +36,7 @@
  *
  *************************************/
 
-double mcr68_timing_factor;
+timer_tm mcr68_timing_factor;
 
 UINT8 mcr_cocktail_flip;
 
@@ -58,7 +58,7 @@ static struct counter_state
 	UINT16	latch;
 	UINT16	count;
 	void *	timer;
-	double	period;
+	timer_tm	period;
 } m6840_state[3];
 
 /* MCR/68k interrupt states */
@@ -71,8 +71,8 @@ static void (*v493_callback)(int param);
 
 static UINT8 zwackery_sound_data;
 
-static const double m6840_counter_periods[3] = { 1.0 / 30.0, 1000000.0, 1.0 / (512.0 * 30.0) };
-static double m6840_internal_counter_period;	/* 68000 CLK / 10 */
+static const timer_tm m6840_counter_periods[3] = { TIME_ONE_SEC / 30, TIME_NEVER, TIME_ONE_SEC / (512 * 30) };
+static timer_tm m6840_internal_counter_period;	/* 68000 CLK / 10 */
 
 
 
@@ -325,7 +325,7 @@ int mcr68_interrupt(void)
 	if (!m6840_state[0].timer)
 		subtract_from_counter(0, 1);
 
-	logerror("--- VBLANK ---\n");
+	//logerror("--- VBLANK ---\n");
 
 	/* also set a timer to generate the 493 signal at a specific time before the next VBLANK */
 	/* the timing of this is crucial for Blasted and Tri-Sports, which check the timing of */
@@ -373,7 +373,7 @@ static void mcr68_493_callback(int param)
 	v493_irq_state = 1;
 	update_mcr68_interrupts();
 	timer_set(cpu_getscanlineperiod(), 0, mcr68_493_off_callback);
-	logerror("--- (INT1) ---\n");
+	//logerror("--- (INT1) ---\n");
 }
 
 
@@ -570,7 +570,7 @@ static void counter_fired_callback(int counter)
 
 static void reload_count(int counter)
 {
-	double period;
+	timer_tm period;
 	int count;
 
 	/* copy the latched value in */
@@ -599,13 +599,13 @@ static void reload_count(int counter)
 		count = count + 1;
 
 	/* set the timer */
-	m6840_state[counter].timer = timer_set(period * (double)count, (count << 2) + counter, counter_fired_callback);
+	m6840_state[counter].timer = timer_set(TIME_IN_SEC(period * (timer_tm)count), (count << 2) + counter, counter_fired_callback);
 }
 
 
 static UINT16 compute_counter(int counter)
 {
-	double period;
+	timer_tm period;
 	int remaining;
 
 	/* if there's no timer, return the count */

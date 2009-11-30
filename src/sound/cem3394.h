@@ -8,8 +8,8 @@ struct cem3394_interface
 {
 	int numchips;									/* number of chips */
 	int volume[MAX_CEM3394];						/* playback volume */
-	double vco_zero_freq[MAX_CEM3394];				/* frequency at 0V for VCO */
-	double filter_zero_freq[MAX_CEM3394];			/* frequency at 0V for filter */
+	float vco_zero_freq[MAX_CEM3394];				/* frequency at 0V for VCO */
+	float filter_zero_freq[MAX_CEM3394];			/* frequency at 0V for filter */
 	void (*external[MAX_CEM3394])(int, int, short *);/* external input source (at Machine->sample_rate) */
 };
 
@@ -30,7 +30,7 @@ int cem3394_sh_start(const struct MachineSound *msound);
 void cem3394_sh_stop(void);
 
 /* set the voltage going to a particular parameter */
-void cem3394_set_voltage(int chip, int input, double voltage);
+void cem3394_set_voltage(int chip, int input, float voltage);
 
 /* get the translated parameter associated with the given input as follows:
 	CEM3394_VCO_FREQUENCY:		frequency in Hz
@@ -41,7 +41,7 @@ void cem3394_set_voltage(int chip, int input, double voltage);
 	CEM3394_FILTER_RESONANCE:	resonance, from 0.0 to 1.0
 	CEM3394_FILTER_FREQENCY:	frequency, in Hz
 	CEM3394_FINAL_GAIN:			gain, in dB */
-double cem3394_get_parameter(int chip, int input);
+float cem3394_get_parameter(int chip, int input);
 
 
 #endif

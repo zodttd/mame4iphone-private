@@ -1,3 +1,7 @@
+#include "../machine/astrocde.cpp"
+#include "../vidhrdw/astrocde.cpp"
+#include "../sndhrdw/astrocde.cpp"
+
 /****************************************************************************
 
 Bally Astrocade style games

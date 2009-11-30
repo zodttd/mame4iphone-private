@@ -1,3 +1,6 @@
+#include "../machine/irobot.cpp"
+#include "../vidhrdw/irobot.cpp"
+
 /****************************************************************************
 I-Robot Memory Map
 

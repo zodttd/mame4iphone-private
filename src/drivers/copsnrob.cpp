@@ -1,3 +1,6 @@
+#include "../vidhrdw/copsnrob.cpp"
+#include "../machine/copsnrob.cpp"
+
 /***************************************************************************
 
 Cops'n Robbers memory map (preliminary)

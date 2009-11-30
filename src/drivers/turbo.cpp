@@ -1,3 +1,6 @@
+#include "../machine/turbo.cpp"
+#include "../vidhrdw/turbo.cpp"
+
 /*************************************************************************
 
 	Turbo - Sega - 1981

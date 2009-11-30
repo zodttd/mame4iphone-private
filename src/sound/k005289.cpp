@@ -193,9 +193,14 @@ void K005289_sh_stop(void)
 static void k005289_recompute(void)
 {
 	k005289_sound_channel *voice = channel_list;
-
+#ifndef MAME_FASTSOUND
 	stream_update(stream,0); 	/* update the streams */
-
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(stream,0); 	/* update the streams */
+    }
+#endif
 	voice[0].frequency = k005289_A_frequency;
 	voice[1].frequency = k005289_B_frequency;
 	voice[0].volume = k005289_A_volume;

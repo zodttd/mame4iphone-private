@@ -15,23 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpuintrf.h"
-#include "mamedbg.h"
 #include "t11.h"
-
-
-static UINT8 t11_reg_layout[] = {
-	T11_PC, T11_SP, T11_PSW, T11_IRQ0_STATE, T11_IRQ1_STATE, T11_IRQ2_STATE, T11_IRQ3_STATE, -1,
-	T11_R0,T11_R1,T11_R2,T11_R3,T11_R4,T11_R5, -1,
-	T11_BANK0,T11_BANK1,T11_BANK2,T11_BANK3, T11_BANK4,T11_BANK5,T11_BANK6,T11_BANK7, 0
-};
-
-static UINT8 t11_win_layout[] = {
-	 0, 0,80, 4,	/* register window (top rows) */
-	 0, 5,31,17,	/* disassembler window (left colums) */
-	32, 5,48, 8,	/* memory #1 window (right, upper middle) */
-	32,14,48, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 /* T-11 Registers */
 typedef struct
@@ -362,8 +346,6 @@ change_pc(0xffff);
 	{
 		t11.ppc = t11.reg[7];	/* copy PC to previous PC */
 
-		CALL_MAME_DEBUG;
-
 		t11.op = ROPCODE();
 		(*opcode_table[t11.op >> 3])();
 
@@ -384,68 +366,20 @@ getout:
  ****************************************************************************/
 const char *t11_info( void *context, int regnum )
 {
-	static char buffer[16][47+1];
-	static int which = 0;
-	t11_Regs *r = (t11_Regs *)context;
-
-	which = ++which % 16;
-    buffer[which][0] = '\0';
-
-	if( !context )
-		r = &t11;
-
     switch( regnum )
 	{
-		case CPU_INFO_REG+T11_PC: sprintf(buffer[which], "PC:%04X", r->reg[7].w.l); break;
-		case CPU_INFO_REG+T11_SP: sprintf(buffer[which], "SP:%04X", r->reg[6].w.l); break;
-		case CPU_INFO_REG+T11_PSW: sprintf(buffer[which], "PSW:%02X", r->psw.b.l); break;
-		case CPU_INFO_REG+T11_R0: sprintf(buffer[which], "R0:%04X", r->reg[0].w.l); break;
-		case CPU_INFO_REG+T11_R1: sprintf(buffer[which], "R1:%04X", r->reg[1].w.l); break;
-		case CPU_INFO_REG+T11_R2: sprintf(buffer[which], "R2:%04X", r->reg[2].w.l); break;
-		case CPU_INFO_REG+T11_R3: sprintf(buffer[which], "R3:%04X", r->reg[3].w.l); break;
-		case CPU_INFO_REG+T11_R4: sprintf(buffer[which], "R4:%04X", r->reg[4].w.l); break;
-		case CPU_INFO_REG+T11_R5: sprintf(buffer[which], "R5:%04X", r->reg[5].w.l); break;
-		case CPU_INFO_REG+T11_IRQ0_STATE: sprintf(buffer[which], "IRQ0:%X", r->irq_state[T11_IRQ0]); break;
-		case CPU_INFO_REG+T11_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", r->irq_state[T11_IRQ1]); break;
-		case CPU_INFO_REG+T11_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", r->irq_state[T11_IRQ2]); break;
-		case CPU_INFO_REG+T11_IRQ3_STATE: sprintf(buffer[which], "IRQ3:%X", r->irq_state[T11_IRQ3]); break;
-		case CPU_INFO_REG+T11_BANK0: sprintf(buffer[which], "B0:%06X", (unsigned)(r->bank[0] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK1: sprintf(buffer[which], "B1:%06X", (unsigned)(r->bank[1] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK2: sprintf(buffer[which], "B2:%06X", (unsigned)(r->bank[2] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK3: sprintf(buffer[which], "B3:%06X", (unsigned)(r->bank[3] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK4: sprintf(buffer[which], "B4:%06X", (unsigned)(r->bank[4] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK5: sprintf(buffer[which], "B5:%06X", (unsigned)(r->bank[5] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK6: sprintf(buffer[which], "B6:%06X", (unsigned)(r->bank[6] - OP_RAM)); break;
-		case CPU_INFO_REG+T11_BANK7: sprintf(buffer[which], "B7:%06X", (unsigned)(r->bank[7] - OP_RAM)); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->psw.b.l & 0x80 ? '?':'.',
-				r->psw.b.l & 0x40 ? 'I':'.',
-				r->psw.b.l & 0x20 ? 'I':'.',
-				r->psw.b.l & 0x10 ? 'T':'.',
-				r->psw.b.l & 0x08 ? 'N':'.',
-				r->psw.b.l & 0x04 ? 'Z':'.',
-				r->psw.b.l & 0x02 ? 'V':'.',
-				r->psw.b.l & 0x01 ? 'C':'.');
-			break;
 		case CPU_INFO_NAME: return "T11";
 		case CPU_INFO_FAMILY: return "DEC T-11";
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) Aaron Giles 1998";
-		case CPU_INFO_REG_LAYOUT: return (const char*)t11_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)t11_win_layout;
     }
-	return buffer[which];
+	return "";
 }
 
 unsigned t11_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-    return DasmT11(buffer,pc);
-#else
 	sprintf( buffer, "$%04X", cpu_readmem16lew_word(pc) );
 	return 2;
-#endif
 }
 

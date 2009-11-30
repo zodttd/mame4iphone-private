@@ -1,3 +1,5 @@
+#include "../vidhrdw/ladybug.cpp"
+
 /***************************************************************************
 
 Lady Bug memory map (preliminary)

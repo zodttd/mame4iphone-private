@@ -1,3 +1,7 @@
+#include "../vidhrdw/segar.cpp"
+#include "../sndhrdw/segar.cpp"
+#include "../machine/segar.cpp"
+
 /***************************************************************************
 
 Sega G-80 Raster drivers

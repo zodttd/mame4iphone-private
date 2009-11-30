@@ -152,25 +152,12 @@ WRITE_HANDLER( astrocde_interrupt_enable_w )
 		{
 		  	GorfDelay = NextScanInt - 1;
 		}
-
-#ifdef MAME_DEBUG
-		logerror("Gorf Delay set to %02x\n",GorfDelay);
-#endif
-
 	}
-
-#ifdef MAME_DEBUG
-	logerror("Interrupt Flag set to %02x\n",InterruptFlag);
-#endif
 }
 
 WRITE_HANDLER( astrocde_interrupt_w )
 {
 	/* A write to 0F triggers an interrupt at that scanline */
-
-#ifdef MAME_DEBUG
-	logerror("Scanline interrupt set to %02x\n",data);
-#endif
 
 	NextScanInt = data;
 }
@@ -276,9 +263,6 @@ WRITE_HANDLER( astrocde_colour_register_w )
 {
 	colors[CurrentScan][offset] = data;
 
-#ifdef MAME_DEBUG
-	logerror("colors %01x set to %02x\n",offset,data);
-#endif
 }
 
 WRITE_HANDLER( astrocde_colour_block_w )
@@ -302,9 +286,6 @@ WRITE_HANDLER( wow_videoram_w )
 
 WRITE_HANDLER( astrocde_magic_expand_color_w )
 {
-#ifdef MAME_DEBUG
-//	logerror("%04x: magic_expand_color = %02x\n",cpu_get_pc(),data);
-#endif
 
 	magic_expand_color = data;
 }
@@ -312,10 +293,6 @@ WRITE_HANDLER( astrocde_magic_expand_color_w )
 
 WRITE_HANDLER( astrocde_magic_control_w )
 {
-#ifdef MAME_DEBUG
-//	logerror("%04x: magic_control = %02x\n",cpu_get_pc(),data);
-#endif
-
 	magic_control = data;
 
 	magic_expand_count = 0;	/* reset flip-flop for expand mode on write to this register */
@@ -457,11 +434,6 @@ WRITE_HANDLER( astrocde_pattern_board_w )
 	if (offset == 6)	/* trigger blit */
 	{
 		int i,j;
-
-#ifdef MAME_DEBUG
-//		logerror("%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
-//			cpu_get_pc(),src,mode,skip,dest,length,loops);
-#endif
 
 		/* Kludge: have to steal some cycles from the Z80 otherwise text
 		   scrolling in Gorf is too fast. */
@@ -632,10 +604,6 @@ READ_HANDLER( gorf_io_r )
 		case 5: sparkle[CurrentScan][3] = data; break;
 	}
 
-#ifdef MAME_DEBUG
-	logerror("%04x: Latch IO %02x set to %d\n",cpu_get_pc(),offset,data);
-#endif
-
 	return 0;
 }
 
@@ -678,10 +646,6 @@ READ_HANDLER( wow_io_r )
 		case 5: sparkle[CurrentScan][3] = data; break;
 		case 7: coin_counter_w(2,data); break;
 	}
-
-#ifdef MAME_DEBUG
-	logerror("%04x: Latch IO %02x set to %d\n",cpu_get_pc(),offset,data);
-#endif
 
 	return 0;
 }

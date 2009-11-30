@@ -1,3 +1,5 @@
+#include "../vidhrdw/rpunch.cpp"
+
 /***************************************************************************
 
 	Rabbit Punch / Rabio Lepus

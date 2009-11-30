@@ -1,3 +1,5 @@
+#include "../machine/quantum.cpp"
+
 /*
   quantum
 

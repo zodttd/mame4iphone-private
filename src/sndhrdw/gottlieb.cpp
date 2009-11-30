@@ -102,6 +102,7 @@ void gottlieb_nmi_generate(int param)
 	cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
+#if 0
 static const char *PhonemeTable[65] =
 {
  "EH3","EH2","EH1","PA0","DT" ,"A1" ,"A2" ,"ZH",
@@ -114,7 +115,7 @@ static const char *PhonemeTable[65] =
  "THV","TH" ,"ER" ,"EH" ,"E1" ,"AW" ,"PA1","STOP",
  0
 };
-
+#endif
 
 WRITE_HANDLER( gottlieb_speech_w )
 {
@@ -122,7 +123,7 @@ WRITE_HANDLER( gottlieb_speech_w )
 
 	data ^= 255;
 
-logerror("Votrax: intonation %d, phoneme %02x %s\n",data >> 6,data & 0x3f,PhonemeTable[data & 0x3f]);
+//logerror("Votrax: intonation %d, phoneme %02x %s\n",data >> 6,data & 0x3f,PhonemeTable[data & 0x3f]);
 
 	queue[pos++] = data & 0x3f;
 
@@ -246,7 +247,7 @@ static WRITE_HANDLER( common_sound_control_w )
 	if (data & 0x01)
 	{
 		/* base clock is 250kHz divided by 256 */
-		double interval = TIME_IN_HZ(250000.0/256/(256-nmi_rate));
+		timer_tm interval = TIME_IN_HZ(250000.0/256/(256-nmi_rate));
 		nmi_timer = timer_pulse(interval, 0, nmi_callback);
 	}
 

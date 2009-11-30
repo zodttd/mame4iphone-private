@@ -1,3 +1,5 @@
+#include "../vidhrdw/darkseal.cpp"
+
 /***************************************************************************
 
 	Dark Seal (Rev 3)    (c) 1990 Data East Corporation (World version)

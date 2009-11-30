@@ -1,3 +1,5 @@
+#include "../vidhrdw/mrdo.cpp"
+
 /***************************************************************************
 
 Mr Do! memory map (preliminary)

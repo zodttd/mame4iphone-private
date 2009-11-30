@@ -117,7 +117,7 @@ WRITE_HANDLER( missile_w )
 		return;
 	}
 
-	logerror("possible unmapped write, offset: %04x, data: %02x\n", address, data);
+	//logerror("possible unmapped write, offset: %04x, data: %02x\n", address, data);
 }
 
 
@@ -152,6 +152,6 @@ READ_HANDLER( missile_r )
 	if ((address >= 0x4000) && (address <= 0x400f))
 		return (pokey1_r (address & 0x0f));
 
-	logerror("possible unmapped read, offset: %04x\n", address);
+	//logerror("possible unmapped read, offset: %04x\n", address);
 	return 0;
 }

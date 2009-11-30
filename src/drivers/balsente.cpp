@@ -1,3 +1,5 @@
+#include "../vidhrdw/balsente.cpp"
+
 /***************************************************************************
 
 	Bally/Sente SAC-1 system
@@ -448,7 +450,7 @@ static WRITE_HANDLER( rombank_select_w )
 {
 	int bank_offset = 0x6000 * ((data >> 4) & 7);
 
-logerror("%04X:rombank_select_w(%02X)\n", cpu_getpreviouspc(), data);
+//logerror("%04X:rombank_select_w(%02X)\n", cpu_getpreviouspc(), data);
 
 	/* the bank number comes from bits 4-6 */
 	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + bank_offset]);
@@ -496,14 +498,14 @@ static WRITE_HANDLER( misc_output_w )
 
 	/* these are generally used to control the various lamps */
 	/* special case is offset 7, which recalls the NVRAM data */
-	if (offset == 7)
-	{
-		logerror("nvrecall_w=%d\n", data);
-	}
-	else
-	{
+//	if (offset == 7)
+//	{
+//		logerror("nvrecall_w=%d\n", data);
+//	}
+//	else
+//	{
 //		osd_led_w(offset, data);
-	}
+//	}
 }
 
 
@@ -796,7 +798,7 @@ INLINE void counter_start(int which)
 	{
 		/* only start a timer if we're gated and there is none already */
 		if (counter[which].gate && !counter[which].timer)
-			counter[which].timer = timer_set(TIME_IN_HZ(2000000) * (double)counter[which].count, which, counter_callback);
+			counter[which].timer = timer_set(TIME_IN_HZ(2000000) * (timer_tm)counter[which].count, which, counter_callback);
 	}
 }
 
@@ -1039,7 +1041,7 @@ static void clock_counter_0_ff(int param)
 
 static void update_counter_0_timer(void)
 {
-	double maxfreq = 0.0;
+	float maxfreq = 0.0;
 	int i;
 
 	/* if there's already a timer, remove it */
@@ -1052,7 +1054,7 @@ static void update_counter_0_timer(void)
 	for (i = 0; i < 6; i++)
 		if (cem3394_get_parameter(i, CEM3394_FINAL_GAIN) < 10.0)
 		{
-			double tempfreq;
+			float tempfreq;
 
 			/* if the filter resonance is high, then they're calibrating the filter frequency */
 			if (cem3394_get_parameter(i, CEM3394_FILTER_RESONANCE) > 0.9)
@@ -1204,6 +1206,7 @@ static WRITE_HANDLER( chip_select_w )
 		CEM3394_WAVE_SELECT
 	};
 
+/*
 	static const char *names[] =
 	{
 		"VCO_FREQUENCY",
@@ -1215,8 +1218,8 @@ static WRITE_HANDLER( chip_select_w )
 		"PULSE_WIDTH",
 		"WAVE_SELECT"
 	};
-
-	double voltage = (double)dac_value * (8.0 / 4096.0) - 4.0;
+*/
+	float voltage = (float)dac_value * (8.0 / 4096.0) - 4.0;
 	int diffchip = data ^ chip_select, i;
 	int reg = register_map[dac_register];
 
@@ -1227,7 +1230,7 @@ static WRITE_HANDLER( chip_select_w )
 	for (i = 0; i < 6; i++)
 		if ((diffchip & (1 << i)) && (data & (1 << i)))
 		{
-			double temp = 0;
+			float temp = 0;
 
 			/* remember the previous value */
 			temp = cem3394_get_parameter(i, reg);
@@ -1237,7 +1240,7 @@ static WRITE_HANDLER( chip_select_w )
 
 			/* only log changes */
 			if (temp != cem3394_get_parameter(i, reg))
-				logerror("s%04X:   CEM#%d:%s=%f\n", cpu_getpreviouspc(), i, names[dac_register], voltage);
+				;//logerror("s%04X:   CEM#%d:%s=%f\n", cpu_getpreviouspc(), i, names[dac_register], voltage);
 		}
 
 	/* if a timer for counter 0 is running, recompute */
@@ -2373,7 +2376,7 @@ INPUT_PORTS_START( rescraid )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON6 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )

@@ -1,3 +1,5 @@
+#include "../vidhrdw/hanaawas.cpp"
+
 /***************************************************************************
 
   Hana Awase driver by Zsolt Vasvari

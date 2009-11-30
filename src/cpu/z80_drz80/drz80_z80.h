@@ -3,19 +3,9 @@
 
 #include "cpuintrf.h"
 #include "osd_cpu.h"
-#include "drz80.h"
 
-typedef struct {
-	struct DrZ80 regs;
-	unsigned int nmi_state;
-	unsigned int irq_state;
-	int previouspc;
-	int (*MAMEIrqCallback)(int int_level);
-} drz80_regs;
-
-extern drz80_regs DRZ80;
-
-#define drz80_ICount (DRZ80.regs.cycles)
+extern int *drz80_cycles;
+#define drz80_ICount (*drz80_cycles)
 
 #define DRZ80_IGNORE_INT  -1    /* Ignore interrupt */
 #define DRZ80_NMI_INT 	-2	/* Execute NMI */
@@ -42,10 +32,6 @@ extern void drz80_state_save(void *file);
 extern void drz80_state_load(void *file);
 extern const char *drz80_info(void *context, int regnum);
 extern unsigned drz80_dasm(char *buffer, unsigned pc);
-
-#ifdef MAME_DEBUG
-extern unsigned DasmZ80(char *buffer, unsigned pc);
-#endif
 
 #ifdef __cplusplus
 extern "C" {

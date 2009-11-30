@@ -90,12 +90,7 @@
 
 #define VERBOSE 0
 
-#ifdef MAME_DEBUG
-#define CPS1_DUMP_VIDEO 1
-#else
 #define CPS1_DUMP_VIDEO 0
-#endif
-
 
 /********************************************************************
 
@@ -336,27 +331,6 @@ if (offset >= 0x18 && //offset != 0x22 &&
 		offset != cps1_game_config->priority3 &&
 		offset != cps1_game_config->control_reg)
 	logerror("PC %06x: write %02x to output port %02x\n",cpu_get_pc(),data,offset);
-
-#ifdef MAME_DEBUG
-if (offset == 0x22 && (data & ~0x8001) != 0x0e)
-{
-	char baf[40];
-	sprintf(baf,"port 22 = %02x",data);
-	usrintf_showmessage(baf);
-}
-if (cps1_game_config->priority0 && offset == cps1_game_config->priority0 && data != 0x00)
-{
-	char baf[40];
-	sprintf(baf,"priority0 %04x",data);
-	usrintf_showmessage(baf);
-}
-if (cps1_game_config->control_reg && offset == cps1_game_config->control_reg && data != 0x3f)
-{
-	char baf[40];
-	sprintf(baf,"control_reg %02x",data);
-	usrintf_showmessage(baf);
-}
-#endif
 #endif
 
 	/* Pang 3 EEPROM interface */
@@ -950,59 +924,6 @@ INLINE void cps1_get_video_base(void )
 	cps1_layer_enabled[1]=layercontrol & cps1_game_config->scrl1_enable_mask;
 	cps1_layer_enabled[2]=layercontrol & cps1_game_config->scrl2_enable_mask;
 	cps1_layer_enabled[3]=layercontrol & cps1_game_config->scrl3_enable_mask;
-
-
-#ifdef MAME_DEBUG
-{
-	char baf[40];
-	int enablemask;
-
-if (keyboard_pressed(KEYCODE_Z))
-{
-	if (keyboard_pressed(KEYCODE_Q)) cps1_layer_enabled[3]=0;
-	if (keyboard_pressed(KEYCODE_W)) cps1_layer_enabled[2]=0;
-	if (keyboard_pressed(KEYCODE_E)) cps1_layer_enabled[1]=0;
-	if (keyboard_pressed(KEYCODE_R)) cps1_layer_enabled[0]=0;
-	if (keyboard_pressed(KEYCODE_T))
-	{
-		sprintf(baf,"%d %d %d %d layer %02x",
-			(layercontrol>>0x06)&03,
-			(layercontrol>>0x08)&03,
-			(layercontrol>>0x0a)&03,
-			(layercontrol>>0x0c)&03,
-			layercontrol&0xc03f
-			);
-		usrintf_showmessage(baf);
-	}
-
-}
-
-	enablemask = 0;
-	if (cps1_game_config->scrl1_enable_mask == cps1_game_config->scrl2_enable_mask)
-		enablemask = cps1_game_config->scrl1_enable_mask;
-	if (cps1_game_config->scrl1_enable_mask == cps1_game_config->scrl3_enable_mask)
-		enablemask = cps1_game_config->scrl1_enable_mask;
-	if (cps1_game_config->scrl2_enable_mask == cps1_game_config->scrl3_enable_mask)
-		enablemask = cps1_game_config->scrl2_enable_mask;
-	if (enablemask)
-	{
-		if (((layercontrol & enablemask) && (layercontrol & enablemask) != enablemask))
-		{
-			sprintf(baf,"layer %02x",layercontrol&0xc03f);
-			usrintf_showmessage(baf);
-		}
-	}
-
-	enablemask = cps1_game_config->scrl1_enable_mask | cps1_game_config->scrl2_enable_mask | cps1_game_config->scrl3_enable_mask;
-#if 0
-	if (((layercontrol & ~enablemask) & 0xc03e) != 0)
-	{
-		sprintf(baf,"layer %02x",layercontrol&0xc03f);
-		usrintf_showmessage(baf);
-   }
-   #endif
-}
-#endif
 }
 
 
@@ -1067,7 +988,7 @@ int cps1_vh_start(void)
 
 	if (!cps1_game_config)
 	{
-		logerror("cps1_game_config hasn't been set up yet");
+		//logerror("cps1_game_config hasn't been set up yet");
 		return -1;
 	}
 

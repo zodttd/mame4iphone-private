@@ -1,3 +1,5 @@
+#include "../vidhrdw/tmnt.cpp"
+
 /***************************************************************************
 
 This driver contains several Konami 68000 based games. For the most part they
@@ -307,14 +309,14 @@ static int tmnt_decode_sample(const struct MachineSound *msound)
 	return 0;
 }
 
-static int sound_nmi_enabled;
+//static int sound_nmi_enabled;
 
-static void sound_nmi_callback( int param )
+/*static void sound_nmi_callback( int param )
 {
 	cpu_set_nmi_line( 1, ( sound_nmi_enabled ) ? CLEAR_LINE : ASSERT_LINE );
 
 	sound_nmi_enabled = 0;
-}
+}*/
 
 static void nmi_callback(int param)
 {
@@ -345,7 +347,7 @@ static READ_HANDLER( ssriders_kludge_r )
 {
     int data = cpu_readmem24bew_word(0x105a0a);
 
-    logerror("%06x: read 1c0800 (D7=%02x 105a0a=%02x)\n",cpu_get_pc(),cpu_get_reg(M68K_D7),data);
+    //logerror("%06x: read 1c0800 (D7=%02x 105a0a=%02x)\n",cpu_get_pc(),cpu_get_reg(M68K_D7),data);
 
     if (data == 0x075c) data = 0x0064;
 

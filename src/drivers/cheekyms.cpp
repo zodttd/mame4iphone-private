@@ -1,3 +1,5 @@
+#include "../vidhrdw/cheekyms.cpp"
+
 /*************************************************************************
  Universal Cheeky Mouse Driver
  (c)Lee Taylor May/June 1998, All rights reserved.

@@ -349,9 +349,7 @@ static void do_blit_stack( const struct sprite *sprite ){
 	} /* next xoffset */
 }
 
-
-
-static void do_blit_zoom( const struct sprite *sprite ){
+static void _do_blit_zoom( const struct sprite *sprite ){
 	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
 
 	int x1,x2, y1,y2, dx,dy;
@@ -409,7 +407,7 @@ static void do_blit_zoom( const struct sprite *sprite ){
 		const unsigned char *pen_data = sprite->pen_data;
 		const unsigned short *pal_data = sprite->pal_data;
 		int x,y;
-		unsigned char pen;
+		unsigned int pen;
 		int pitch = blit.line_offset*dy;
 		unsigned char *dest = blit.baseaddr + blit.line_offset*y1;
 		int ycount = ycount0;
@@ -433,13 +431,11 @@ static void do_blit_zoom( const struct sprite *sprite ){
 						source ++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip1; /* marker for right side of sprite; needed for AltBeast, ESwat */
-/*					if( pen==10 ) *dest1 = shade_table[*dest1];
-					else */if( pen ) *dest1 = pal_data[pen];
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+                    if( pen ) *dest1 = pal_data[pen];
 					ycount+= sprite->tile_height;
 					dest1 += pitch;
 				}
-skip1:
 				xcount += sprite->tile_width;
 			}
 		}
@@ -458,12 +454,10 @@ skip1:
 						source++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip; /* marker for right side of sprite; needed for AltBeast, ESwat */
-/*					if( pen==10 ) dest[x] = shade_table[dest[x]];
-					else */if( pen ) dest[x] = pal_data[pen];
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+                    if( pen ) dest[x] = pal_data[pen];
 					xcount += sprite->tile_width;
 				}
-skip:
 				ycount += sprite->tile_height;
 				dest += pitch;
 			}
@@ -474,7 +468,7 @@ skip:
 		const unsigned char *pen_data = sprite->pen_data;
 		const unsigned short *pal_data = sprite->pal_data;
 		int x,y;
-		unsigned char pen;
+		unsigned int pen;
 		int pitch = blit.line_offset*dy;
 		unsigned char *dest = blit.baseaddr + blit.line_offset*y1;
 		int ycount = ycount0;
@@ -498,13 +492,12 @@ skip:
 						source ++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip6; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
 					if( pen==sprite->shadow_pen ) *dest1 = shade_table[*dest1];
 					else if( pen ) *dest1 = pal_data[pen];
 					ycount+= sprite->tile_height;
 					dest1 += pitch;
 				}
-skip6:
 				xcount += sprite->tile_width;
 			}
 		}
@@ -523,12 +516,11 @@ skip6:
 						source++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip5; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
 					if( pen==sprite->shadow_pen ) dest[x] = shade_table[dest[x]];
 					else if( pen ) dest[x] = pal_data[pen];
 					xcount += sprite->tile_width;
 				}
-skip5:
 				ycount += sprite->tile_height;
 				dest += pitch;
 			}
@@ -537,9 +529,8 @@ skip5:
 	else
 	{	// Shadow Sprite
 		const unsigned char *pen_data = sprite->pen_data;
-//		const unsigned short *pal_data = sprite->pal_data;
 		int x,y;
-		unsigned char pen;
+		unsigned int pen;
 		int pitch = blit.line_offset*dy;
 		unsigned char *dest = blit.baseaddr + blit.line_offset*y1;
 		int ycount = ycount0;
@@ -563,12 +554,11 @@ skip5:
 						source ++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip4; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
 					if( pen ) *dest1 = shade_table[*dest1];
 					ycount+= sprite->tile_height;
 					dest1 += pitch;
 				}
-skip4:
 				xcount += sprite->tile_width;
 			}
 		}
@@ -587,11 +577,10 @@ skip4:
 						source++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip3; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
 					if( pen ) dest[x] = shade_table[dest[x]];
 					xcount += sprite->tile_width;
 				}
-skip3:
 				ycount += sprite->tile_height;
 				dest += pitch;
 			}
@@ -600,8 +589,195 @@ skip3:
 
 }
 
+static void _do_blit_zoom_noscale( const struct sprite *sprite ){
+	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
 
-static void do_blit_zoom16( const struct sprite *sprite ){
+	int x1,x2, y1,y2, dx,dy;
+	int xcount0 = 0, ycount0 = 0;
+
+	if( sprite->flags & SPRITE_FLIPX ){
+		x2 = sprite->x;
+		x1 = x2+sprite->total_width;
+		dx = -1;
+		if( x2<blit.clip_left ) x2 = blit.clip_left;
+		if( x1>blit.clip_right ){
+			xcount0 = x1-blit.clip_right;
+			x1 = blit.clip_right;
+		}
+		if( x2>=x1 ) return;
+		x1--; x2--;
+	}
+	else {
+		x1 = sprite->x;
+		x2 = x1+sprite->total_width;
+		dx = 1;
+		if( x1<blit.clip_left ){
+			xcount0 = blit.clip_left-x1;
+			x1 = blit.clip_left;
+		}
+		if( x2>blit.clip_right ) x2 = blit.clip_right;
+		if( x1>=x2 ) return;
+	}
+	if( sprite->flags & SPRITE_FLIPY ){
+		y2 = sprite->y;
+		y1 = y2+sprite->total_height;
+		dy = -1;
+		if( y2<blit.clip_top ) y2 = blit.clip_top;
+		if( y1>blit.clip_bottom ){
+			ycount0 = y1-blit.clip_bottom;
+			y1 = blit.clip_bottom;
+		}
+		if( y2>=y1 ) return;
+		y1--; y2--;
+	}
+	else {
+		y1 = sprite->y;
+		y2 = y1+sprite->total_height;
+		dy = 1;
+		if( y1<blit.clip_top ){
+			ycount0 = blit.clip_top-y1;
+			y1 = blit.clip_top;
+		}
+		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
+		if( y1>=y2 ) return;
+	}
+
+	if(!(sprite->flags & (SPRITE_SHADOW | SPRITE_PARTIAL_SHADOW)))
+	{
+		int x,y;
+		unsigned int pen;
+		int pitch = blit.line_offset*dy;
+		unsigned char *dest = blit.baseaddr + blit.line_offset*y1;
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+    		const unsigned char *pen_data = sprite->pen_data+xcount0*sprite->line_offset+ycount0;
+	    	const unsigned short *pal_data = sprite->pal_data;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				unsigned char *dest1;
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+                    if( pen ) *dest1 = pal_data[pen];
+					dest1 += pitch;
+				}
+    			pen_data+=sprite->line_offset;
+			}
+		}
+		else {
+    		const unsigned char *pen_data = sprite->pen_data+xcount0+ycount0*sprite->line_offset;
+	    	const unsigned short *pal_data = sprite->pal_data;
+			for( y=y1; y!=y2; y+=dy ){
+				const unsigned char *source;
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+                    if( pen ) dest[x] = pal_data[pen];
+				}
+				pen_data += sprite->line_offset;
+				dest += pitch;
+			}
+		}
+	}
+	else if(sprite->flags & SPRITE_PARTIAL_SHADOW)
+	{
+		int x,y;
+		unsigned int pen;
+		int pitch = blit.line_offset*dy;
+		unsigned char *dest = blit.baseaddr + blit.line_offset*y1;
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+    		const unsigned char *pen_data = sprite->pen_data+xcount0*sprite->line_offset+ycount0;
+	    	const unsigned short *pal_data = sprite->pal_data;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				unsigned char *dest1;
+
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==sprite->shadow_pen ) *dest1 = shade_table[*dest1];
+					else if( pen ) *dest1 = pal_data[pen];
+					dest1 += pitch;
+				}
+				pen_data+=sprite->line_offset;
+			}
+		}
+		else {
+    		const unsigned char *pen_data = sprite->pen_data+xcount0+ycount0*sprite->line_offset;
+	    	const unsigned short *pal_data = sprite->pal_data;
+			for( y=y1; y!=y2; y+=dy ){
+				const unsigned char *source;
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==sprite->shadow_pen ) dest[x] = shade_table[dest[x]];
+					else if( pen ) dest[x] = pal_data[pen];
+				}
+				pen_data += sprite->line_offset;
+				dest += pitch;
+			}
+		}
+	}
+	else
+	{	// Shadow Sprite
+		int x,y;
+		unsigned int pen;
+		int pitch = blit.line_offset*dy;
+		unsigned char *dest = blit.baseaddr + blit.line_offset*y1;
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+    		const unsigned char *pen_data = sprite->pen_data+xcount0*sprite->line_offset+ycount0;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				unsigned char *dest1;
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen ) *dest1 = shade_table[*dest1];
+					dest1 += pitch;
+				}
+				pen_data+=sprite->line_offset;
+			}
+		}
+		else {
+    		const unsigned char *pen_data = sprite->pen_data+xcount0+ycount0*sprite->line_offset;
+			for( y=y1; y!=y2; y+=dy ){
+				const unsigned char *source;
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen ) dest[x] = shade_table[dest[x]];
+				}
+				pen_data += sprite->line_offset;
+				dest += pitch;
+			}
+		}
+	}
+
+}
+
+static void do_blit_zoom( const struct sprite *sprite ){
+    if ((sprite->tile_width==sprite->total_width) && (sprite->tile_height==sprite->total_height))
+    {
+        _do_blit_zoom_noscale(sprite);
+    }
+    else
+    {
+        _do_blit_zoom(sprite);
+    }
+}
+
+static void _do_blit_zoom16( const struct sprite *sprite ){
 	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
 
 	int x1,x2, y1,y2, dx,dy;
@@ -659,7 +835,7 @@ static void do_blit_zoom16( const struct sprite *sprite ){
 		const unsigned char *pen_data = sprite->pen_data;
 		const unsigned short *pal_data = sprite->pal_data;
 		int x,y;
-		unsigned char pen;
+		unsigned int pen;
 		int pitch = blit.line_offset*dy/2;
 		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
 		int ycount = ycount0;
@@ -683,13 +859,11 @@ static void do_blit_zoom16( const struct sprite *sprite ){
 						source ++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip1; /* marker for right side of sprite; needed for AltBeast, ESwat */
-/*					if( pen==10 ) *dest1 = shade_table[*dest1];
-					else */if( pen ) *dest1 = pal_data[pen];
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+                    if( pen ) *dest1 = pal_data[pen];
 					ycount+= sprite->tile_height;
 					dest1 += pitch;
 				}
-skip1:
 				xcount += sprite->tile_width;
 			}
 		}
@@ -708,12 +882,10 @@ skip1:
 						source++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip; /* marker for right side of sprite; needed for AltBeast, ESwat */
-/*					if( pen==10 ) dest[x] = shade_table[dest[x]];
-					else */if( pen ) dest[x] = pal_data[pen];
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+                    if( pen ) dest[x] = pal_data[pen];
 					xcount += sprite->tile_width;
 				}
-skip:
 				ycount += sprite->tile_height;
 				dest += pitch;
 			}
@@ -724,8 +896,8 @@ skip:
 		const unsigned char *pen_data = sprite->pen_data;
 		const unsigned short *pal_data = sprite->pal_data;
 		int x,y;
-		unsigned char pen;
-		int pitch = blit.line_offset*dy/2;
+		unsigned int pen;
+		int pitch = (blit.line_offset*dy)>>1;
 		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
 		int ycount = ycount0;
 
@@ -748,13 +920,12 @@ skip:
 						source ++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip6; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
 					if( pen==sprite->shadow_pen ) *dest1 = shade_table[*dest1];
 					else if( pen ) *dest1 = pal_data[pen];
 					ycount+= sprite->tile_height;
 					dest1 += pitch;
 				}
-skip6:
 				xcount += sprite->tile_width;
 			}
 		}
@@ -773,12 +944,11 @@ skip6:
 						source++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip5; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
 					if( pen==sprite->shadow_pen ) dest[x] = shade_table[dest[x]];
 					else if( pen ) dest[x] = pal_data[pen];
 					xcount += sprite->tile_width;
 				}
-skip5:
 				ycount += sprite->tile_height;
 				dest += pitch;
 			}
@@ -787,10 +957,9 @@ skip5:
 	else
 	{	// Shadow Sprite
 		const unsigned char *pen_data = sprite->pen_data;
-//		const unsigned short *pal_data = sprite->pal_data;
 		int x,y;
-		unsigned char pen;
-		int pitch = blit.line_offset*dy/2;
+		unsigned int pen;
+		int pitch = (blit.line_offset*dy)>>1;
 		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
 		int ycount = ycount0;
 
@@ -813,12 +982,11 @@ skip5:
 						source ++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip4; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
 					if( pen ) *dest1 = shade_table[*dest1];
 					ycount+= sprite->tile_height;
 					dest1 += pitch;
 				}
-skip4:
 				xcount += sprite->tile_width;
 			}
 		}
@@ -837,17 +1005,202 @@ skip4:
 						source++;
 					}
 					pen = *source;
-					if( pen==0xff ) goto skip3; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
 					if( pen ) dest[x] = shade_table[dest[x]];
 					xcount += sprite->tile_width;
 				}
-skip3:
 				ycount += sprite->tile_height;
 				dest += pitch;
 			}
 		}
 	}
 
+}
+
+static void _do_blit_zoom16_noscale( const struct sprite *sprite ){
+	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
+
+	int x1,x2, y1,y2, dx,dy;
+	int xcount0 = 0, ycount0 = 0;
+
+	if( sprite->flags & SPRITE_FLIPX ){
+		x2 = sprite->x;
+		x1 = x2+sprite->total_width;
+		dx = -1;
+		if( x2<blit.clip_left ) x2 = blit.clip_left;
+		if( x1>blit.clip_right ){
+			xcount0 = x1-blit.clip_right;
+			x1 = blit.clip_right;
+		}
+		if( x2>=x1 ) return;
+		x1--; x2--;
+	}
+	else {
+		x1 = sprite->x;
+		x2 = x1+sprite->total_width;
+		dx = 1;
+		if( x1<blit.clip_left ){
+			xcount0 = blit.clip_left-x1;
+			x1 = blit.clip_left;
+		}
+		if( x2>blit.clip_right ) x2 = blit.clip_right;
+		if( x1>=x2 ) return;
+	}
+	if( sprite->flags & SPRITE_FLIPY ){
+		y2 = sprite->y;
+		y1 = y2+sprite->total_height;
+		dy = -1;
+		if( y2<blit.clip_top ) y2 = blit.clip_top;
+		if( y1>blit.clip_bottom ){
+			ycount0 = y1-blit.clip_bottom;
+			y1 = blit.clip_bottom;
+		}
+		if( y2>=y1 ) return;
+		y1--; y2--;
+	}
+	else {
+		y1 = sprite->y;
+		y2 = y1+sprite->total_height;
+		dy = 1;
+		if( y1<blit.clip_top ){
+			ycount0 = blit.clip_top-y1;
+			y1 = blit.clip_top;
+		}
+		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
+		if( y1>=y2 ) return;
+	}
+
+	if(!(sprite->flags & (SPRITE_SHADOW | SPRITE_PARTIAL_SHADOW)))
+	{
+		int x,y;
+		unsigned int pen;
+		int pitch = (blit.line_offset*dy)>>1;
+		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+    		const unsigned char *pen_data = sprite->pen_data+xcount0*sprite->line_offset+ycount0;
+    		const unsigned short *pal_data = sprite->pal_data;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				UINT16 *dest1;
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+                    if( pen ) *dest1 = pal_data[pen];
+					dest1 += pitch;
+				}
+				pen_data+=sprite->line_offset;
+			}
+		}
+		else {
+    		const unsigned char *pen_data = sprite->pen_data+xcount0+ycount0*sprite->line_offset;
+    		const unsigned short *pal_data = sprite->pal_data;
+			for( y=y1; y!=y2; y+=dy ){
+				const unsigned char *source;
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+                    if( pen ) dest[x] = pal_data[pen];
+				}
+				pen_data += sprite->line_offset;
+				dest += pitch;
+			}
+		}
+	}
+	else if(sprite->flags & SPRITE_PARTIAL_SHADOW)
+	{
+		int x,y;
+		unsigned int pen;
+		int pitch = (blit.line_offset*dy)>>1;
+		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+    		const unsigned char *pen_data = sprite->pen_data+xcount0*sprite->line_offset+ycount0;
+    		const unsigned short *pal_data = sprite->pal_data;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				UINT16 *dest1;
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==sprite->shadow_pen ) *dest1 = shade_table[*dest1];
+					else if( pen ) *dest1 = pal_data[pen];
+					dest1 += pitch;
+				}
+				pen_data+=sprite->line_offset;
+			}
+		}
+		else {
+    		const unsigned char *pen_data = sprite->pen_data+xcount0+ycount0*sprite->line_offset;
+    		const unsigned short *pal_data = sprite->pal_data;
+			for( y=y1; y!=y2; y+=dy ){
+				const unsigned char *source;
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==sprite->shadow_pen ) dest[x] = shade_table[dest[x]];
+					else if( pen ) dest[x] = pal_data[pen];
+				}
+				pen_data += sprite->line_offset;
+				dest += pitch;
+			}
+		}
+	}
+	else
+	{	// Shadow Sprite
+		int x,y;
+		unsigned int pen;
+		int pitch = blit.line_offset*dy/2;
+		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+    		const unsigned char *pen_data = sprite->pen_data+xcount0*sprite->line_offset+ycount0;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				UINT16 *dest1;
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen ) *dest1 = shade_table[*dest1];
+					dest1 += pitch;
+				}
+				pen_data+=sprite->line_offset;
+			}
+		}
+		else {
+    		const unsigned char *pen_data = sprite->pen_data+xcount0+ycount0*sprite->line_offset;
+			for( y=y1; y!=y2; y+=dy ){
+				const unsigned char *source;
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					pen = *source++;
+					if( pen==0xff ) break; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen ) dest[x] = shade_table[dest[x]];
+				}
+				pen_data += sprite->line_offset;
+				dest += pitch;
+			}
+		}
+	}
+
+}
+
+static void do_blit_zoom16( const struct sprite *sprite ){
+    if ((sprite->tile_width==sprite->total_width) && (sprite->tile_height==sprite->total_height))
+    {
+        _do_blit_zoom16_noscale(sprite);
+    }
+    else
+    {
+        _do_blit_zoom16(sprite);
+    }
 }
 
 /*********************************************************************/

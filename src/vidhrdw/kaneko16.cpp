@@ -86,10 +86,6 @@ static struct tilemap *bg_tilemap, *fg_tilemap;
 static struct osd_bitmap *kaneko16_bg15_bitmap;
 static int flipsprites;
 
-#ifdef MAME_DEBUG
-static int debugsprites;	// for debug
-#endif
-
 /* Variables that driver has access to: */
 
 unsigned char *kaneko16_bgram, *kaneko16_fgram;
@@ -176,7 +172,7 @@ WRITE_HANDLER( kaneko16_screen_regs_w )
 		case 0x00:	flipsprites = new_data & 3;	break;
 	}
 
-	logerror("CPU #0 PC %06X : Warning, screen reg %04X <- %04X\n",cpu_get_pc(),offset,data);
+	//logerror("CPU #0 PC %06X : Warning, screen reg %04X <- %04X\n",cpu_get_pc(),offset,data);
 }
 
 
@@ -614,10 +610,6 @@ void kaneko16_draw_sprites(struct osd_bitmap *bitmap, int priority)
 
 		if ((sattr & 0xc0) != priority)	continue;
 
-#ifdef MAME_DEBUG
-	if ( debugsprites && ( ((sattr >> 6) & 3) != debugsprites-1 ) )	continue;
-#endif
-
 		if (flipsprites & 2) { sx = max_x - sx;		sflipx = !sflipx; }
 		if (flipsprites & 1) { sy = max_y - sy;		sflipy = !sflipy; }
 
@@ -663,27 +655,6 @@ void kaneko16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_set_scrollx(bg_tilemap, 0, READ_WORD(&kaneko16_layers1_regs[0x04]) >> 6 );
 	tilemap_set_scrolly(bg_tilemap, 0, READ_WORD(&kaneko16_layers1_regs[0x06]) >> 6 );
-
-
-#ifdef MAME_DEBUG
-debugsprites = 0;
-if (keyboard_pressed(KEYCODE_Z))
-{
-int msk = 0;
-
-	if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0x01;}
-	if (keyboard_pressed(KEYCODE_W))	{ msk |= 0x02;}
-	if (keyboard_pressed(KEYCODE_E))	{ msk |= 0x04;}
-	if (keyboard_pressed(KEYCODE_R))	{ msk |= 0x10;}
-	if (keyboard_pressed(KEYCODE_T))	{ msk |= 0x20;}
-	if (keyboard_pressed(KEYCODE_A))	{ msk |= 0x08; debugsprites = 1;}
-	if (keyboard_pressed(KEYCODE_S))	{ msk |= 0x08; debugsprites = 2;}
-	if (keyboard_pressed(KEYCODE_D))	{ msk |= 0x08; debugsprites = 3;}
-	if (keyboard_pressed(KEYCODE_F))	{ msk |= 0x08; debugsprites = 4;}
-	if (msk != 0) layers_ctrl &= msk;
-}
-#endif
-
 
 	tilemap_update(ALL_TILEMAPS);
 

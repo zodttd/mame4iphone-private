@@ -1,3 +1,5 @@
+#include "../vidhrdw/tutankhm.cpp"
+
 /***************************************************************************
 
 Tutankham :  memory map (preliminary)

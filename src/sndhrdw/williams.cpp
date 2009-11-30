@@ -27,6 +27,7 @@
 #include "cpu/m6809/m6809.h"
 #include "cpu/adsp2100/adsp2100.h"
 #include "williams.h"
+#include "osinline.h"
 
 #include <math.h>
 
@@ -66,8 +67,8 @@
 
 struct ym2151_state
 {
-	double	timer_base;
-	double	timer_period[3];
+	timer_tm	timer_base;
+	timer_tm	timer_period[3];
 	UINT16	timer_value[2];
 	UINT8	timer_is_active[2];
 	UINT8	current_register;
@@ -85,7 +86,7 @@ struct counter_state
 	UINT16	hotspot_start;
 	UINT16	hotspot_stop;
 	UINT16	last_read_pc;
-	double	time_leftover;
+	timer_tm	time_leftover;
 	void *	update_timer;
 	void *	enable_timer;
 	UINT8	invalid;
@@ -102,11 +103,11 @@ struct cvsd_state
 	UINT32	sample_position;
 	UINT16	current_sample;
 	UINT8	invalid;
-	double	charge;
-	double	decay;
-	double	leak;
-	double	integrator;
-	double	filter;
+	float	charge;
+	float	decay;
+	float	leak;
+	float	integrator;
+	float	filter;
 	UINT8	shiftreg;
 };
 
@@ -823,8 +824,8 @@ void williams_dcs_init(int cpunum)
 static void init_audio_state(int first_time)
 {
 	/* reset the YM2151 state */
-	ym2151.timer_base = 1.0 / (3579580.0 / 64.0);
-	ym2151.timer_period[0] = ym2151.timer_period[1] = ym2151.timer_period[2] = 1.0;
+	ym2151.timer_base = TIME_IN_SEC(1.0 / (3579580.0 / 64.0));
+	ym2151.timer_period[0] = ym2151.timer_period[1] = ym2151.timer_period[2] = TIME_IN_SEC(1.0);
 	ym2151.timer_value[0] = ym2151.timer_value[1] = 0;
 	ym2151.timer_is_active[0] = ym2151.timer_is_active[1] = 0;
 	ym2151.current_register = 0x13;
@@ -842,7 +843,7 @@ static void init_audio_state(int first_time)
 	counter.invalid = 1;
 	if (!first_time && counter.enable_timer)
 		timer_remove(counter.enable_timer);
-	counter.enable_timer = timer_set(TIME_IN_SEC(3), 0, counter_enable);
+	counter.enable_timer = timer_set(TIME_NEVER-1, 0, counter_enable);
 
 	/* reset the CVSD generator */
 	cvsd.sample_step = 0;
@@ -891,11 +892,11 @@ static void locate_audio_hotspot(UINT8 *base, UINT16 start)
 		{
 			counter.hotspot_start = i;
 			counter.hotspot_stop = i + 12;
-			logerror("Found hotspot @ %04X", i);
+			//logerror("Found hotspot @ %04X", i);
 			return;
 		}
 	}
-	logerror("Found no hotspot!");
+	//logerror("Found no hotspot!");
 }
 
 
@@ -1030,10 +1031,6 @@ WRITE_HANDLER( williams_dcs_bank_select_w )
 	dcs.bank = data & 0x7ff;
 	
 	/* bit 11 = sound board led */
-#ifdef MAME_DEBUG
-	osd_led_w( 2, ( data & 0x800 ) ? 1 : 0 );
-#endif
-
 #if (!DISABLE_DCS_SPEEDUP)
 	/* they write 0x800 here just before entering the stall loop */
 	if (data == 0x800)
@@ -1223,7 +1220,7 @@ READ_HANDLER( williams_dcs_control_r )
 
 void williams_dcs_reset_w(int state)
 {
-	logerror( "%08x: DCS reset\n", cpu_get_pc() );	
+	//logerror( "%08x: DCS reset\n", cpu_get_pc() );	
 	
 	/* going high halts the CPU */
 	if ( state )
@@ -1273,19 +1270,19 @@ static WRITE_HANDLER( williams_ym2151_w )
 			case 0x10:	/* timer A, upper 8 bits */
 				update_counter();
 				ym2151.timer_value[0] = (ym2151.timer_value[0] & 0x003) | (data << 2);
-				ym2151.timer_period[0] = ym2151.timer_base * (double)(1024 - ym2151.timer_value[0]);
+				ym2151.timer_period[0] = ym2151.timer_base * (timer_tm)(1024 - ym2151.timer_value[0]);
 				break;
 
 			case 0x11:	/* timer A, upper 8 bits */
 				update_counter();
 				ym2151.timer_value[0] = (ym2151.timer_value[0] & 0x3fc) | (data & 0x03);
-				ym2151.timer_period[0] = ym2151.timer_base * (double)(1024 - ym2151.timer_value[0]);
+				ym2151.timer_period[0] = ym2151.timer_base * (timer_tm)(1024 - ym2151.timer_value[0]);
 				break;
 
 			case 0x12:	/* timer B */
 				update_counter();
 				ym2151.timer_value[1] = data;
-				ym2151.timer_period[1] = ym2151.timer_base * (double)((256 - ym2151.timer_value[1]) << 4);
+				ym2151.timer_period[1] = ym2151.timer_base * (timer_tm)((256 - ym2151.timer_value[1]) << 4);
 				break;
 
 			case 0x14:	/* timer control */
@@ -1381,7 +1378,7 @@ static void counter_enable(int param)
 
 static void update_counter(void)
 {
-	double time_since_update, timer_period = ym2151.timer_period[ym2151.active_timer];
+	timer_tm time_since_update, timer_period = ym2151.timer_period[ym2151.active_timer];
 	int firqs_since_update, complete_ticks, downcounter;
 
 	if (DISABLE_FIRQ_SPEEDUP || ym2151.active_timer == 2 || counter.invalid)
@@ -1396,7 +1393,7 @@ static void update_counter(void)
 	firqs_since_update = (int)(time_since_update / timer_period);
 
 	/* keep track of any additional time */
-	counter.time_leftover = time_since_update - (double)firqs_since_update * timer_period;
+	counter.time_leftover = time_since_update - (timer_tm)firqs_since_update * timer_period;
 
 	/* reset the timer */
 	timer_reset(counter.update_timer, TIME_NEVER);
@@ -1486,7 +1483,7 @@ static WRITE_HANDLER( counter_value_w )
 
 static void cvsd_start(int param)
 {
-	double sample_rate;
+	float sample_rate;
 	int start, end;
 
 	/* if interrupts are disabled, try again later */
@@ -1501,8 +1498,8 @@ static void cvsd_start(int param)
 	end = cvsd.end[0] * 256 + cvsd.end[1];
 
 	/* compute the effective sample rate */
-	sample_rate = (double)cvsd.bits_per_firq / ym2151.timer_period[ym2151.active_timer];
-	cvsd.sample_step = (int)(sample_rate * 65536.0 / (double)Machine->sample_rate);
+	sample_rate = (float)cvsd.bits_per_firq / (((float)ym2151.timer_period[ym2151.active_timer])/((float)TIME_ONE_SEC));
+	cvsd.sample_step = (int)(sample_rate * 65536.0 / (float)Machine->sample_rate);
 	cvsd.invalid = 0;
 }
 
@@ -1526,7 +1523,7 @@ static WRITE_HANDLER( cvsd_state_w )
 
 static void dac_start(int param)
 {
-	double sample_rate;
+	float sample_rate;
 	int start, end;
 
 	/* if interrupts are disabled, try again later */
@@ -1541,8 +1538,8 @@ static void dac_start(int param)
 	end = dac.end[0] * 256 + dac.end[1];
 
 	/* compute the effective sample rate */
-	sample_rate = (double)dac.bytes_per_firq / ym2151.timer_period[ym2151.active_timer];
-	dac.sample_step = (int)(sample_rate * 65536.0 / (double)Machine->sample_rate);
+	sample_rate = (float)dac.bytes_per_firq / (((float)ym2151.timer_period[ym2151.active_timer])/((float)TIME_ONE_SEC));
+	dac.sample_step = (int)(sample_rate * 65536.0 / (float)Machine->sample_rate);
 	dac.invalid = 0;
 }
 
@@ -1724,7 +1721,7 @@ static void dcs_dac_update(int num, INT16 *buffer, int length)
 
 INT16 get_next_cvsd_sample(int bit)
 {
-	double temp;
+	float temp;
 
 	/* move the estimator up or down a step based on the bit */
 	if (bit)
@@ -1852,10 +1849,10 @@ WRITE_HANDLER( williams_dcs_control_w )
 		break;
 		
 		case S1_CONTROL_REG:
-			if ( ( ( data >> 4 ) & 3 ) == 2 )
+			/*if ( ( ( data >> 4 ) & 3 ) == 2 )
 				logerror( "Oh no!, the data is compresed with u-law encoding\n" );
 			if ( ( ( data >> 4 ) & 3 ) == 3 )
-				logerror( "Oh no!, the data is compresed with A-law encoding\n" );
+				logerror( "Oh no!, the data is compresed with A-law encoding\n" );*/
 		break;
 	}
 }
@@ -1958,14 +1955,14 @@ static void sound_tx_callback( int port, INT32 data )
 			dcs.reg_timer = timer_pulse(TIME_IN_HZ(sample_rate) * (dcs.size / 2), 0, williams_dcs_irq);
 			
 			/* configure the DAC generator */
-			dcs.sample_step = (int)(sample_rate * 65536.0 / (double)Machine->sample_rate);
+			dcs.sample_step = (int)(sample_rate * 65536.0 / (float)Machine->sample_rate);
 			dcs.sample_position = 0;
 			dcs.buffer_in = 0;
 
 			return;
 		}
-		else
-			logerror( "ADSP SPORT1: trying to transmit and autobuffer not enabled!\n" );
+		/*else
+			logerror( "ADSP SPORT1: trying to transmit and autobuffer not enabled!\n" );*/
 	}
 	
 	/* if we get there, something went wrong. Disable playing */
@@ -2083,23 +2080,39 @@ static void dcs_speedup_common()
 				ay1 = i0[1];
 
 				temp = ay0 - ax0;
+#ifndef clip_short
 				if (temp < -32768) temp = -32768;
 				else if (temp > 32767) temp = 32767;
+#else
+                clip_short(temp);
+#endif
 				*i0++ = temp;
 
 				temp = ax0 + ay0;
+#ifndef clip_short
 				if (temp < -32768) temp = -32768;
 				else if (temp > 32767) temp = 32767;
+#else
+                clip_short(temp);
+#endif
 				*i2++ = temp;
 
 				temp = ay1 - mr1;
+#ifndef clip_short
 				if (temp < -32768) temp = -32768;
 				else if (temp > 32767) temp = 32767;
+#else
+                clip_short(temp);
+#endif
 				*i0++ = temp;
 
 				temp = ay1 + mr1;
+#ifndef clip_short
 				if (temp < -32768) temp = -32768;
 				else if (temp > 32767) temp = 32767;
+#else
+                clip_short(temp);
+#endif
 				*i2++ = temp;
 			}
 			i2 += mem63e;

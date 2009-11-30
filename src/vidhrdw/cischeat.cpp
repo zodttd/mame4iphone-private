@@ -64,9 +64,6 @@ Video Section Summary		[ Cisco Heat ]			[ F1 GP Star ]
 /* Variables only used here: */
 
 static int cischeat_ip_select;
-#ifdef MAME_DEBUG
-static int debugsprites;	// For debug purposes
-#endif
 
 /* Variables that driver has access to: */
 unsigned char *cischeat_roadram[2];
@@ -178,8 +175,7 @@ READ_HANDLER( cischeat_vregs_r )
 		case 0x2200 : return readinputport(5);	// DSW 3 (4 bits)
 		case 0x2300 : return soundlatch2_r(0);	// From sound cpu
 
-		default:	SHOW_READ_ERROR("vreg %04X read!",offset);
-					return READ_WORD(&megasys1_vregs[offset]);
+		default: return READ_WORD(&megasys1_vregs[offset]);
 	}
 }
 
@@ -209,8 +205,7 @@ READ_HANDLER( f1gpstar_vregs_r )
 		case 0x0010 :	// Accel + Driving Wheel
 			return (read_accelerator()&0xff) + ((readinputport(5)&0xff)<<8);
 
-		default:		SHOW_READ_ERROR("vreg %04X read!",offset);
-						return READ_WORD(&megasys1_vregs[offset]);
+		default: return READ_WORD(&megasys1_vregs[offset]);
 	}
 }
 
@@ -271,8 +266,6 @@ int old_data, new_data;
 						cpu_set_reset_line(2, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
 						cpu_set_reset_line(3, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
 						break;
-
-		default: SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
 	}
 }
 
@@ -334,8 +327,6 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 						cpu_set_reset_line(2, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
 						cpu_set_reset_line(3, (new_data & 4) ? ASSERT_LINE : CLEAR_LINE );
 						break;
-
-		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
 	}
 }
 
@@ -795,14 +786,6 @@ static void cischeat_draw_sprites(struct osd_bitmap *bitmap , int priority1, int
 		sy <<= 16;
 
 		/* dimension of a tile after zoom */
-#ifdef MAME_DEBUG
-		if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_M) )
-		{
-			xdim	=	16 << 16;
-			ydim	=	16 << 16;
-		}
-		else
-#endif
 		{
 			xdim	=	SHRINK(16,xzoom);
 			ydim	=	SHRINK(16,yzoom);
@@ -824,10 +807,6 @@ static void cischeat_draw_sprites(struct osd_bitmap *bitmap , int priority1, int
 
 		if ( high_sprites && (!(color & (SPRITE_COLOR_CODES/2))) )
 			continue;
-
-#ifdef MAME_DEBUG
-if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continue; };
-#endif
 
 		xscale = xdim / 16;
 		yscale = ydim / 16;
@@ -860,23 +839,6 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 			}
 		}
 
-#ifdef MAME_DEBUG
-		if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_N) )
-		{
-			struct DisplayText dt[3];
-			char buf[40],buf1[40];
-
-			dt[0].text = buf;	dt[1].text = buf1;	dt[2].text = 0;
-			dt[0].color = dt[1].color = UI_COLOR_NORMAL;
-			dt[0].x = sx / 0x10000;	dt[1].x = dt[0].x;
-			dt[0].y = sy / 0x10000;	dt[1].y = dt[0].y + 8;
-
-			sprintf(buf, "A:%04X",attr);
-			sprintf(buf1,"Z:%04X",xzoom);
-			displaytext(Machine->scrbitmap,dt,0,0);
-		}
-#endif
-
 	}	/* end sprite loop */
 
 }
@@ -890,46 +852,6 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 
 ***************************************************************************/
 
-#define CISCHEAT_LAYERSCTRL \
-debugsprites = 0; \
-if (keyboard_pressed(KEYCODE_Z)) \
-{ \
-	int msk = 0; \
-	if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0xffc1;} \
-	if (keyboard_pressed(KEYCODE_W))	{ msk |= 0xffc2;} \
-	if (keyboard_pressed(KEYCODE_E))	{ msk |= 0xffc4;} \
-	if (keyboard_pressed(KEYCODE_A))	{ msk |= 0xffc8; debugsprites = 1;} \
-	if (keyboard_pressed(KEYCODE_S))	{ msk |= 0xffc8; debugsprites = 2;} \
-	if (keyboard_pressed(KEYCODE_D))	{ msk |= 0xffc8; debugsprites = 3;} \
-	if (keyboard_pressed(KEYCODE_F))	{ msk |= 0xffc8; debugsprites = 4;} \
-	if (keyboard_pressed(KEYCODE_R))	{ msk |= 0xffd0;} \
-	if (keyboard_pressed(KEYCODE_T))	{ msk |= 0xffe0;} \
- \
-	if (msk != 0) megasys1_active_layers &= msk; \
-} \
-\
-{ \
-	static int show_unknown; \
-	if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_U) ) \
-	{ \
-		while (keyboard_pressed(KEYCODE_U)); \
-		show_unknown ^= 1; \
-	} \
- \
-	if (show_unknown) \
-	{ \
-		char buf[80]; \
-		sprintf(buf, "0:%04X 2:%04X 4:%04X 6:%04X", \
-					READ_WORD(&megasys1_vregs[0x0000]), \
-					READ_WORD(&megasys1_vregs[0x0002]), \
-					READ_WORD(&megasys1_vregs[0x0004]), \
-					READ_WORD(&megasys1_vregs[0x0006]) \
-				); \
-		usrintf_showmessage(buf); \
-	} \
-}
-
-
 /**************************************************************************
 								[ Cisco Heat ]
 **************************************************************************/
@@ -938,18 +860,9 @@ void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int megasys1_active_layers1, flag;
 
-#ifdef MAME_DEBUG
-	megasys1_active_layers = READ_WORD(&megasys1_vregs[0x2400]);
-	if (megasys1_active_layers == 0)	megasys1_active_layers = 0x3f;
-#else
 	megasys1_active_layers = 0x3f;
-#endif
 
 	megasys1_active_layers1 = megasys1_active_layers;
-
-#ifdef MAME_DEBUG
-	CISCHEAT_LAYERSCTRL
-#endif
 
 	MEGASYS1_TMAP_SET_SCROLL(0)
 	MEGASYS1_TMAP_SET_SCROLL(1)
@@ -1011,18 +924,9 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int megasys1_active_layers1, flag;
 
-#ifdef MAME_DEBUG
-	megasys1_active_layers = READ_WORD(&megasys1_vregs[0x2400]);
-	if (megasys1_active_layers == 0)	megasys1_active_layers = 0x3f;
-#else
 	megasys1_active_layers = 0x3f;
-#endif
 
 	megasys1_active_layers1 = megasys1_active_layers;
-
-#ifdef MAME_DEBUG
-	CISCHEAT_LAYERSCTRL
-#endif
 
 	MEGASYS1_TMAP_SET_SCROLL(0)
 	MEGASYS1_TMAP_SET_SCROLL(1)

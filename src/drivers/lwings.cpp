@@ -1,3 +1,6 @@
+#include "../machine/lwings.cpp"
+#include "../vidhrdw/lwings.cpp"
+
 /***************************************************************************
 
   Legendary Wings

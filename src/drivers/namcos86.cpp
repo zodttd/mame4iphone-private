@@ -1,3 +1,5 @@
+#include "../vidhrdw/namcos86.cpp"
+
 /*******************************************************************
 Rolling Thunder
 (C) 1986 Namco
@@ -70,7 +72,7 @@ static int rt_decode_sample(const struct MachineSound *msound)
 	else
 		rt_decode_mode = 0;
 
-	logerror("pcm decode mode:%d\n", rt_decode_mode );
+	//logerror("pcm decode mode:%d\n", rt_decode_mode );
 	if (rt_decode_mode != 0) {
 		decode_mode = 6;
 	} else {
@@ -82,7 +84,7 @@ static int rt_decode_sample(const struct MachineSound *msound)
 		src = memory_region(REGION_SOUND1)+ ( j * 0x10000 );
 		rt_totalsamples[j] = ( ( src[0] << 8 ) + src[1] ) / 2;
 		n += rt_totalsamples[j];
-		logerror("rt_totalsamples[%d]:%d\n", j, rt_totalsamples[j] );
+		//logerror("rt_totalsamples[%d]:%d\n", j, rt_totalsamples[j] );
 	}
 
 	/* calculate the amount of headers needed */
@@ -203,7 +205,7 @@ static WRITE_HANDLER( namco_voice1_play_w ) {
 /* select voice sample (Modified and Added by Takahiro Nogi. 1999/09/26) */
 static void namco_voice_select( int offset, int data, int ch ) {
 
-	logerror("Voice %d mode: %d select: %02x\n", ch, rt_decode_mode, data );
+	//logerror("Voice %d mode: %d select: %02x\n", ch, rt_decode_mode, data );
 
 	if ( data == 0 )
 		sample_stop( ch );
@@ -727,7 +729,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( roishtar )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON6 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
@@ -799,7 +801,7 @@ INPUT_PORTS_START( roishtar )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON5 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )

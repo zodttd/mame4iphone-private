@@ -1,3 +1,6 @@
+#include "../machine/namcos1.cpp"
+#include "../vidhrdw/namcos1.cpp"
+
 /***********************************************************************
 
 Namco System 1

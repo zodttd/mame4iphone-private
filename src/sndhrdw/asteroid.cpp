@@ -137,7 +137,7 @@ INLINE int saucer(int samplerate)
 {
 	static int vco, vco_charge, vco_counter;
     static int out, counter;
-	double v5;
+	float v5;
 
     /* saucer sound enabled ? */
 	if( sound_latch[SAUCEREN] )
@@ -398,7 +398,7 @@ static void explosion_init(void)
     for( i = 0; i < 16; i++ )
     {
         /* r0 = open, r1 = open */
-        double r0 = 1.0/1e12, r1 = 1.0/1e12;
+        float r0 = 1.0/1e12, r1 = 1.0/1e12;
 
         /* R14 */
         if( i & 1 )
@@ -474,7 +474,7 @@ WRITE_HANDLER( asteroid_explode_w )
 
 WRITE_HANDLER( asteroid_thump_w )
 {
-	double r0 = 1/47000, r1 = 1/1e12;
+	float r0 = 1/47000, r1 = 1/1e12;
 
     if( data == thump_latch )
 		return;

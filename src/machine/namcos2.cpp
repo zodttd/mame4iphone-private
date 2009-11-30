@@ -363,14 +363,14 @@ unsigned char *namcos2_68k_serial_comms_ram=NULL;
 
 READ_HANDLER( namcos2_68k_serial_comms_ram_r )
 {
-	logerror("Serial Comms read  Addr=%08x\n",offset);
+	//logerror("Serial Comms read  Addr=%08x\n",offset);
 	return READ_WORD(&namcos2_68k_serial_comms_ram[offset&0x3fff]);
 }
 
 WRITE_HANDLER( namcos2_68k_serial_comms_ram_w )
 {
 	COMBINE_WORD_MEM(&namcos2_68k_serial_comms_ram[offset&0x3fff],data&0x1ff);
-	logerror("Serial Comms write Addr=%08x, Data=%04x\n",offset,data);
+	//logerror("Serial Comms write Addr=%08x, Data=%04x\n",offset,data);
 }
 
 
@@ -893,7 +893,7 @@ READ_HANDLER( namcos2_input_port_0_r )
 		case NAMCOS2_ASSAULT_JP:
 		case NAMCOS2_ASSAULT_PLUS:
 			datafake=~readinputport(15) & 0xff;
-			logerror("xxx=%08x\n",datafake);
+			//logerror("xxx=%08x\n",datafake);
 			for (i=0;i<10;i++)
 				if (datafake==one_joy_trans0[0][i])
 				{

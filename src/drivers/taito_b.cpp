@@ -1,3 +1,5 @@
+#include "../vidhrdw/taito_b.cpp"
+
 /***************************************************************************
 
 Taito B System
@@ -155,7 +157,7 @@ static READ_HANDLER( rastsag2_input_r )
 		case 0x0e:
 			return readinputport (2)<<8; /*tilt, coins*/
 		default:
-            logerror("WARNING: read input offs=%2x PC=%08x\n", offset, cpu_get_pc());
+            //logerror("WARNING: read input offs=%2x PC=%08x\n", offset, cpu_get_pc());
 			return 0xff<<8;
 	}
 }
@@ -184,7 +186,7 @@ static READ_HANDLER( silentd_input_r )
 		case 0x0e:
 			return readinputport (2);
 		default:
-            logerror("WARNING: read input offs=%2x PC=%08x\n", offset, cpu_get_pc());
+            //logerror("WARNING: read input offs=%2x PC=%08x\n", offset, cpu_get_pc());
 			return 0xff;
 	}
 }
@@ -222,7 +224,7 @@ static READ_HANDLER( puzbobb_input_r )
 		case 0x0e:
 			return readinputport (2)<<8; /*tilt, coins*/
 		default:
-            logerror("WARNING: puzbobb read input offs=%x\n",offset);
+            //logerror("WARNING: puzbobb read input offs=%x\n",offset);
 			return 0xff;
 	}
 }
@@ -675,13 +677,13 @@ static WRITE_HANDLER( eeprom_w )
 
 READ_HANDLER( p_read )
 {
-	logerror("puzzle_read off%x\n",offset);
+	//logerror("puzzle_read off%x\n",offset);
 	return 0xffff;
 }
 
 WRITE_HANDLER( p_write )
 {
-	logerror("puzzle_write off%2x data=%8x   pc=%8x\n",offset,data, cpu_get_pc());
+	//logerror("puzzle_write off%2x data=%8x   pc=%8x\n",offset,data, cpu_get_pc());
 }
 
 static struct MemoryReadAddress puzbobb_readmem[] =
@@ -922,12 +924,10 @@ if (offset==0)
         case 0x07:
 			return readinputport (2)<<8; /*tilt, coins*/
 		default:
-            logerror("WARNING: mow read input offs=%2x PC=%08x\n", offset, cpu_get_pc());
+            //logerror("WARNING: mow read input offs=%2x PC=%08x\n", offset, cpu_get_pc());
 			return 0xff;
 	}
 }
-if (offset==2)
-  	logerror("read from offset 2 PC=%08x\n",cpu_get_pc() );
 
 	return 0x0200;
 }
@@ -2125,10 +2125,6 @@ WRITE_HANDLER( portAwrite )
 		cpu_setbank (2, &RAM [0x10000 + (banknum * 0x4000)]);
 
 	a=data;
-
-	if ((a!=1) && (a!=2) )
-		logerror("hitice write to port A on YM2203 val=%x\n",data);
-
 }
 
 static struct YM2203interface ym2203_interface =
@@ -3160,7 +3156,7 @@ GAMEX( 1990, ashurau,  ashura,  ashura,   ashura,   0, ROT270,      "Taito Ameri
 GAMEX( 1990, hitice,   0,       hitice,   hitice,   0, ROT180,      "Williams", "Hit the Ice (US)", GAME_NO_COCKTAIL )
 GAMEX( 1989, rambo3,   0,       rambo3,   rastsag2, 0, ROT180,      "Taito Europe Corporation", "Rambo III (set 1, Europe)", GAME_NO_COCKTAIL )
 GAMEX( 1989, rambo3a,  rambo3,  rambo3a,  rambo3a,  0, ROT180,      "Taito America Corporation", "Rambo III (set 2, US)", GAME_NO_COCKTAIL)
-GAMEX( 1994, puzbobb,  pbobble, puzbobb,  puzbobb,  0, ROT0,        "Taito Corporation", "Puzzle Bobble (Japan, B-System)", GAME_NO_COCKTAIL )
+GAMEX( 1994, puzbobb,  0,       puzbobb,  puzbobb,  0, ROT0,        "Taito Corporation", "Puzzle Bobble (Japan, B-System)", GAME_NO_COCKTAIL )
 GAMEX( 1994, spacedx,  0,       spacedx,  puzbobb,  0, ROT0,        "Taito Corporation", "Space Invaders DX (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1993, qzshowby, 0,       qzshowby, puzbobb,  0, ROT0,        "Taito Corporation", "Quiz Sekai wa SHOW by shobai (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1989, viofight, 0,       viofight, viofight, 0, ROT180,      "Taito Corporation Japan", "Violence Fight (World)", GAME_NO_COCKTAIL)

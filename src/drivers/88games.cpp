@@ -1,3 +1,5 @@
+#include "../vidhrdw/88games.cpp"
+
 /***************************************************************************
 
 88 Games (c) 1988 Konami
@@ -539,7 +541,7 @@ static void k88games_banking( int lines )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
-logerror("%04x: bank select %02x\n",cpu_get_pc(),lines);
+//logerror("%04x: bank select %02x\n",cpu_get_pc(),lines);
 
 	/* bits 0-2 select ROM bank for 0000-1fff */
 	/* bit 3: when 1, palette RAM at 1000-1fff */

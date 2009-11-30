@@ -410,54 +410,12 @@ void suna8_draw_text_sprites(struct osd_bitmap *bitmap)
 
 void suna8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-#ifdef MAME_DEBUG
-#if TILEMAPS
-{
-	char buf[80];
-	int max_tiles = memory_region_length(REGION_GFX1) / (0x400 * 0x20);
-
-	if (keyboard_pressed_memory(KEYCODE_Q))	{ page--;	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);	}
-	if (keyboard_pressed_memory(KEYCODE_W))	{ page++;	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);	}
-	if (keyboard_pressed_memory(KEYCODE_R))	{ tiles--;	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);	}
-	if (keyboard_pressed_memory(KEYCODE_T))	{ tiles++;	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);	}
-	if (keyboard_pressed_memory(KEYCODE_A))	{ rombank--;	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);	}
-	if (keyboard_pressed_memory(KEYCODE_S))	{ rombank++;	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);	}
-
-	rombank  &= 0xf;
-	page  &= (suna8_text_dim > 0)?3:7;
-	tiles %= max_tiles;
-	if (tiles < 0)	tiles += max_tiles;
-
-	tilemap_set_scrollx( tilemap, 0, 0x100 * page);
-	tilemap_set_scrolly( tilemap, 0, 0);
-
-	tilemap_update(ALL_TILEMAPS);
-
-#if 1
-	sprintf(buf,	"%02X %02X %02X %02X - p%2X g%02X r%02X",
-					suna8_rombank, suna8_palettebank, suna8_spritebank, suna8_unknown,
-					page,tiles,rombank	);
-	usrintf_showmessage(buf);
-#endif
-
-}
-#endif
-#endif
-
 	palette_init_used_colors();
 	memset(palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors);
 	palette_recalc();
 
 	/* see hardhead, hardhea2 test mode (press button 2 for both players) */
 	fillbitmap(bitmap,Machine->pens[0xff],&Machine->visible_area);
-
-#ifdef MAME_DEBUG
-#if TILEMAPS
-	if (keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X))
-		tilemap_draw(bitmap, tilemap, 0, 0);
-	else
-#endif
-#endif
 	{
 		suna8_draw_normal_sprites(bitmap);
 		suna8_draw_text_sprites(bitmap);

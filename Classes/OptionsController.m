@@ -8,9 +8,9 @@
 
 #import "SOApplication.h"
 
-unsigned long gp2x_fps_debug;
-int __autosave;
-int __compatibility;
+unsigned long gp2x_fps_debug = 0;
+int __autosave = 0;
+int __compatibility = 0;
 
 @implementation OptionsController
 
@@ -68,20 +68,14 @@ int __compatibility;
 	[optionsArray addObject:[NSDictionary dictionaryWithObjectsAndKeys:
 							 [NSString stringWithFormat:@"%d", segmentedSkin.selectedSegmentIndex], @"skin",
 							 [NSString stringWithFormat:@"%d", [switchScaling isOn]], @"scaling",
-							 [NSString stringWithFormat:@"%d", [switchAutosave isOn]], @"autosave",
-							 [NSString stringWithFormat:@"%d", [switchCompatibility isOn]], @"compatibility",
 							 [NSString stringWithFormat:@"%d", [switchFramerate isOn]], @"framerate",
 							 nil]];	
 	
 	[segmentedSkin setSelectedSegmentIndex:[[[optionsArray objectAtIndex:0] objectForKey:@"skin"] intValue]];
 	[switchScaling setOn:[[[optionsArray objectAtIndex:0] objectForKey:@"scaling"] intValue] animated:NO];
-	[switchAutosave setOn:[[[optionsArray objectAtIndex:0] objectForKey:@"autosave"] intValue] animated:NO];
-	[switchCompatibility setOn:[[[optionsArray objectAtIndex:0] objectForKey:@"compatibility"] intValue] animated:NO];
 	[switchFramerate setOn:[[[optionsArray objectAtIndex:0] objectForKey:@"framerate"] intValue] animated:NO];
 	
 	gp2x_fps_debug = [switchFramerate isOn];
-	__autosave = [switchAutosave isOn];
-	__compatibility = [switchCompatibility isOn];
 	
 	NSString *path=[[self getDocumentsDirectory] stringByAppendingPathComponent:@"options.bin"];
 	NSData *plistData;
@@ -169,8 +163,6 @@ int __compatibility;
 		
 		[segmentedSkin setSelectedSegmentIndex:0];
 		[switchScaling setOn:0 animated:NO];
-		[switchAutosave setOn:0 animated:NO];
-		[switchCompatibility setOn:0 animated:NO];
 		[switchFramerate setOn:0 animated:NO];
 		
 		[self optionChanged:self];
@@ -181,8 +173,6 @@ int __compatibility;
 		
 		[segmentedSkin setSelectedSegmentIndex:[[[optionsArray objectAtIndex:0] objectForKey:@"skin"] intValue]];
 		[switchScaling setOn:[[[optionsArray objectAtIndex:0] objectForKey:@"scaling"] intValue] animated:NO];
-		[switchAutosave setOn:[[[optionsArray objectAtIndex:0] objectForKey:@"autosave"] intValue] animated:NO];
-		[switchCompatibility setOn:[[[optionsArray objectAtIndex:0] objectForKey:@"compatibility"] intValue] animated:NO];
 		[switchFramerate setOn:[[[optionsArray objectAtIndex:0] objectForKey:@"framerate"] intValue] animated:NO];
 		
 		[self optionChanged:self];

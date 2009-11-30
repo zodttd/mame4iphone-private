@@ -1,3 +1,6 @@
+#include "../vidhrdw/mario.cpp"
+#include "../sndhrdw/mario.cpp"
+
 /***************************************************************************
 
 Mario Bros memory map (preliminary):

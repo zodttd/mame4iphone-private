@@ -1,3 +1,5 @@
+#include "../vidhrdw/rollerg.cpp"
+
 /***************************************************************************
 
 Rollergames (GX999) (c) 1991 Konami
@@ -26,7 +28,7 @@ static int readzoomroms;
 
 static WRITE_HANDLER( rollerg_0010_w )
 {
-logerror("%04x: write %02x to 0010\n",cpu_get_pc(),data);
+//logerror("%04x: write %02x to 0010\n",cpu_get_pc(),data);
 
 	/* bits 0/1 are coin counters */
 	coin_counter_w(0,data & 0x01);

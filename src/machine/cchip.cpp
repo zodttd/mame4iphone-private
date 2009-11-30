@@ -88,7 +88,6 @@ READ_HANDLER( cchip1_r )
 			break;
 		case 0x004:
 			/* Coins */
-			logerror("cchip1_r (coin) pc: %06x, offset: %04x\n", cpu_get_pc(), offset);
 			if (cchip1_bank == 1)
 				ret = cchip1_code[offset/2];
 			else
@@ -112,7 +111,6 @@ READ_HANDLER( cchip1_r )
 				ret = cchip1_code[offset/2];
 			else
 			{
-				logerror("cchip1_r offset: %04x\n", offset);
 				ret = 0xff;
 			}
 			break;
@@ -123,7 +121,6 @@ READ_HANDLER( cchip1_r )
 
 WRITE_HANDLER( cchip1_w )
 {
-	logerror("cchip1_w pc: %06x, %04x:%02x\n", cpu_get_pc(), offset, data);
 	switch (offset)
 	{
 		case 0x0000:
@@ -151,3 +148,29 @@ WRITE_HANDLER( cchip1_w )
 	}
 }
 
+
+/* Mega Blast */
+unsigned char *cchip_ram;
+
+READ_HANDLER( cchip2_r )
+{
+    int ret = 0;
+
+    switch (offset)
+    {
+        case 0x802:
+            /* C-Chip ID */
+            ret = 0x01;
+            break;
+        default:
+            ret = cchip_ram[offset];
+            break;
+    }
+
+    return ret;
+}
+
+WRITE_HANDLER( cchip2_w )
+{
+    cchip_ram[offset] = data;
+}

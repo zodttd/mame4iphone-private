@@ -64,10 +64,6 @@ extern void m4510_state_load(void *file);
 extern const char *m4510_info(void *context, int regnum);
 extern unsigned m4510_dasm(char *buffer, unsigned pc);
 
-#ifdef MAME_DEBUG
-extern unsigned Dasm4510( char *dst, unsigned pc );
-#endif
-
 #endif
 
 

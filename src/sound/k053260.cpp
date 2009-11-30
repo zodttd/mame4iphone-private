@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "k053260.h"
+#include "osinline.h"
 
 #define LOG 0
 
@@ -45,14 +46,14 @@ static unsigned long *delta_table;
 
 static void InitDeltaTable( void ) {
 	int		i;
-	double	base = ( double )Machine->sample_rate;
-	double	max = (double)K053260_chip.intf->clock; /* hz */
+	float	base = ( float )Machine->sample_rate;
+	float	max = (float)K053260_chip.intf->clock; /* hz */
 	unsigned long val;
 
 	for( i = 0; i < 0x1000; i++ ) {
-		double v = ( double )( 0x1000 - i );
-		double target = max / v;
-		double fixed = ( double )( 1 << BASE_SHIFT );
+		float v = ( float )( 0x1000 - i );
+		float target = max / v;
+		float fixed = ( float )( 1 << BASE_SHIFT );
 
 		if ( target && base ) {
 			target = fixed / ( base / target );
@@ -228,8 +229,13 @@ void K053260_update( int param, INT16 **buffer, int length ) {
 				}
 			}
 
+#ifndef clip_short_ret
 			buffer[1][j] = limit( dataL, MAXOUT, MINOUT );
 			buffer[0][j] = limit( dataR, MAXOUT, MINOUT );
+#else
+			buffer[1][j] = clip_short_ret(dataL);
+			buffer[0][j] = clip_short_ret(dataR);
+#endif
 		}
 
 	/* update the regs now */
@@ -325,12 +331,20 @@ WRITE_HANDLER( K053260_w )
 	int v = data;
 
 	if ( r > 0x2f ) {
-		logerror("K053260: Writing past registers\n" );
+		//logerror("K053260: Writing past registers\n" );
 		return;
 	}
 
+#ifndef MAME_FASTSOUND
 	if ( Machine->sample_rate != 0 )
 		stream_update( K053260_chip.channel, 0 );
+#else
+    {
+        extern int fast_sound;
+        if ((!fast_sound) && ( Machine->sample_rate != 0 ))
+		    stream_update( K053260_chip.channel, 0 );
+    }
+#endif
 
 	/* before we update the regs, we need to check for a latched reg */
 	if ( r == 0x28 ) {

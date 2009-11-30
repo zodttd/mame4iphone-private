@@ -1,3 +1,5 @@
+#include "../vidhrdw/tecmo.cpp"
+
 /***************************************************************************
 
 tecmo.c
@@ -579,7 +581,7 @@ static struct YM3526interface ym3812_interface =
 static struct MSM5205interface msm5205_interface =
 {
 	1,					/* 1 chip             */
-	384000,				/* 384KHz             */
+	400000,				/* 400KHz             */
 	{ tecmo_adpcm_int },/* interrupt function */
 	{ MSM5205_S48_4B },	/* 8KHz               */
 	{ 80 }				/* volume */
@@ -636,7 +638,7 @@ static struct MachineDriver machine_driver_##NAME =				\
 	}															\
 };
 
-MACHINE_DRIVER( rygar,    4000000,         rygar )
+MACHINE_DRIVER( rygar,    6000000,         rygar )
 MACHINE_DRIVER( gemini,   6000000 /* ? */, tecmo )
 MACHINE_DRIVER( silkworm, 6000000 /* ? */, tecmo )
 

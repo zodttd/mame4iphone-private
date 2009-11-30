@@ -26,7 +26,7 @@ void sample_start(int channel,int samplenum,int loop)
 
 	if ( Machine->samples->sample[samplenum]->resolution == 8 )
 	{
-		logerror("play 8 bit sample %d, channel %d\n",samplenum,channel);
+		//logerror("play 8 bit sample %d, channel %d\n",samplenum,channel);
 		mixer_play_sample(firstchannel + channel,
 				Machine->samples->sample[samplenum]->data,
 				Machine->samples->sample[samplenum]->length,
@@ -35,7 +35,7 @@ void sample_start(int channel,int samplenum,int loop)
 	}
 	else
 	{
-		logerror("play 16 bit sample %d, channel %d\n",samplenum,channel);
+		//logerror("play 16 bit sample %d, channel %d\n",samplenum,channel);
 		mixer_play_sample_16(firstchannel + channel,
 				(short *) Machine->samples->sample[samplenum]->data,
 				Machine->samples->sample[samplenum]->length,

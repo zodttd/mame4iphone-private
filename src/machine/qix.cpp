@@ -20,7 +20,7 @@ static WRITE_HANDLER( sdungeon_coin_w );
 static READ_HANDLER( qix_sound_r );
 static WRITE_HANDLER( qix_dac_w );
 static void qix_pia_sint (int state);
-static void qix_pia_dint (int state);
+//static void qix_pia_dint (int state);
 static int suspended;
 
 static int sdungeon_coinctrl;
@@ -272,10 +272,11 @@ READ_HANDLER( qix_sound_r )
 	return pia_4_porta_r (offset);
 }
 
+/*
 static void qix_pia_dint (int state)
 {
-	/* not used by Qix, but others might use it; depends on a jumper on the PCB */
 }
+*/
 
 static void qix_pia_sint (int state)
 {

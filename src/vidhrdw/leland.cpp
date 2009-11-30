@@ -335,16 +335,16 @@ int leland_vram_port_r(int offset, int num)
             break;
 
         default:
-            logerror("CPU #%d %04x Warning: Unknown video port %02x read (address=%04x)\n",
-                        cpu_getactivecpu(),cpu_get_pc(), offset, addr);
+            /*logerror("CPU #%d %04x Warning: Unknown video port %02x read (address=%04x)\n",
+                        cpu_getactivecpu(),cpu_get_pc(), offset, addr);*/
             ret = 0;
             break;
     }
     state->addr = addr & 0x7fff;
     state->plane = plane;
 
-	if (LOG_COMM && addr >= 0x7800)
-		logerror("%04X:%s comm read %04X = %02X\n", cpu_getpreviouspc(), num ? "slave" : "master", addr, ret);
+	/*if (LOG_COMM && addr >= 0x7800)
+		logerror("%04X:%s comm read %04X = %02X\n", cpu_getpreviouspc(), num ? "slave" : "master", addr, ret);*/
 
     return ret;
 }
@@ -375,8 +375,8 @@ void leland_vram_port_w(int offset, int data, int num)
 			update_for_scanline(cur_scanline);
 	}
 
-	if (LOG_COMM && addr >= 0x7800)
-		logerror("%04X:%s comm write %04X = %02X\n", cpu_getpreviouspc(), num ? "slave" : "master", addr, data);
+	/*if (LOG_COMM && addr >= 0x7800)
+		logerror("%04X:%s comm write %04X = %02X\n", cpu_getpreviouspc(), num ? "slave" : "master", addr, data);*/
 
 	/* based on the low 3 bits of the offset, update the destination */
     switch (offset & 7)
@@ -427,8 +427,8 @@ void leland_vram_port_w(int offset, int data, int num)
             break;
 
         default:
-            logerror("CPU #%d %04x Warning: Unknown video port %02x write (address=%04x value=%02x)\n",
-                        cpu_getactivecpu(),cpu_get_pc(), offset, addr);
+            /*logerror("CPU #%d %04x Warning: Unknown video port %02x write (address=%04x value=%02x)\n",
+                        cpu_getactivecpu(),cpu_get_pc(), offset, addr);*/
             break;
     }
 

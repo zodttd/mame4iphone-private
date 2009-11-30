@@ -1,3 +1,6 @@
+#include "../vidhrdw/seta.cpp"
+#include "../sndhrdw/seta.cpp"
+
 /***************************************************************************
 
 								-= Seta Games =-
@@ -193,7 +196,7 @@ READ_HANDLER ( calibr50_ip_r )
 		case 0x16:	return (dir2>>8);			// upper 4 bits of p2 rotation
 		case 0x18:	return 0xffff;				// ? (value's read but not used)
 		default:
-			logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
+			//logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
 			return 0;
 	}
 }
@@ -2370,10 +2373,10 @@ static READ_HANDLER( dsw2_r )
 	return (readinputport(3) >> 0) & 0xff;
 }
 
-static void irq_handler(int irq)
+/*static void irq_handler(int irq)
 {
 	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
-}
+}*/
 
 static struct YM2203interface tndrcade_ym2203_interface =
 {

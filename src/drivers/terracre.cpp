@@ -1,3 +1,5 @@
+#include "../vidhrdw/terracre.cpp"
+
 /******************************************************************
 Terra Cresta (preliminary)
 Nichibutsu 1985
@@ -76,7 +78,7 @@ WRITE_HANDLER( terracre_misc_w )
 //			break;
 	}
 
-	logerror("OUTPUT [%x] <- %08x\n", offset,data );
+	//logerror("OUTPUT [%x] <- %08x\n", offset,data );
 }
 
 static READ_HANDLER( terracre_ports_r )

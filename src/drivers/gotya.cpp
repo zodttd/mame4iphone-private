@@ -1,3 +1,6 @@
+#include "../vidhrdw/gotya.cpp"
+#include "../sndhrdw/gotya.cpp"
+
 /****************************************************************************
 
 	Got-Ya driver by Zsolt Vasvari

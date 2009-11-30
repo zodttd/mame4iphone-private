@@ -1,3 +1,6 @@
+#ifndef Z80FAMILY_H
+#define Z80FAMILY_H
+
 /*  Z80 FMLY.H   Z80 FAMILY IC EMURATION */
 
 
@@ -21,7 +24,7 @@ typedef struct
 
 void z80ctc_init (z80ctc_interface *intf);
 
-double z80ctc_getperiod (int which, int ch);
+float z80ctc_getperiod (int which, int ch);
 
 void z80ctc_reset (int which);
 void z80ctc_0_reset (void);
@@ -85,4 +88,4 @@ WRITE_HANDLER( z80pioB_0_p_w );
 READ_HANDLER( z80pioA_0_p_r );
 READ_HANDLER( z80pioB_0_p_r );
 
-
+#endif

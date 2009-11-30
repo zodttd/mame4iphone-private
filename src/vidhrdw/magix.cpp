@@ -203,16 +203,6 @@ void magix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int layers_ctrl = -1;
 
-#ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z))
-{
-	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
-	if (msk != 0) layers_ctrl &= msk;
-}
-#endif
-
 	tilemap_update(ALL_TILEMAPS);
 
 	palette_init_used_colors();

@@ -1,3 +1,7 @@
+#include "../machine/system16.cpp"
+#include "../sndhrdw/system16.cpp"
+#include "../vidhrdw/system16.cpp"
+
 /*
 
 
@@ -142,7 +146,9 @@ extern int sys16_sh_shadowpal;
 #else
 #define ShadowColorsMultiplier 1
 #endif
+#ifdef TRANSPARENT_SHADOWS
 extern int sys16_MaxShadowColors;
+#endif
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -485,7 +491,9 @@ static void sys16_onetime_init_machine(void)
 
 	sys16_custom_irq=NULL;
 
+#ifdef TRANSPARENT_SHADOWS
 	sys16_MaxShadowColors=NumOfShadowColors;
+#endif
 
 #ifdef SPACEHARRIER_OFFSETS
 	spaceharrier_patternoffsets=0;
@@ -810,13 +818,13 @@ static READ_HANDLER( sound2_shared_ram_r ) { return sound_shared_ram[offset]; }
 static WRITE_HANDLER( sound2_shared_ram_w ) { sound_shared_ram[offset] = data; }
 
 static WRITE_HANDLER( sound_command_w ){
-	logerror("SOUND COMMAND %04x <- %02x\n", offset, data&0xff );
+	//logerror("SOUND COMMAND %04x <- %02x\n", offset, data&0xff );
 	soundlatch_w( 0,data&0xff );
 	cpu_cause_interrupt( 1, 0 );
 }
 
 static WRITE_HANDLER( sound_command_nmi_w ){
-	logerror("SOUND COMMAND %04x <- %02x\n", offset, data&0xff );
+	//logerror("SOUND COMMAND %04x <- %02x\n", offset, data&0xff );
 	soundlatch_w( 0,data&0xff );
 	cpu_set_nmi_line(1, PULSE_LINE);
 }
@@ -1341,7 +1349,7 @@ static void patch_codeX( int offset, int data, int cpu ){
 }
 
 static void patch_code( int offset, int data ) {patch_codeX(offset,data,0);}
-static void patch_code2( int offset, int data ) {patch_codeX(offset,data,2);}
+//static void patch_code2( int offset, int data ) {patch_codeX(offset,data,2);}
 
 static void patch_z80code( int offset, int data ){
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -2358,7 +2366,9 @@ static void init_astorm( void )
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
+#ifdef TRANSPARENT_SHADOWS
 	sys16_MaxShadowColors=0;		// doesn't seem to use transparent shadows
+#endif
 
 	sys16_sprite_decode( 4,0x080000 );
 }
@@ -2457,12 +2467,12 @@ ROM_END
 
 /***************************************************************************/
 
-static READ_HANDLER( atomicp_skip_r )
+/*static READ_HANDLER( atomicp_skip_r )
 {
 	if (cpu_get_pc()==0x7fc) {cpu_spinuntil_int(); return 0xffff;}
 
 	return READ_WORD(&sys16_workingram[0x0902]);
-}
+}*/
 
 
 static struct MemoryReadAddress atomicp_readmem[] =
@@ -6633,7 +6643,9 @@ static void init_shdancer( void ){
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
 	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancer_skip_r );
+#ifdef TRANSPARENT_SHADOWS
 	sys16_MaxShadowColors=0;		// doesn't seem to use transparent shadows
+#endif
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
 
@@ -6855,7 +6867,9 @@ static void init_shdancbl( void ){
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
 	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancer_skip_r );
+#ifdef TRANSPARENT_SHADOWS
 	sys16_MaxShadowColors=0;		// doesn't seem to use transparent shadows
+#endif
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
 
@@ -8394,7 +8408,9 @@ static void wrestwar_init_machine( void ){
 static void init_wrestwar( void ){
 	sys16_onetime_init_machine();
 	sys16_bg1_trans=1;
+#ifdef TRANSPARENT_SHADOWS
 	sys16_MaxShadowColors=16;
+#endif
 	sys18_splittab_bg_y=&sys16_textram[0x0f40];
 	sys18_splittab_fg_y=&sys16_textram[0x0f00];
 	sys16_rowscroll_scroll=0x8000;
@@ -9058,13 +9074,17 @@ static void harrier_init_machine( void ){
 	gr_colorflip[1][2]=0x06 / 2;
 	gr_colorflip[1][3]=0x00 / 2;
 
+#ifdef TRANSPARENT_SHADOWS
 	sys16_sh_shadowpal=0;
+#endif
 }
 
 static void init_sharrier( void )
 {
 	sys16_onetime_init_machine();
+#ifdef TRANSPARENT_SHADOWS
 	sys16_MaxShadowColors=NumOfShadowColors / 2;
+#endif
 
 #ifdef SPACEHARRIER_OFFSETS
 	spaceharrier_patternoffsets=malloc(65536);
@@ -9748,7 +9768,7 @@ ROM_END
 
 /***************************************************************************/
 
-static READ_HANDLER( or_io_joy_r ){ return (input_port_5_r( offset ) << 8) + input_port_6_r( offset ); }
+//static READ_HANDLER( or_io_joy_r ){ return (input_port_5_r( offset ) << 8) + input_port_6_r( offset ); }
 
 #ifdef HANGON_DIGITAL_CONTROLS
 static READ_HANDLER( or_io_brake_r ){
@@ -10707,7 +10727,9 @@ static void enduror_init_machine( void ){
 	gr_colorflip[1][2]=0x06 / 2;
 	gr_colorflip[1][3]=0x00 / 2;
 
+#ifdef TRANSPARENT_SHADOWS
 	sys16_sh_shadowpal=0xff;
+#endif
 }
 
 
@@ -10769,7 +10791,9 @@ static void endurob2_opcode_decode( void )
 static void init_enduror( void )
 {
 	sys16_onetime_init_machine();
+#ifdef TRANSPARENT_SHADOWS
 	sys16_MaxShadowColors=NumOfShadowColors / 2;
+#endif
 //	sys16_MaxShadowColors=0;
 
 	enduror_sprite_decode();
@@ -10778,7 +10802,9 @@ static void init_enduror( void )
 static void init_endurobl( void )
 {
 	sys16_onetime_init_machine();
+#ifdef TRANSPARENT_SHADOWS
 	sys16_MaxShadowColors=NumOfShadowColors / 2;
+#endif
 //	sys16_MaxShadowColors=0;
 
 	endurob_sprite_decode();
@@ -10788,7 +10814,9 @@ static void init_endurobl( void )
 static void init_endurob2( void )
 {
 	sys16_onetime_init_machine();
+#ifdef TRANSPARENT_SHADOWS
 	sys16_MaxShadowColors=NumOfShadowColors / 2;
+#endif
 //	sys16_MaxShadowColors=0;
 
 	endurob_sprite_decode();

@@ -39,7 +39,7 @@ int generic_vh_start(void)
 
 	if (videoram_size == 0)
 	{
-logerror("Error: generic_vh_start() called but videoram_size not initialized\n");
+//logerror("Error: generic_vh_start() called but videoram_size not initialized\n");
 		return 1;
 	}
 

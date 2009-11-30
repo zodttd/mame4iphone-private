@@ -13,8 +13,6 @@
 {
 	IBOutlet UISegmentedControl*	segmentedSkin;
 	IBOutlet UISwitch*				switchScaling;
-	IBOutlet UISwitch*				switchAutosave;
-	IBOutlet UISwitch*				switchCompatibility;
 	IBOutlet UISwitch*				switchFramerate;
 	NSMutableArray*					optionsArray;
 }

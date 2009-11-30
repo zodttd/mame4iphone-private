@@ -1,3 +1,6 @@
+#include "../machine/slapfght.cpp"
+#include "../vidhrdw/slapfght.cpp"
+
 /***************************************************************************
 
 Slap Fight driver by K.Wilkins Jan 1998

@@ -40,7 +40,7 @@ READ_HANDLER( arkanoi2_sh_f000_r )
 {
 	int val;
 
-	logerror("PC %04x: read input %04x\n", cpu_get_pc(), 0xf000 + offset);
+	//logerror("PC %04x: read input %04x\n", cpu_get_pc(), 0xf000 + offset);
 
 	val = readinputport(5 + offset/2);
 	if (offset & 1)
@@ -92,7 +92,7 @@ static void mcu_handle_coins(int coin)
 			}
 			else
 			{
-				logerror("Coin dropped into slot A\n");
+				//logerror("Coin dropped into slot A\n");
 				coin_lockout_global_w(0,0); /* Unlock all coin slots */
 				coin_counter_w(0,1); coin_counter_w(0,0); /* Count slot A */
 				mcu_coinsA++;
@@ -111,7 +111,7 @@ static void mcu_handle_coins(int coin)
 			}
 			else
 			{
-				logerror("Coin dropped into slot B\n");
+				//logerror("Coin dropped into slot B\n");
 				coin_lockout_global_w(0,0); /* Unlock all coin slots */
 				coin_counter_w(1,1); coin_counter_w(1,0); /* Count slot B */
 				mcu_coinsB++;
@@ -124,7 +124,7 @@ static void mcu_handle_coins(int coin)
 		}
 		if (coin & 0x04)	/* service */
 		{
-			logerror("Coin dropped into service slot C\n");
+			//logerror("Coin dropped into service slot C\n");
 			mcu_credits++;
 		}
 		mcu_reportcoin = coin;
@@ -174,7 +174,7 @@ static READ_HANDLER( mcu_arkanoi2_r )
 				else return readinputport(2);	/* buttons */
 
 			default:
-logerror("error, unknown mcu command\n");
+//logerror("error, unknown mcu command\n");
 				/* should not happen */
 				return 0xff;
 				break;
@@ -242,7 +242,7 @@ static READ_HANDLER( mcu_chukatai_r )
 {
 	char *mcu_startup = "\xa5\x5a\xaa";
 
-	logerror("PC %04x (re %04x): read mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
+	//logerror("PC %04x (re %04x): read mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -289,7 +289,7 @@ static READ_HANDLER( mcu_chukatai_r )
 				}
 
 			default:
-logerror("error, unknown mcu command (%02x)\n",mcu_command);
+//logerror("error, unknown mcu command (%02x)\n",mcu_command);
 				/* should not happen */
 				return 0xff;
 				break;
@@ -318,7 +318,7 @@ logerror("error, unknown mcu command (%02x)\n",mcu_command);
 
 static WRITE_HANDLER( mcu_chukatai_w )
 {
-	logerror("PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+	//logerror("PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -358,7 +358,7 @@ static READ_HANDLER( mcu_tnzs_r )
 {
 	char *mcu_startup = "\x5a\xa5\x55";
 
-	logerror("PC %04x (re %04x): read mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
+	//logerror("PC %04x (re %04x): read mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -412,7 +412,7 @@ static READ_HANDLER( mcu_tnzs_r )
 				else return ((readinputport(2) & 0xf0) | (readinputport(3) >> 4)) ^ 0xff;
 
 			default:
-logerror("error, unknown mcu command\n");
+//logerror("error, unknown mcu command\n");
 				/* should not happen */
 				return 0xff;
 				break;
@@ -452,7 +452,7 @@ static WRITE_HANDLER( mcu_tnzs_w )
 {
 	if (offset == 0)
 	{
-		logerror("PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+		//logerror("PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
 		if (mcu_command == 0x41)
 		{
 			mcu_credits = (mcu_credits + data) & 0xff;
@@ -474,7 +474,7 @@ static WRITE_HANDLER( mcu_tnzs_w )
 		during initialization, a sequence of 4 bytes sets coin/credit settings
 		*/
 
-		logerror("PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+		//logerror("PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
 
 		if (mcu_initializing)
 		{

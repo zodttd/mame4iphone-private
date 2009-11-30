@@ -355,8 +355,4 @@ unsigned nsc8105_dasm(char *buffer, unsigned pc);
 #    define TRUE (!FALSE)
 #endif
 
-#ifdef	MAME_DEBUG
-unsigned Dasm680x(int subtype, char *buf, unsigned pc);
-#endif
-
 #endif /* _M6800_H */

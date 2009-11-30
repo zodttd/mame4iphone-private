@@ -1,8 +1,7 @@
 #import "SOApplication.h"
 
 @implementation SOApplication
-@synthesize tblView;
-//@synthesize bookmarksView;
+@synthesize romView;
 @synthesize nowPlayingView;
 @synthesize saveStatesView;
 @synthesize recentView;

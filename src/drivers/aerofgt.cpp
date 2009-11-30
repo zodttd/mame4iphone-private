@@ -1,3 +1,5 @@
+#include "../vidhrdw/aerofgt.cpp"
+
 /***************************************************************************
 
 Various Video System Co. games using the C7-01 VS8803 VS8904 VS8905 video

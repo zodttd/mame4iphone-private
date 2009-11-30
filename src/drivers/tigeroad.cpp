@@ -1,3 +1,5 @@
+#include "../vidhrdw/tigeroad.cpp"
+
 /***************************************************************************
 
 Tiger Road (C) 1987 Romstar/Capcom USA
@@ -147,7 +149,7 @@ static void f1dream_protection_w(void)
 
 static WRITE_HANDLER( f1dream_control_w )
 {
-	logerror("protection write, PC: %04x  FFE1 Value:%01x\n",cpu_get_pc(), ram[0x3fe1]);
+	//logerror("protection write, PC: %04x  FFE1 Value:%01x\n",cpu_get_pc(), ram[0x3fe1]);
 	f1dream_protection_w();
 }
 

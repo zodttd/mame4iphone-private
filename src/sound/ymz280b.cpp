@@ -12,7 +12,7 @@
 
 #include "driver.h"
 #include "adpcm.h"
-
+#include "osinline.h"
 
 #define MAX_SAMPLE_CHUNK	10000
 
@@ -64,7 +64,7 @@ struct YMZ280BChip
 	UINT8 irq_mask;					/* current IRQ mask */
 	UINT8 irq_enable;				/* current IRQ enable */
 	UINT8 keyon_enable;				/* key on enable */
-	double master_clock;			/* master clock frequency */
+	float master_clock;			/* master clock frequency */
 	void (*irq_callback)(int);		/* IRQ callback */
 	struct YMZ280BVoice	voice[8];	/* the 8 voices */
 };
@@ -107,7 +107,7 @@ INLINE void update_irq_state(struct YMZ280BChip *chip)
 
 INLINE void update_step(struct YMZ280BChip *chip, struct YMZ280BVoice *voice)
 {
-	double frequency;
+	float frequency;
 
 	/* handle the sound-off case */
 	if (Machine->sample_rate == 0)
@@ -118,10 +118,10 @@ INLINE void update_step(struct YMZ280BChip *chip, struct YMZ280BVoice *voice)
 
 	/* compute the frequency */
 	if (voice->mode == 1)
-		frequency = chip->master_clock * (double)((voice->fnum & 0x0ff) + 1) * (1.0 / 256.0);
+		frequency = chip->master_clock * (float)((voice->fnum & 0x0ff) + 1) * (1.0 / 256.0);
 	else
-		frequency = chip->master_clock * (double)((voice->fnum & 0x1ff) + 1) * (1.0 / 256.0);
-	voice->output_step = (UINT32)(frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
+		frequency = chip->master_clock * (float)((voice->fnum & 0x1ff) + 1) * (1.0 / 256.0);
+	voice->output_step = (UINT32)(frequency * (float)FRAC_ONE / (float)Machine->sample_rate);
 }
 
 
@@ -189,11 +189,14 @@ static int generate_adpcm(struct YMZ280BVoice *voice, UINT8 *base, INT16 *buffer
 			signal += (step * diff_lookup[val & 15]) / 8;
 
 			/* clamp to the maximum */
+#ifndef clip_short
 			if (signal > 32767)
 				signal = 32767;
 			else if (signal < -32768)
 				signal = -32768;
-
+#else
+            clip_short(signal);
+#endif
 			/* adjust the step size and clamp */
 			step = (step * index_scale[val & 7]) >> 8;
 			if (step > 0x6000)
@@ -223,10 +226,14 @@ static int generate_adpcm(struct YMZ280BVoice *voice, UINT8 *base, INT16 *buffer
 			signal += (step * diff_lookup[val & 15]) / 8;
 
 			/* clamp to the maximum */
+#ifndef clip_short
 			if (signal > 32767)
 				signal = 32767;
 			else if (signal < -32768)
 				signal = -32768;
+#else
+            clip_short(signal);
+#endif
 
 			/* adjust the step size and clamp */
 			step = (step * index_scale[val & 7]) >> 8;
@@ -532,11 +539,15 @@ static void ymz280b_update(int num, INT16 **buffer, int length)
 		int lsamp = lacc[v] / 256;
 		int rsamp = racc[v] / 256;
 
+#ifndef clip_short
 		if (lsamp < -32768) lsamp = -32768;
 		else if (lsamp > 32767) lsamp = 32767;
 		if (rsamp < -32768) rsamp = -32768;
 		else if (rsamp > 32767) rsamp = 32767;
-
+#else
+        clip_short(lsamp);
+        clip_short(rsamp);
+#endif
 		buffer[0][v] = lsamp;
 		buffer[1][v] = rsamp;
 	}
@@ -581,7 +592,7 @@ int YMZ280B_sh_start(const struct MachineSound *msound)
 			return 1;
 
 		/* initialize the rest of the structure */
-		ymz280b[i].master_clock = (double)intf->baseclock[i] / 384.0;
+		ymz280b[i].master_clock = (float)intf->baseclock[i] / 384.0;
 		ymz280b[i].region_base = memory_region(intf->region[i]);
 		ymz280b[i].irq_callback = intf->irq_callback[i];
 	}
@@ -630,7 +641,14 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 	int i;
 
 	/* force an update */
+#ifndef MAME_FASTSOUND
 	stream_update(chip->stream, 0);
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(chip->stream, 0);
+    }
+#endif
 
 	/* lower registers follow a pattern */
 	if (chip->current_register < 0x80)
@@ -765,7 +783,14 @@ static int compute_status(struct YMZ280BChip *chip)
 	UINT8 result = chip->status_register;
 
 	/* force an update */
+#ifndef MAME_FASTSOUND
 	stream_update(chip->stream, 0);
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(chip->stream, 0);
+    }
+#endif
 
 	/* clear the IRQ state */
 	chip->status_register = 0;

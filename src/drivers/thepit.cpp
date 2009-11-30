@@ -1,3 +1,5 @@
+#include "../vidhrdw/thepit.cpp"
+
 /***************************************************************************
 
 The Pit/Round Up/Intrepid/Super Mouse memory map (preliminary)

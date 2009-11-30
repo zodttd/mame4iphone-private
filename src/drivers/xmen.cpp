@@ -1,3 +1,5 @@
+#include "../vidhrdw/xmen.cpp"
+
 /***************************************************************************
 
 X-Men
@@ -8,7 +10,7 @@ driver by Nicola Salmoria
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
 #include "machine/eeprom.h"
-
+#include "cpu/z80/z80.h"
 
 
 int xmen_vh_start(void);
@@ -77,7 +79,7 @@ static READ_HANDLER( eeprom_r )
 {
 	int res;
 
-logerror("%06x eeprom_r\n",cpu_get_pc());
+//logerror("%06x eeprom_r\n",cpu_get_pc());
 	/* bit 6 is EEPROM data */
 	/* bit 7 is EEPROM ready */
 	/* bit 14 is service button */
@@ -92,7 +94,7 @@ logerror("%06x eeprom_r\n",cpu_get_pc());
 
 static WRITE_HANDLER( eeprom_w )
 {
-logerror("%06x: write %04x to 108000\n",cpu_get_pc(),data);
+//logerror("%06x: write %04x to 108000\n",cpu_get_pc(),data);
 	if ((data & 0x00ff0000) == 0)
 	{
 		/* bit 0 = coin counter */
@@ -114,26 +116,35 @@ logerror("%06x: write %04x to 108000\n",cpu_get_pc(),data);
 	}
 }
 
-static READ_HANDLER( xmen_sound_r )
+static READ_HANDLER( sound_status_r )
 {
-	/* fake self test pass until we emulate the sound chip */
-	return 0x000f;
+	return soundlatch2_r(0);
 }
 
-static WRITE_HANDLER( xmen_sound_w )
+static WRITE_HANDLER( sound_cmd_w )
 {
 	if (offset == 0)
 	{
-		if ((data & 0x00ff0000) == 0)
-			soundlatch_w(0,data & 0xff);
+		data &= 0xff;
+		soundlatch_w(0, data);
+		if(!Machine->sample_rate)
+			if(data == 0xfc || data == 0xfe)
+				soundlatch2_w(0, 0x7f);
 	}
-	if (offset == 2) cpu_cause_interrupt(1,0xff);
+}
+
+static WRITE_HANDLER( sound_irq_w )
+{
+	cpu_set_irq_line(1, Z80_IRQ_INT, HOLD_LINE);
 }
 
 static WRITE_HANDLER( xmen_18fa00_w )
 {
-	/* bit 2 is interrupt enable */
-	interrupt_enable_w(0,data & 0x04);
+	if (offset == 0)
+	{
+		/* bit 2 is interrupt enable */
+		interrupt_enable_w(0,data & 0x04);
+	}
 }
 
 static WRITE_HANDLER( sound_bankswitch_w )
@@ -155,7 +166,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x100000, 0x100fff, K053247_word_r },
 	{ 0x101000, 0x101fff, MRA_BANK2 },
 	{ 0x104000, 0x104fff, paletteram_word_r },
-	{ 0x108054, 0x108055, xmen_sound_r },
+	{ 0x108054, 0x108055, sound_status_r },
 	{ 0x10a000, 0x10a001, input_port_0_r },
 	{ 0x10a002, 0x10a003, input_port_1_r },
 	{ 0x10a004, 0x10a005, eeprom_r },
@@ -174,7 +185,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x104000, 0x104fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
 	{ 0x108000, 0x108001, eeprom_w },
 	{ 0x108020, 0x108027, K053246_word_w },
-	{ 0x10804c, 0x10804f, xmen_sound_w },
+	{ 0x10804c, 0x10804d, sound_cmd_w },
+	{ 0x10804e, 0x10804f, sound_irq_w },
 	{ 0x108060, 0x10807f, K053251_halfword_w },
 	{ 0x10a000, 0x10a001, watchdog_reset_w },
 	{ 0x110000, 0x113fff, MWA_BANK1 },	/* main RAM */
@@ -188,6 +200,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK4 },
 	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xe000, 0xe22f, K054539_0_r },
 	{ 0xec01, 0xec01, YM2151_status_port_0_r },
 	{ 0xf002, 0xf002, soundlatch_r },
 	{ -1 }	/* end of table */
@@ -197,9 +210,10 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe22f, K054539_0_w },
 	{ 0xe800, 0xe800, YM2151_register_port_0_w },
 	{ 0xec01, 0xec01, YM2151_data_port_0_w },
-//	{ 0xf000, 0xf000, soundlatch2_w },	/* to main cpu */
+	{ 0xf000, 0xf000, soundlatch2_w },
 	{ 0xf800, 0xf800, sound_bankswitch_w },
 	{ -1 }	/* end of table */
 };
@@ -317,9 +331,18 @@ INPUT_PORTS_END
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
+	4000000,	/* 4 MHz */
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ 0 }
+};
+
+static struct K054539interface k054539_interface =
+{
+	1,			/* 1 chip */
+	48000,
+	{ REGION_SOUND1 },
+	{ { 100, 100 } },
+	{ 0 }		/* The YM does not seem to be connected to the 539 analog input */
 };
 
 
@@ -369,9 +392,12 @@ static struct MachineDriver machine_driver_xmen =
 		{
 			SOUND_YM2151,
 			&ym2151_interface
+		},
+		{
+			SOUND_K054539,
+			&k054539_interface
 		}
 	},
-
 	nvram_handler
 };
 
@@ -479,6 +505,6 @@ static void init_xmen6p(void)
 
 
 
-GAMEX( 1992, xmen,    0,    xmen, xmen,   xmen,   ROT0, "Konami", "X-Men (4 Players)", GAME_IMPERFECT_SOUND )
+GAME( 1992, xmen,    0,    xmen, xmen,   xmen,   ROT0, "Konami", "X-Men (4 Players)")
 GAMEX( 1992, xmen6p,  xmen, xmen, xmen,   xmen6p, ROT0, "Konami", "X-Men (6 Players)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEX( 1992, xmen2pj, xmen, xmen, xmen2p, xmen,   ROT0, "Konami", "X-Men (2 Players Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1992, xmen2pj, xmen, xmen, xmen2p, xmen,   ROT0, "Konami", "X-Men (2 Players Japan)")

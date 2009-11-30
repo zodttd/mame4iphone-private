@@ -9,6 +9,9 @@
 #ifdef GP2X
 #include "gp2x_wrapper.h"
 #endif
+#ifdef WIZ
+#include "wiz_wrapper.h"
+#endif
 
 #ifdef MESS
 #include "mess/mess.h"

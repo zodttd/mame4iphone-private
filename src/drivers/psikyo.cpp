@@ -1,3 +1,5 @@
+#include "../vidhrdw/psikyo.cpp"
+
 /***************************************************************************
 
 							-= Psikyo Games =-
@@ -85,7 +87,7 @@ READ_HANDLER( gunbird_input_r )
 
 //		case 0x8:
 //		case 0xa:
-		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
+		default:	//logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
 					return 0;
 	}
 }
@@ -112,7 +114,7 @@ READ_HANDLER( s1945_input_r )
 		case 0x8:	return (rand() & 0xffff);	// protection??
 
 //		case 0xa:
-		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
+		default:	//logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
 					return 0;
 	}
 }
@@ -137,7 +139,7 @@ READ_HANDLER( sngkace_input_r )
 		}
 		case 0xa:	return readinputport(3);
 
-		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
+		default:	//logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
 					return 0;
 	}
 }

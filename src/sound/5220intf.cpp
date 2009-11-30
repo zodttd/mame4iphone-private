@@ -14,7 +14,7 @@
 
 #include "driver.h"
 #include "tms5220.h"
-
+#include "tms5220.cpp"
 
 #define MAX_SAMPLE_CHUNK	10000
 
@@ -100,7 +100,14 @@ void tms5220_sh_update(void)
 WRITE_HANDLER( tms5220_data_w )
 {
     /* bring up to date first */
+#ifndef MAME_FASTSOUND
     stream_update(stream, 0);
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(stream, 0);
+    }
+#endif
     tms5220_data_write(data);
 }
 
@@ -115,7 +122,14 @@ WRITE_HANDLER( tms5220_data_w )
 READ_HANDLER( tms5220_status_r )
 {
     /* bring up to date first */
+#ifndef MAME_FASTSOUND
     stream_update(stream, -1);
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(stream, -1);
+    }
+#endif
     return tms5220_status_read();
 }
 
@@ -130,7 +144,14 @@ READ_HANDLER( tms5220_status_r )
 int tms5220_ready_r(void)
 {
     /* bring up to date first */
+#ifndef MAME_FASTSOUND
     stream_update(stream, -1);
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(stream, -1);
+    }
+#endif
     return tms5220_ready_read();
 }
 
@@ -145,7 +166,14 @@ int tms5220_ready_r(void)
 int tms5220_int_r(void)
 {
     /* bring up to date first */
+#ifndef MAME_FASTSOUND
     stream_update(stream, -1);
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(stream, -1);
+    }
+#endif
     return tms5220_int_read();
 }
 
@@ -238,5 +266,5 @@ void tms5220_set_frequency(int frequency)
 	/* update the stream and compute a new step size */
 	if (stream != -1)
 		stream_update(stream, 0);
-	source_step = (UINT32)((double)(frequency / 80) * (double)FRAC_ONE / (double)Machine->sample_rate);
+	source_step = (UINT32)((float)(frequency / 80) * (float)FRAC_ONE / (float)Machine->sample_rate);
 }

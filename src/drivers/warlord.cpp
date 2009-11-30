@@ -1,3 +1,5 @@
+#include "../vidhrdw/warlord.cpp"
+
 /***************************************************************************
 Warlords Driver by Lee Taylor and John Clegg
 

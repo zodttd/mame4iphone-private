@@ -1,3 +1,5 @@
+#include "../vidhrdw/battlera.cpp"
+
 /*******************************************************************************
 
 	Battle Rangers					(c) 1988 Data East Corporation

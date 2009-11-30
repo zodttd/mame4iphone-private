@@ -134,6 +134,34 @@ static int common_vh_start(void)
 	return 0;
 }
 
+static int get_num_tiles (void)
+{
+    return ((memory_region_length(REGION_GFX2)/128)+(memory_region_length(REGION_GFX3)/128));
+}
+
+static UINT32 *get_tile (int tileno)
+{
+    UINT32 *gfxdata=NULL;
+    
+    if (memory_region_length(REGION_GFX3)>0)
+    {
+        unsigned int tiles_gfx2=memory_region_length(REGION_GFX2)>>7;
+        if (tileno>=tiles_gfx2)
+        {
+    	    gfxdata = (UINT32 *)&memory_region(REGION_GFX3)[(tileno-tiles_gfx2)<<7];
+        }
+        else
+        {
+    	    gfxdata = (UINT32 *)&memory_region(REGION_GFX2)[tileno<<7];
+        }
+    }
+    else
+    {
+	    gfxdata = (UINT32 *)&memory_region(REGION_GFX2)[tileno<<7];
+    }
+    
+    return gfxdata;
+}
 
 static void decodetile(int tileno)
 {
@@ -142,8 +170,7 @@ static void decodetile(int tileno)
 	int x,y;
 	unsigned int pen;
 
-
-	gfxdata = (UINT32 *)&memory_region(REGION_GFX2)[128 * tileno];
+    gfxdata=get_tile (tileno);
 
 	memcpy(swap,gfxdata,128);
 
@@ -179,7 +206,7 @@ static void decodetile(int tileno)
 
 int neogeo_mvs_vh_start(void)
 {
-	no_of_tiles=memory_region_length(REGION_GFX2)/128;
+	no_of_tiles=get_num_tiles();
 	if (no_of_tiles>0x10000) high_tile=1; else high_tile=0;
 	if (no_of_tiles>0x20000) vhigh_tile=1; else vhigh_tile=0;
 	if (no_of_tiles>0x40000) vvhigh_tile=1; else vvhigh_tile=0;
@@ -515,7 +542,7 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 
 	int mydword;
 
-	UINT32 *fspr = (UINT32 *)memory_region(REGION_GFX2);
+	UINT32 *fspr;
 
 	char *l_y_skip;
 
@@ -543,15 +570,17 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 	else
 		 l_y_skip=dda_y_skip;
 
+    fspr=get_tile(code);
+
 	if (flipy)	/* Y flip */
 	{
 		dy = -2;
-		fspr+=(code+1)*32 - 2 - (sy-oy)*2;
+		fspr+=32 - 2 - (sy-oy)*2;
 	}
 	else		/* normal */
 	{
 		dy = 2;
-		fspr+=code*32 + (sy-oy)*2;
+		fspr+= (sy-oy)*2;
 	}
 
 	{
@@ -700,7 +729,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 
 	int mydword;
 
-	UINT32 *fspr = (UINT32 *)memory_region(REGION_GFX2);
+	UINT32 *fspr;
 
 	char *l_y_skip;
 
@@ -728,15 +757,17 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 	else
 		 l_y_skip=dda_y_skip;
 
+    fspr=get_tile(code);
+
 	if (flipy)	/* Y flip */
 	{
 		dy = -2;
-		fspr+=(code+1)*32 - 2 - (sy-oy)*2;
+		fspr+=32 - 2 - (sy-oy)*2;
 	}
 	else		/* normal */
 	{
 		dy = 2;
-		fspr+=code*32 + (sy-oy)*2;
+		fspr+=(sy-oy)*2;
 	}
 
 	{

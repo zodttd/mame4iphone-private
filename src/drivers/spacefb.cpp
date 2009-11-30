@@ -1,3 +1,5 @@
+#include "../vidhrdw/spacefb.cpp"
+
 /***************************************************************************
 
 Space Firebird memory map (preliminary)

@@ -150,7 +150,7 @@ unsigned char val;
 WRITE_HANDLER( getstar_sh_intenable_w )
 {
 	getstar_sh_intenabled = 1;
-	logerror("cpu #1 PC=%d: %d written to a0e0\n",cpu_get_pc(),data);
+	//logerror("cpu #1 PC=%d: %d written to a0e0\n",cpu_get_pc(),data);
 }
 
 

@@ -6,9 +6,9 @@
 
 
 #define BASE_FREQ 			1789773
-#define BASE_TIME 			(1.0 / ((double)BASE_FREQ / 2000000.0))
+#define BASE_TIME 			(1000000000.0f / ((float)BASE_FREQ / 2000000.0f))
 #define E_CLOCK				(11289000/16)
-#define CVSD_CLOCK_FREQ 	(1000000.0 / 34.0)
+#define CVSD_CLOCK_FREQ 	(1000000.0f / 34.0f)
 
 #define RIOT_IDLE 0
 #define RIOT_COUNTUP 1
@@ -51,7 +51,7 @@ struct channel_data
 	UINT32	fraction;
 };
 static int exidy_stream;
-static double freq_to_step;
+static float freq_to_step;
 static struct channel_data music_channel[3];
 static struct channel_data sfx_channel[3];
 
@@ -98,7 +98,7 @@ static struct pia6821_interface victory_pia_0_intf =
 
 static void exidy_stream_update(int param, INT16 *buffer, int length)
 {
-	double noise_freq=0;
+	float noise_freq=0;
 	int chan, i;
 
 	/* reset */
@@ -109,11 +109,11 @@ static void exidy_stream_update(int param, INT16 *buffer, int length)
 	{
 		/* if noise is clocked by the E, just generate at max frequency */
 		if (!(exidy_sfxctrl & 1))
-			noise_freq = (double)E_CLOCK;
+			noise_freq = (float)E_CLOCK;
 
 		/* otherwise, generate noise clocked by channel 1 of the 6840 */
 		else if (sfx_channel[0].enable)
-			noise_freq = (sh6840_timer[0]) ? ((double)BASE_FREQ / (double)sh6840_timer[0] * 0.5) : 0;
+			noise_freq = (sh6840_timer[0]) ? ((float)BASE_FREQ / (float)sh6840_timer[0] * 0.5) : 0;
 
 		/* if channel 1 isn't enabled, zap the buffer */
 		else
@@ -165,7 +165,7 @@ static void exidy_stream_update(int param, INT16 *buffer, int length)
 					the variance, we compute the effective step value, and then apply a random
 					offset to it after each sample is generated
 				*/
-				UINT32 avgstep = (sh6840_timer[chan]) ? freq_to_step * (noise_freq * 0.25) / (double)sh6840_timer[chan] : 0;
+				UINT32 avgstep = (sh6840_timer[chan]) ? freq_to_step * (noise_freq * 0.25) / (float)sh6840_timer[chan] : 0;
 				UINT32 frac = c->fraction;
 				INT16 vol = c->volume;
 
@@ -225,7 +225,7 @@ static int common_start(void)
 
 	/* compute the frequency-to-step conversion factor */
 	if (Machine->sample_rate != 0)
-		freq_to_step = (double)(1 << 24) / (double)Machine->sample_rate;
+		freq_to_step = (float)(1 << 24) / (float)Machine->sample_rate;
 	else
 		freq_to_step = 0.0;
 
@@ -331,11 +331,9 @@ WRITE_HANDLER( exidy_shriot_w )
 				if (!(data & 0x01) && (riot_portb_data & 0x01))
 				{
 					riot_porta_data = tms5220_status_r(0);
-					logerror("(%f)%04X:TMS5220 status read = %02X\n", timer_get_time(), cpu_getpreviouspc(), riot_porta_data);
 				}
 				if ((data & 0x02) && !(riot_portb_data & 0x02))
 				{
-					logerror("(%f)%04X:TMS5220 data write = %02X\n", timer_get_time(), cpu_getpreviouspc(), riot_porta_data);
 					tms5220_data_w(0, riot_porta_data);
 				}
 			}
@@ -390,7 +388,7 @@ WRITE_HANDLER( exidy_shriot_w )
 			return;
 
 		default:
-			logerror("Undeclared RIOT write: %x=%x\n",offset,data);
+			//logerror("Undeclared RIOT write: %x=%x\n",offset,data);
 			return;
 	}
 	return; /* will never execute this */
@@ -439,7 +437,7 @@ READ_HANDLER( exidy_shriot_r )
 				return timer_timeleft(riot_timer) / TIME_IN_USEC(riot_divider * BASE_TIME);
 
 		default:
-			logerror("Undeclared RIOT read: %x  PC:%x\n",offset,cpu_get_pc());
+			//logerror("Undeclared RIOT read: %x  PC:%x\n",offset,cpu_get_pc());
 			return 0xff;
 	}
 	return 0;
@@ -473,7 +471,7 @@ WRITE_HANDLER( exidy_sh8253_w )
 				sh8253_clstate[chan] = 0;
 				sh8253_count[chan] = (sh8253_count[chan] & 0x00ff) | ((data << 8) & 0xff00);
 				if (sh8253_count[chan])
-					music_channel[chan].step = freq_to_step * (double)BASE_FREQ / (double)sh8253_count[chan];
+					music_channel[chan].step = freq_to_step * (float)BASE_FREQ / (float)sh8253_count[chan];
 				else
 					music_channel[chan].step = 0;
 			}
@@ -489,7 +487,7 @@ WRITE_HANDLER( exidy_sh8253_w )
 
 READ_HANDLER( exidy_sh8253_r )
 {
-    logerror("8253(R): %x\n",offset);
+    //logerror("8253(R): %x\n",offset);
 	return 0;
 }
 
@@ -500,7 +498,7 @@ READ_HANDLER( exidy_sh8253_r )
 
 READ_HANDLER( exidy_sh6840_r )
 {
-    logerror("6840R %x\n",offset);
+    //logerror("6840R %x\n",offset);
     return 0;
 }
 
@@ -537,7 +535,7 @@ WRITE_HANDLER( exidy_sh6840_w )
 			ch = (offset - 3) / 2;
 			sh6840_count[ch] = sh6840_timer[ch] = (sh6840_MSB << 8) | (data & 0xff);
 			if (sh6840_timer[ch])
-				sfx_channel[ch].step = freq_to_step * (double)BASE_FREQ / (double)sh6840_timer[ch];
+				sfx_channel[ch].step = freq_to_step * (float)BASE_FREQ / (float)sh6840_timer[ch];
 			else
 				sfx_channel[ch].step = 0;
 			break;
@@ -604,7 +602,7 @@ READ_HANDLER( mtrap_voiceio_r )
 	}
     if (!(offset & 0x40))
     {
-    	int clock_pulse = (int)(timer_get_time() * (2.0 * CVSD_CLOCK_FREQ));
+    	int clock_pulse = (int)(( ((float)timer_get_time())) * (2.0f * CVSD_CLOCK_FREQ));
     	return (clock_pulse & 1) << 7;
 	}
 	return 0;

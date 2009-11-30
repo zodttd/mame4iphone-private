@@ -1,3 +1,5 @@
+#include "../vidhrdw/cninja.cpp"
+
 /***************************************************************************
 
   Edward Randy      (c) 1990 Data East Corporation (World version)
@@ -135,7 +137,7 @@ static READ_HANDLER( cninja_prot_r )
 		case 0x22c: /* Player 1 & 2 input ports */
 			return (readinputport(0) + (readinputport(1) << 8));
 	}
-	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",cpu_get_pc(),offset);
+	//logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",cpu_get_pc(),offset);
 	return 0;
 }
 
@@ -213,7 +215,7 @@ case 0x33e: return READ_WORD(&loopback[0x2c]); /* allows video registers */
 
 case 0x156: /* Interrupt regulate */
 
-logerror("Int stop %04x\n",READ_WORD(&loopback[0x1a]));
+//logerror("Int stop %04x\n",READ_WORD(&loopback[0x1a]));
 
 cpu_spinuntil_int();
 //return readinputport(2);

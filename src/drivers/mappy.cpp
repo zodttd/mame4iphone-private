@@ -1,3 +1,6 @@
+#include "../machine/mappy.cpp"
+#include "../vidhrdw/mappy.cpp"
+
 /***************************************************************************
 
 Mappy memory map (preliminary)

@@ -1,3 +1,6 @@
+#include "../vidhrdw/cclimber.cpp"
+#include "../sndhrdw/cclimber.cpp"
+
 /***************************************************************************
 
 Crazy Climber memory map (preliminary)

@@ -303,7 +303,83 @@ int memory_init(void);
 void memory_shutdown(void);
 void memorycontextswap(int activecpu);
 
+/* memory hardware element map */
+/* value:					   */
+#define HT_RAM	  0 	/* RAM direct		 */
+#define HT_BANK1  1 	/* bank memory #1	 */
+#define HT_BANK2  2 	/* bank memory #2	 */
+#define HT_BANK3  3 	/* bank memory #3	 */
+#define HT_BANK4  4 	/* bank memory #4	 */
+#define HT_BANK5  5 	/* bank memory #5	 */
+#define HT_BANK6  6 	/* bank memory #6	 */
+#define HT_BANK7  7 	/* bank memory #7	 */
+#define HT_BANK8  8 	/* bank memory #8	 */
+#define HT_BANK9  9 	/* bank memory #9	 */
+#define HT_BANK10 10	/* bank memory #10	 */
+#define HT_BANK11 11	/* bank memory #11	 */
+#define HT_BANK12 12	/* bank memory #12	 */
+#define HT_BANK13 13	/* bank memory #13	 */
+#define HT_BANK14 14	/* bank memory #14	 */
+#define HT_BANK15 15	/* bank memory #15	 */
+#define HT_BANK16 16	/* bank memory #16	 */
+#define HT_NON	  17	/* non mapped memory */
+#define HT_NOP	  18	/* NOP memory		 */
+#define HT_RAMROM 19	/* RAM ROM memory	 */
+#define HT_ROM	  20	/* ROM memory		 */
+
+#define HT_USER   21	/* user functions	 */
+/* [MH_HARDMAX]-0xff	  link to sub memory element  */
+/*						  (value-MH_HARDMAX)<<MH_SBITS -> element bank */
+
+#define HT_BANKMAX (HT_BANK1 + MAX_BANKS - 1)
+
+#if LSB_FIRST
+	#define BYTE_XOR_BE(a) ((a) ^ 1)
+	#define BYTE_XOR_LE(a) (a)
+#else
+	#define BYTE_XOR_BE(a) (a)
+	#define BYTE_XOR_LE(a) ((a) ^ 1)
+#endif
+
+/* stupid workarounds so that we can generate an address mask that works even for 32 bits */
+#define ADDRESS_TOPBIT(abits)		(1UL << (ABITS1_##abits + ABITS2_##abits + ABITS_MIN_##abits - 1))
+#define ADDRESS_MASK(abits) 		(ADDRESS_TOPBIT(abits) | (ADDRESS_TOPBIT(abits) - 1))
+
+extern unsigned char *cpu_bankbase[HT_BANKMAX + 1];
+
 /* ----- memory read functions ----- */
+
+extern MHELE *cur_mrhard;
+extern MHELE readhardware[MH_ELEMAX << MH_SBITS];	/* mem/port read  */
+extern mem_read_handler memoryreadhandler[MH_HARDMAX];
+extern int memoryreadoffset[MH_HARDMAX];
+
+#ifdef MAME_MEMINLINE
+INLINE READ_HANDLER(cpu_readmem16);
+INLINE READ_HANDLER(cpu_readmem16bew);
+INLINE READ_HANDLER(cpu_readmem16bew_word);
+INLINE READ_HANDLER(cpu_readmem16lew);
+INLINE READ_HANDLER(cpu_readmem16lew_word);
+INLINE READ_HANDLER(cpu_readmem20);
+INLINE READ_HANDLER(cpu_readmem21);
+INLINE READ_HANDLER(cpu_readmem24);
+INLINE READ_HANDLER(cpu_readmem24bew);
+INLINE READ_HANDLER(cpu_readmem24bew_word);
+INLINE READ_HANDLER(cpu_readmem24bew_dword);
+INLINE READ_HANDLER(cpu_readmem26lew);
+INLINE READ_HANDLER(cpu_readmem26lew_word);
+INLINE READ_HANDLER(cpu_readmem26lew_dword);
+INLINE READ_HANDLER(cpu_readmem29);
+INLINE READ_HANDLER(cpu_readmem29_word);
+INLINE READ_HANDLER(cpu_readmem29_dword);
+INLINE READ_HANDLER(cpu_readmem32);
+INLINE READ_HANDLER(cpu_readmem32_word);
+INLINE READ_HANDLER(cpu_readmem32_dword);
+INLINE READ_HANDLER(cpu_readmem32lew);
+INLINE READ_HANDLER(cpu_readmem32lew_word);
+INLINE READ_HANDLER(cpu_readmem32lew_dword);
+#include "memory_read.h"
+#else
 READ_HANDLER(cpu_readmem16);
 READ_HANDLER(cpu_readmem16bew);
 READ_HANDLER(cpu_readmem16bew_word);
@@ -327,8 +403,41 @@ READ_HANDLER(cpu_readmem32_dword);
 READ_HANDLER(cpu_readmem32lew);
 READ_HANDLER(cpu_readmem32lew_word);
 READ_HANDLER(cpu_readmem32lew_dword);
+#endif
 
 /* ----- memory write functions ----- */
+
+extern MHELE *cur_mwhard;
+extern MHELE writehardware[MH_ELEMAX << MH_SBITS]; /* mem/port write */
+extern mem_write_handler memorywritehandler[MH_HARDMAX];
+extern int memorywriteoffset[MH_HARDMAX];
+
+#ifdef MAME_MEMINLINE
+INLINE WRITE_HANDLER(cpu_writemem16);
+INLINE WRITE_HANDLER(cpu_writemem16bew);
+INLINE WRITE_HANDLER(cpu_writemem16bew_word);
+INLINE WRITE_HANDLER(cpu_writemem16lew);
+INLINE WRITE_HANDLER(cpu_writemem16lew_word);
+INLINE WRITE_HANDLER(cpu_writemem20);
+INLINE WRITE_HANDLER(cpu_writemem21);
+INLINE WRITE_HANDLER(cpu_writemem24);
+INLINE WRITE_HANDLER(cpu_writemem24bew);
+INLINE WRITE_HANDLER(cpu_writemem24bew_word);
+INLINE WRITE_HANDLER(cpu_writemem24bew_dword);
+INLINE WRITE_HANDLER(cpu_writemem26lew);
+INLINE WRITE_HANDLER(cpu_writemem26lew_word);
+INLINE WRITE_HANDLER(cpu_writemem26lew_dword);
+INLINE WRITE_HANDLER(cpu_writemem29);
+INLINE WRITE_HANDLER(cpu_writemem29_word);
+INLINE WRITE_HANDLER(cpu_writemem29_dword);
+INLINE WRITE_HANDLER(cpu_writemem32);
+INLINE WRITE_HANDLER(cpu_writemem32_word);
+INLINE WRITE_HANDLER(cpu_writemem32_dword);
+INLINE WRITE_HANDLER(cpu_writemem32lew);
+INLINE WRITE_HANDLER(cpu_writemem32lew_word);
+INLINE WRITE_HANDLER(cpu_writemem32lew_dword);
+#include "memory_write.h"
+#else
 WRITE_HANDLER(cpu_writemem16);
 WRITE_HANDLER(cpu_writemem16bew);
 WRITE_HANDLER(cpu_writemem16bew_word);
@@ -352,6 +461,7 @@ WRITE_HANDLER(cpu_writemem32_dword);
 WRITE_HANDLER(cpu_writemem32lew);
 WRITE_HANDLER(cpu_writemem32lew_word);
 WRITE_HANDLER(cpu_writemem32lew_dword);
+#endif
 
 /* ----- port I/O functions ----- */
 int cpu_readport(int port);

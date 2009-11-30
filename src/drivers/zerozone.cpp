@@ -1,3 +1,5 @@
+#include "../vidhrdw/zerozone.cpp"
+
 /***************************************************************************
 
 Zero Zone memory map
@@ -44,7 +46,7 @@ static READ_HANDLER( zerozone_input_r )
 			return readinputport(3);
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x800000+offset);
+//logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x800000+offset);
 
 	return 0x00;
 }

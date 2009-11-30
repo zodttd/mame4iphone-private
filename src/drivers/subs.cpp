@@ -1,3 +1,6 @@
+#include "../machine/subs.cpp"
+#include "../vidhrdw/subs.cpp"
+
 /***************************************************************************
 
 Subs Driver

@@ -119,8 +119,4 @@ INLINE void mem_WriteWord (UINT32 address, UINT16 value)
   mem_WriteByte ((address + 1) & 0xffff, value >> 8);
 }
 
-#ifdef MAME_DEBUG
-extern unsigned DasmZ80GB(char *buffer, unsigned pc);
-#endif
-
 #endif

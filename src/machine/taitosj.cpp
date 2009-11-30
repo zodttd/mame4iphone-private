@@ -11,7 +11,7 @@
 #include "cpu/m6805/m6805.h"
 
 
-#define DEBUG_MCU	1
+#define DEBUG_MCU	0
 
 
 static unsigned char fromz80,toz80;

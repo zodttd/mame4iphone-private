@@ -8,39 +8,9 @@
  ***************************************************************************************************/
 
 #include "arm.h"
-#include "mamedbg.h"
 
 #undef INLINE
 #define INLINE static
-
-/* there are more registers but the debugger interface is limited to 127 */
-static UINT8 arm_reg_layout[] =
-{
-	ARM_R0, ARM_OP,    -1,
-	ARM_R1, ARM_Q1,    -1,
-	ARM_R2, ARM_Q2,    -1,
-	ARM_R3, ARM_PSW,   -1,
-	ARM_R4, ARM_IR13,  -1,
-	ARM_R5, ARM_IR14,  -1,
-	ARM_R6, ARM_SR13,  -1,
-	ARM_R7, ARM_SR14,  -1,
-	ARM_R8, ARM_FR8,   -1,
-	ARM_R9, ARM_FR9,   -1,
-	ARM_R10,ARM_FR10,  -1,
-	ARM_R11,ARM_FR11,  -1,
-	ARM_R12,ARM_FR12,  -1,
-	ARM_R13,ARM_FR13,  -1,
-	ARM_R14,ARM_FR14,  -1,
-	ARM_R15,			0
-};
-
-static UINT8 arm_win_layout[] = {
-	 0, 0,29,17,	/* register window (top rows) */
-	30, 0,50,17,	/* disassembler window (left colums) */
-	 0,18,48, 4,	/* memory #1 window (right, upper middle) */
-	49,18,31, 4,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 struct ARM {
 	UINT32 queue[3];	/* instruction queue */
@@ -68,7 +38,7 @@ INLINE UINT32 ARM_RDMEM(UINT32 addr)
 INLINE UINT32 ARM_RDMEM_32(UINT32 addr)
 {
 	UINT32 data = cpu_readmem26lew_dword(addr & AMASK);
-	logerror("ARM_RDMEM_32 (%08x) -> %08x\n", addr, data);
+	/*logerror("ARM_RDMEM_32 (%08x) -> %08x\n", addr, data);*/
 	return data;
 }
 
@@ -180,7 +150,7 @@ INLINE UINT32 RS(void)
 	if( r == 15 )
 		rs |= PSW;
 
-	logerror("RS(%08x) m: %d, s: %d, Rs(%d): %08x\n", OP, m, s, r, rs);
+	/*logerror("RS(%08x) m: %d, s: %d, Rs(%d): %08x\n", OP, m, s, r, rs);*/
 	switch( m )
 	{
 	case 0x00:
@@ -2546,7 +2516,7 @@ static void bl(void)
  */
 static void ill_c(void)
 {
-	logerror("ARM #%d: %08x illegal opcode %08x\n", cpu_getactivecpu(), PC, OP);
+	/*logerror("ARM #%d: %08x illegal opcode %08x\n", cpu_getactivecpu(), PC, OP);*/
 }
 
 /*
@@ -2555,7 +2525,7 @@ static void ill_c(void)
  */
 static void ill_d(void)
 {
-	logerror("ARM #%d: %08x illegal opcode %08x\n", cpu_getactivecpu(), PC, OP);
+	/*logerror("ARM #%d: %08x illegal opcode %08x\n", cpu_getactivecpu(), PC, OP);*/
 }
 
 /*
@@ -2564,7 +2534,7 @@ static void ill_d(void)
  */
 static void ill_e(void)
 {
-	logerror("ARM #%d: %08x illegal opcode %08x\n", cpu_getactivecpu(), PC, OP);
+	/*logerror("ARM #%d: %08x illegal opcode %08x\n", cpu_getactivecpu(), PC, OP);*/
 }
 
 /*
@@ -2641,8 +2611,6 @@ int arm_execute(int cycles)
 		int cond;
 
 		shift_queue();
-
-		CALL_MAME_DEBUG;
 
 		/* conditionally execute _every_ opcode (yes, the ARM is like this) */
 		switch (OP >> 28)
@@ -2805,97 +2773,22 @@ void arm_set_irq_callback(int (*callback)(int irqline))
 
 const char *arm_info(void *context, int regnum)
 {
-	static char buffer[32][63+1];
-	static int which = 0;
-	struct ARM *r = context;
-
-	which = ++which % 32;
-	buffer[which][0] = '\0';
-	if (!context)
-	{
-		static struct ARM tmp;
-		arm_get_context( &tmp );
-		r = &tmp;
-	}
-
 	switch( regnum )
 	{
-	case CPU_INFO_REG + ARM_OP: sprintf( buffer[which], "OP  :%08x", r->queue[0]);  break;
-	case CPU_INFO_REG + ARM_Q1: sprintf( buffer[which], "Q1  :%08x", r->queue[1]);  break;
-	case CPU_INFO_REG + ARM_Q2: sprintf( buffer[which], "Q2  :%08x", r->queue[2]);  break;
-	case CPU_INFO_REG + ARM_PSW:sprintf( buffer[which], "PS  :%08x", r->psw);       break;
-	case CPU_INFO_REG + ARM_R0: sprintf( buffer[which], "R0  :%08x", r->reg[ 0] );  break;
-	case CPU_INFO_REG + ARM_R1: sprintf( buffer[which], "R1  :%08x", r->reg[ 1] );  break;
-	case CPU_INFO_REG + ARM_R2: sprintf( buffer[which], "R2  :%08x", r->reg[ 2] );  break;
-	case CPU_INFO_REG + ARM_R3: sprintf( buffer[which], "R3  :%08x", r->reg[ 3] );  break;
-	case CPU_INFO_REG + ARM_R4: sprintf( buffer[which], "R4  :%08x", r->reg[ 4] );  break;
-	case CPU_INFO_REG + ARM_R5: sprintf( buffer[which], "R5  :%08x", r->reg[ 5] );  break;
-	case CPU_INFO_REG + ARM_R6: sprintf( buffer[which], "R6  :%08x", r->reg[ 6] );  break;
-	case CPU_INFO_REG + ARM_R7: sprintf( buffer[which], "R7  :%08x", r->reg[ 7] );  break;
-	case CPU_INFO_REG + ARM_R8: sprintf( buffer[which], "R8  :%08x", r->reg[ 8] );  break;
-	case CPU_INFO_REG + ARM_R9: sprintf( buffer[which], "R9  :%08x", r->reg[ 9] );  break;
-	case CPU_INFO_REG + ARM_R10:sprintf( buffer[which], "R10 :%08x", r->reg[10] );  break;
-	case CPU_INFO_REG + ARM_R11:sprintf( buffer[which], "R11 :%08x", r->reg[11] );  break;
-	case CPU_INFO_REG + ARM_R12:sprintf( buffer[which], "R12 :%08x", r->reg[12] );  break;
-	case CPU_INFO_REG + ARM_R13:sprintf( buffer[which], "R13 :%08x", r->reg[13] );  break;
-	case CPU_INFO_REG + ARM_R14:sprintf( buffer[which], "R14 :%08x", r->reg[14] );  break;
-	case CPU_INFO_REG + ARM_R15:sprintf( buffer[which], "R15 :%08x", r->reg[15] );  break;
-	case CPU_INFO_REG + ARM_FR8: sprintf( buffer[which], "FR8 :%08x", r->reg_firq[0] );  break;
-	case CPU_INFO_REG + ARM_FR9: sprintf( buffer[which], "FR9 :%08x", r->reg_firq[1] );  break;
-	case CPU_INFO_REG + ARM_FR10:sprintf( buffer[which], "FR10:%08x", r->reg_firq[2] );  break;
-	case CPU_INFO_REG + ARM_FR11:sprintf( buffer[which], "FR11:%08x", r->reg_firq[3] );  break;
-	case CPU_INFO_REG + ARM_FR12:sprintf( buffer[which], "FR12:%08x", r->reg_firq[4] );  break;
-	case CPU_INFO_REG + ARM_FR13:sprintf( buffer[which], "FR13:%08x", r->reg_firq[5] );  break;
-	case CPU_INFO_REG + ARM_FR14:sprintf( buffer[which], "FR14:%08x", r->reg_firq[6] );  break;
-	case CPU_INFO_REG + ARM_IR13:sprintf( buffer[which], "IR13:%08x", r->reg_irq[0] );  break;
-	case CPU_INFO_REG + ARM_IR14:sprintf( buffer[which], "IR14:%08x", r->reg_irq[1] );  break;
-	case CPU_INFO_REG + ARM_SR13:sprintf( buffer[which], "SR13:%08x", r->reg_svc[0] );  break;
-	case CPU_INFO_REG + ARM_SR14:sprintf( buffer[which], "SR14:%08x", r->reg_svc[1] );  break;
-
-	case CPU_INFO_FLAGS:
-		sprintf(buffer[which], "%c%c%c%c%c%c",
-			(r->psw & N) ? 'C' : '-',
-			(r->psw & Z) ? 'Z' : '-',
-			(r->psw & C) ? 'C' : '-',
-			(r->psw & V) ? 'V' : '-',
-			(r->psw & I) ? 'I' : '-',
-			(r->psw & F) ? 'F' : '-');
-		switch (r->psw & 3)
-		{
-		case 0:
-			strcat(buffer[which], " USER");
-			break;
-		case 1:
-			strcat(buffer[which], " FIRQ");
-			break;
-		case 2:
-			strcat(buffer[which], " IRQ ");
-			break;
-		default:
-			strcat(buffer[which], " SVC ");
-			break;
-		}
-		break;
 	case CPU_INFO_NAME: 		return "ARM";
 	case CPU_INFO_FAMILY:		return "Acorn Risc Machine";
 	case CPU_INFO_VERSION:		return "1.0";
 	case CPU_INFO_FILE: 		return __FILE__;
 	case CPU_INFO_CREDITS:		return "Copyright 2000 hjb";
-	case CPU_INFO_REG_LAYOUT:	return (const char*)arm_reg_layout;
-	case CPU_INFO_WIN_LAYOUT:	return (const char*)arm_win_layout;
 	}
 
-	return buffer[which];
+	return "";
 }
 
 unsigned arm_dasm(char *buffer, unsigned pc)
 {
 	change_pc26lew(pc);
-#ifdef MAME_DEBUG
-	return DasmARM(buffer,pc);
-#else
 	sprintf(buffer, "$%08x", ARM_RDMEM_32(pc));
 	return 4;
-#endif
 }
 

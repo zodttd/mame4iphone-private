@@ -1,3 +1,5 @@
+#include "../vidhrdw/appoooh.cpp"
+
 /***************************************************************************
 
 Appoooh memory map (preliminary)

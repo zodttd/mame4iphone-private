@@ -1,3 +1,6 @@
+#include "../vidhrdw/gottlieb.cpp"
+#include "../sndhrdw/gottlieb.cpp"
+
 /***************************************************************************
 
 Gottlieb driver : dedicated to Warren Davis, Jeff Lee, Tim Skelly & David Thiel
@@ -294,7 +297,7 @@ WRITE_HANDLER( gottlieb_laserdisc_command_w )
 
 	if ((data & 0xe0) != 0x20)
 	{
-logerror("error: laserdisc command %02x\n",data);
+//logerror("error: laserdisc command %02x\n",data);
 		return;
 	}
 
@@ -304,7 +307,7 @@ logerror("error: laserdisc command %02x\n",data);
 			((data & 0x02) << 2) |
 			((data & 0x01) << 4);
 
-logerror("laserdisc command %02x -> %02x\n",data,cmd);
+//logerror("laserdisc command %02x -> %02x\n",data,cmd);
 	if (lastcmd == 0x0b && (cmd & 0x10))	/* seek frame # */
 	{
 		current_frame = (current_frame << 4) | (cmd & 0x0f);
@@ -666,7 +669,7 @@ INPUT_PORTS_START( mplanets )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* trackball V (dial) */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL, 5, 10, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL, 5, 10, 0, 0, JOYCODE_1_BUTTON5, JOYCODE_1_BUTTON6, 0, 0 )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
@@ -1128,8 +1131,8 @@ INPUT_PORTS_START( screwloo )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY )
-	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1, "Start 2P", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Start 1P", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1, "Start 2P", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1, "Start 1P", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END

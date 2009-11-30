@@ -1,3 +1,5 @@
+#include "../vidhrdw/ambush.cpp"
+
 /***************************************************************************
 
 Ambush Memory Map (preliminary)

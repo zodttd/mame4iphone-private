@@ -1,3 +1,5 @@
+#include "../vidhrdw/bionicc.cpp"
+
 /********************************************************************
 
 			  Bionic Commando
@@ -69,7 +71,7 @@ void bionicc_sound_cmd(int data);
 
 READ_HANDLER( bionicc_inputs_r )
 {
-logerror("%06x: inputs_r %04x\n",cpu_get_pc(),offset);
+//logerror("%06x: inputs_r %04x\n",cpu_get_pc(),offset);
 	return (readinputport(offset)<<8) + readinputport(offset+1);
 }
 
@@ -77,13 +79,13 @@ static unsigned char bionicc_inp[6];
 
 WRITE_HANDLER( hacked_controls_w )
 {
-logerror("%06x: hacked_controls_w %04x %02x\n",cpu_get_pc(),offset,data);
+//logerror("%06x: hacked_controls_w %04x %02x\n",cpu_get_pc(),offset,data);
 	COMBINE_WORD_MEM( &bionicc_inp[offset], data);
 }
 
 static READ_HANDLER( hacked_controls_r )
 {
-logerror("%06x: hacked_controls_r %04x %04x\n",cpu_get_pc(),offset,READ_WORD( &bionicc_inp[offset] ));
+//logerror("%06x: hacked_controls_r %04x %04x\n",cpu_get_pc(),offset,READ_WORD( &bionicc_inp[offset] ));
 	return READ_WORD( &bionicc_inp[offset] );
 }
 

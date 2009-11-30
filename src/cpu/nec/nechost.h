@@ -1,7 +1,7 @@
 /*****************************************************************************/
 /* host dependent types                                                      */
 
-#define BIGCASE
+/*#define BIGCASE*/
 
 #include "osd_cpu.h"
 

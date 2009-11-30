@@ -482,7 +482,9 @@ int sys16_vh_start( void ){
 
 	sprite_list = sprite_list_create( NUM_SPRITES, SPRITE_LIST_BACK_TO_FRONT | SPRITE_LIST_RAW_DATA );
 
+#ifdef TRANSPARENT_SHADOWS
 	sprite_set_shade_table(shade_table);
+#endif
 
 	if( background && foreground && text_layer && sprite_list ){
 		/* initialize all entries to black - needed for Golden Axe*/

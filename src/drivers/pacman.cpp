@@ -1,3 +1,6 @@
+#include "../machine/pacplus.cpp"
+#include "../machine/theglob.cpp"
+
 /***************************************************************************
 
 Pac-Man memory map (preliminary)

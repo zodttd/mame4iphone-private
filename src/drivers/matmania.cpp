@@ -1,3 +1,6 @@
+#include "../machine/maniach.cpp"
+#include "../vidhrdw/matmania.cpp"
+
 /***************************************************************************
 
 Mat Mania

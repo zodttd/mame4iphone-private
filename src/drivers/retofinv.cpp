@@ -1,3 +1,5 @@
+#include "../vidhrdw/retofinv.cpp"
+
 /***************************************************************************
 
 Return of the Invaders
@@ -34,12 +36,6 @@ extern unsigned char *retofinv_fg_char_bank;
 extern unsigned char *retofinv_bg_char_bank;
 
 static unsigned char cpu0_me000=0,cpu0_me800_last=0,cpu2_m6000=0;
-
-static void retofinv_init_machine(void)
-{
-	cpu0_me800_last = 0;
-	cpu2_m6000 = 0;
-}
 
 static READ_HANDLER( retofinv_shared_ram_r )
 {

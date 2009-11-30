@@ -1,3 +1,5 @@
+#include "../vidhrdw/kangaroo.cpp"
+
 /***************************************************************************
 
 Kangaroo (c) Atari Games / Sun Electronics Corp 1982

@@ -1,3 +1,5 @@
+#include "../vidhrdw/exprraid.cpp"
+
 /***************************************************************************
 
 Express Raider - (c) 1986 Data East USA

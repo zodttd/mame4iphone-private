@@ -1,3 +1,6 @@
+#include "../machine/gaplus.cpp"
+#include "../vidhrdw/gaplus.cpp"
+
 /***************************************************************************
 
 Gaplus (c) 1984 Namco

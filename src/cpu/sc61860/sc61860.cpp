@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include "driver.h"
 #include "state.h"
-#include "mamedbg.h"
 
 #include "sc61860.h"
 #include "sc.h"
@@ -36,39 +35,6 @@ typedef int bool;
 #else
 #define LOG(x)
 #endif
-
-/* Layout of the registers in the debugger */
-static UINT8 sc61860_reg_layout[] = {
-	SC61860_P,
-	SC61860_Q,
-	SC61860_R,
-	SC61860_DP, 
-	SC61860_PC, 
-	-1,
-
-	SC61860_I, 
-	SC61860_K, 
-	SC61860_V, 
-	SC61860_X, 
-	SC61860_H, 
-	-1,
-
-	SC61860_J, 
-	SC61860_L, 
-	SC61860_W,
-	SC61860_Y,
-	SC61860_BA, 
-	0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 sc61860_win_layout[] = {
-	25, 0,55, 3,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 4,55, 8,	/* memory #1 window (right, upper middle) */
-	25,14,55, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 /****************************************************************************
  * The 6502 registers.
@@ -241,8 +207,6 @@ int sc61860_execute(int cycles)
 	{
 		sc61860.oldpc = sc61860.pc;
 
-		CALL_MAME_DEBUG;
-
 		sc61860_instruction();
 
 	} while (sc61860_icount > 0);
@@ -293,53 +257,13 @@ void sc61860_state_load(void *file)
  ****************************************************************************/
 const char *sc61860_info(void *context, int regnum)
 {
-	static char buffer[16][47+1];
-	static int which = 0;
-	SC61860_Regs *r = context;
-
-	which = ++which % 16;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &sc61860;
-
 	switch( regnum )
 	{
-	case CPU_INFO_REG+SC61860_PC: sprintf(buffer[which],"PC:%.4x",r->pc);break;
-	case CPU_INFO_REG+SC61860_DP: sprintf(buffer[which],"DP:%.4x",r->dp);break;
-	case CPU_INFO_REG+SC61860_P: sprintf(buffer[which],"P:%.2x",r->p);break;
-	case CPU_INFO_REG+SC61860_Q: sprintf(buffer[which],"Q:%.2x",r->q);break;
-	case CPU_INFO_REG+SC61860_R: sprintf(buffer[which],"R:%.2x",r->r);break;
-	case CPU_INFO_REG+SC61860_I: sprintf(buffer[which],"I:%.2x",r->ram[I]);break;
-	case CPU_INFO_REG+SC61860_J: sprintf(buffer[which],"J:%.2x",r->ram[J]);break;
-	case CPU_INFO_REG+SC61860_K: sprintf(buffer[which],"K:%.2x",r->ram[K]);break;
-	case CPU_INFO_REG+SC61860_L: sprintf(buffer[which],"L:%.2x",r->ram[L]);break;
-	case CPU_INFO_REG+SC61860_V: sprintf(buffer[which],"V:%.2x",r->ram[V]);break;
-	case CPU_INFO_REG+SC61860_W: sprintf(buffer[which],"W:%.2x",r->ram[W]);break;
-	case CPU_INFO_REG+SC61860_H: sprintf(buffer[which],"H:%.2x",r->ram[H]);break;
-	case CPU_INFO_REG+SC61860_BA: 
-		sprintf(buffer[which],"BA:%.2x%.2x",r->ram[B],r->ram[A]);break;
-	case CPU_INFO_REG+SC61860_X: 
-		sprintf(buffer[which],"X: %.2x%.2x",r->ram[XH],r->ram[XL]);break;
-	case CPU_INFO_REG+SC61860_Y: 
-		sprintf(buffer[which],"Y: %.2x%.2x",r->ram[YH],r->ram[YL]);break;
-	case CPU_INFO_REG+SC61860_CARRY: sprintf(buffer[which],"Carry: %d",r->carry);break;
-	case CPU_INFO_REG+SC61860_ZERO: sprintf(buffer[which],"Carry: %d",r->zero);break;
-	case CPU_INFO_FLAGS: sprintf(buffer[which], "%c%c", r->zero?'Z':'.', r->carry ? 'C':'.'); break;
 	case CPU_INFO_NAME: return "SC61860";
 	case CPU_INFO_FAMILY: return "SC61860";
 	case CPU_INFO_VERSION: return "1.0alpha";
 	case CPU_INFO_FILE: return __FILE__;
 	case CPU_INFO_CREDITS: return "Copyright (c) 2000 Peter Trauner, all rights reserved.";
-	case CPU_INFO_REG_LAYOUT: return (const char*)sc61860_reg_layout;
-	case CPU_INFO_WIN_LAYOUT: return (const char*)sc61860_win_layout;
 	}
-	return buffer[which];
+	return "";
 }
-
-#ifndef MAME_DEBUG
-unsigned sc61860_dasm(char *buffer, unsigned pc)
-{
-	sprintf( buffer, "$%X", cpu_readop(pc) );
-	return 1;
-}
-#endif

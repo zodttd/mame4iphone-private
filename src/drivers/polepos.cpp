@@ -1,3 +1,7 @@
+#include "../machine/polepos.cpp"
+#include "../vidhrdw/polepos.cpp"
+#include "../sndhrdw/polepos.cpp"
+
 /***************************************************************************
   Pole Position memory map (preliminary)
 

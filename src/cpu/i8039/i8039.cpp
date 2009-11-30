@@ -11,24 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "cpuintrf.h"
-#include "mamedbg.h"
 #include "i8039.h"
-
-
-/* Layout of the registers in the debugger */
-static UINT8 i8039_reg_layout[] = {
-	I8039_PC, I8039_SP, I8039_PSW, I8039_A, I8039_IRQ_STATE, -1,
-	I8039_R0, I8039_R1, I8039_R2, I8039_R3, I8039_R4, I8039_R5, I8039_R6, I8039_R7, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i8039_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 #define M_RDMEM(A)      I8039_RDMEM(A)
 #define M_RDOP(A)       I8039_RDOP(A)
@@ -193,12 +176,12 @@ INLINE void M_XCHD(UINT8 addr)
 
 INLINE void M_ILLEGAL(void)
 {
-	logerror("I8039:  PC = %04x,  Illegal opcode = %02x\n", R.PC.w.l-1, M_RDMEM(R.PC.w.l-1));
+	/*logerror("I8039:  PC = %04x,  Illegal opcode = %02x\n", R.PC.w.l-1, M_RDMEM(R.PC.w.l-1));*/
 }
 
 INLINE void M_UNDEFINED(void)
 {
-	logerror("I8039:  PC = %04x,  Unimplemented opcode = %02x\n", R.PC.w.l-1, M_RDMEM(R.PC.w.l-1));
+	/*logerror("I8039:  PC = %04x,  Unimplemented opcode = %02x\n", R.PC.w.l-1, M_RDMEM(R.PC.w.l-1));*/
 }
 
 
@@ -569,7 +552,7 @@ static int Timer_IRQ(void)
 {
 	if (R.tirq_en && !R.irq_executing)
 	{
-		logerror("I8039:  TIMER INTERRUPT\n");
+		/*logerror("I8039:  TIMER INTERRUPT\n");*/
 		R.irq_executing = I8039_TIMER_INT;
 		push(R.PC.b.l);
 		push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
@@ -664,8 +647,6 @@ int i8039_execute(int cycles)
         R.pending_irq = I8039_IGNORE_INT;
 
         R.PREPC = R.PC;
-
-		CALL_MAME_DEBUG;
 
 		opcode=M_RDOP(R.PC.w.l);
 
@@ -860,81 +841,27 @@ void i8039_set_irq_callback(int (*callback)(int irqline))
  ****************************************************************************/
 const char *i8039_info(void *context, int regnum)
 {
-	static char buffer[8][47+1];
-	static int which = 0;
-    I8039_Regs *r = (I8039_Regs *)context;
-
-	which = ++which % 8;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &R;
-
     switch( regnum )
     {
-		case CPU_INFO_REG+I8039_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
-		case CPU_INFO_REG+I8039_SP: sprintf(buffer[which], "SP:%02X", r->SP); break;
-		case CPU_INFO_REG+I8039_PSW: sprintf(buffer[which], "PSW:%02X", r->PSW); break;
-        case CPU_INFO_REG+I8039_A: sprintf(buffer[which], "A:%02X", r->A); break;
-		case CPU_INFO_REG+I8039_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_REG+I8039_R0: sprintf(buffer[which], "R0:%02X", r->RAM[r->regPtr+0]); break;
-		case CPU_INFO_REG+I8039_R1: sprintf(buffer[which], "R1:%02X", r->RAM[r->regPtr+1]); break;
-		case CPU_INFO_REG+I8039_R2: sprintf(buffer[which], "R2:%02X", r->RAM[r->regPtr+2]); break;
-		case CPU_INFO_REG+I8039_R3: sprintf(buffer[which], "R3:%02X", r->RAM[r->regPtr+3]); break;
-		case CPU_INFO_REG+I8039_R4: sprintf(buffer[which], "R4:%02X", r->RAM[r->regPtr+4]); break;
-		case CPU_INFO_REG+I8039_R5: sprintf(buffer[which], "R5:%02X", r->RAM[r->regPtr+5]); break;
-		case CPU_INFO_REG+I8039_R6: sprintf(buffer[which], "R6:%02X", r->RAM[r->regPtr+6]); break;
-		case CPU_INFO_REG+I8039_R7: sprintf(buffer[which], "R7:%02X", r->RAM[r->regPtr+7]); break;
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->PSW & 0x80 ? 'C':'.',
-				r->PSW & 0x40 ? 'A':'.',
-				r->PSW & 0x20 ? 'F':'.',
-				r->PSW & 0x10 ? 'B':'.',
-				r->PSW & 0x08 ? '?':'.',
-				r->PSW & 0x04 ? '4':'.',
-				r->PSW & 0x02 ? '2':'.',
-				r->PSW & 0x01 ? '1':'.');
-			break;
 		case CPU_INFO_NAME: return "I8039";
 		case CPU_INFO_FAMILY: return "Intel 8039";
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1997 by Mirko Buffoni\nBased on the original work (C) 1997 by Dan Boris";
-		case CPU_INFO_REG_LAYOUT: return (const char*)i8039_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)i8039_win_layout;
 	}
-    return buffer[which];
+    return "";
 }
 
 unsigned i8039_dasm(char *buffer, unsigned pc)
 {
-#ifdef	MAME_DEBUG
-    return Dasm8039(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 /**************************************************************************
  * I8035 section
  **************************************************************************/
 #if (HAS_I8035)
-/* Layout of the registers in the debugger */
-static UINT8 i8035_reg_layout[] = {
-	I8035_PC, I8035_SP, I8035_PSW, I8035_A, I8035_IRQ_STATE, -1,
-	I8035_R0, I8035_R1, I8035_R2, I8035_R3, I8035_R4, I8035_R5, I8035_R6, I8035_R7, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i8035_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 void i8035_reset(void *param) { i8039_reset(param); }
 void i8035_exit(void) { i8039_exit(); }
 int i8035_execute(int cycles) { return i8039_execute(cycles); }
@@ -955,20 +882,14 @@ const char *i8035_info(void *context, int regnum)
     {
 		case CPU_INFO_NAME: return "I8035";
 		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_REG_LAYOUT: return (const char*)i8035_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)i8035_win_layout;
 	}
 	return i8039_info(context,regnum);
 }
 
 unsigned i8035_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm8039(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 
 #endif
@@ -977,21 +898,6 @@ unsigned i8035_dasm(char *buffer, unsigned pc)
  * I8048 section
  **************************************************************************/
 #if (HAS_I8048)
-/* Layout of the registers in the debugger */
-static UINT8 i8048_reg_layout[] = {
-	I8048_PC, I8048_SP, I8048_PSW, I8048_A, I8048_IRQ_STATE, -1,
-	I8048_R0, I8048_R1, I8048_R2, I8048_R3, I8048_R4, I8048_R5, I8048_R6, I8048_R7, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i8048_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 void i8048_reset(void *param) { i8039_reset(param); }
 void i8048_exit(void) { i8039_exit(); }
 int i8048_execute(int cycles) { return i8039_execute(cycles); }
@@ -1012,41 +918,20 @@ const char *i8048_info(void *context, int regnum)
     {
 		case CPU_INFO_NAME: return "I8048";
 		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_REG_LAYOUT: return (const char*)i8048_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)i8048_win_layout;
 	}
 	return i8039_info(context,regnum);
 }
 
 unsigned i8048_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	return Dasm8039(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 #endif
 /**************************************************************************
  * N7751 section
  **************************************************************************/
 #if (HAS_N7751)
-/* Layout of the registers in the debugger */
-static UINT8 n7751_reg_layout[] = {
-	N7751_PC, N7751_SP, N7751_PSW, N7751_A, N7751_IRQ_STATE, -1,
-	N7751_R0, N7751_R1, N7751_R2, N7751_R3, N7751_R4, N7751_R5, N7751_R6, N7751_R7, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 n7751_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 void n7751_reset(void *param) { i8039_reset(param); }
 void n7751_exit(void) { i8039_exit(); }
 int n7751_execute(int cycles) { return i8039_execute(cycles); }
@@ -1067,20 +952,14 @@ const char *n7751_info(void *context, int regnum)
     {
 		case CPU_INFO_NAME: return "N7751";
 		case CPU_INFO_VERSION: return "1.1";
-		case CPU_INFO_REG_LAYOUT: return (const char*)n7751_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)n7751_win_layout;
 	}
 	return i8039_info(context,regnum);
 }
 
 unsigned n7751_dasm(char *buffer, unsigned pc)
 {
-#ifdef	MAME_DEBUG
-	return Dasm8039(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 #endif
 

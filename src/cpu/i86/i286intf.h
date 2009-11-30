@@ -42,8 +42,4 @@ extern void i286_set_irq_callback(int (*callback)(int irqline));
 extern const char *i286_info(void *context, int regnum);
 extern unsigned i286_dasm(char *buffer, unsigned pc);
 
-#ifdef MAME_DEBUG
-extern unsigned DasmI286(char* buffer, unsigned pc);
-#endif
-
 #endif

@@ -1,3 +1,5 @@
+#include "../vidhrdw/parodius.cpp"
+
 /***************************************************************************
 
 Parodius (Konami GX955) (c) 1990 Konami
@@ -71,7 +73,7 @@ static WRITE_HANDLER( parodius_052109_053245_w )
 
 static WRITE_HANDLER( parodius_videobank_w )
 {
-	if (videobank & 0xf8) logerror("%04x: videobank = %02x\n",cpu_get_pc(),data);
+	//if (videobank & 0xf8) logerror("%04x: videobank = %02x\n",cpu_get_pc(),data);
 
 	/* bit 0 = select palette or work RAM at 0000-07ff */
 	/* bit 1 = select 052109 or 053245 at 2000-27ff */
@@ -81,7 +83,7 @@ static WRITE_HANDLER( parodius_videobank_w )
 
 static WRITE_HANDLER( parodius_3fc0_w )
 {
-	if ((data & 0xf4) != 0x10) logerror("%04x: 3fc0 = %02x\n",cpu_get_pc(),data);
+	//if ((data & 0xf4) != 0x10) logerror("%04x: 3fc0 = %02x\n",cpu_get_pc(),data);
 
 	/* bit 0/1 = coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -104,15 +106,6 @@ static READ_HANDLER( parodius_sound_r )
 static WRITE_HANDLER( parodius_sh_irqtrigger_w )
 {
 	cpu_cause_interrupt(1,0xff);
-}
-
-static int nmi_enabled;
-
-static void sound_nmi_callback( int param )
-{
-	cpu_set_nmi_line( 1, ( nmi_enabled ) ? CLEAR_LINE : ASSERT_LINE );
-
-	nmi_enabled = 0;
 }
 
 static void nmi_callback(int param)
@@ -411,7 +404,7 @@ static void parodius_banking(int lines)
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs = 0;
 
-	if (lines & 0xf0) logerror("%04x: setlines %02x\n",cpu_get_pc(),lines);
+	//if (lines & 0xf0) logerror("%04x: setlines %02x\n",cpu_get_pc(),lines);
 
 	offs = 0x10000 + (((lines & 0x0f)^0x0f) * 0x4000);
 	if (offs >= 0x48000) offs -= 0x40000;

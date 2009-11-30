@@ -1,3 +1,5 @@
+#include "../vidhrdw/gbusters.cpp"
+
 /***************************************************************************
 
 Gangbusters(GX878) (c) 1988 Konami
@@ -59,10 +61,10 @@ static WRITE_HANDLER( gbusters_1f98_w )
 	/* bit 7 used (during gfx rom tests), but unknown */
 
 	/* other bits unused/unknown */
-	if (data & 0xfe){
+	//if (data & 0xfe){
 		//logerror("%04x: (1f98) write %02x\n",cpu_get_pc(), data);
 		//usrintf_showmessage("$1f98 = %02x", data);
-	}
+	//}
 }
 
 static WRITE_HANDLER( gbusters_coin_counter_w )
@@ -80,24 +82,24 @@ static WRITE_HANDLER( gbusters_coin_counter_w )
 	/* bit 7 is used but unknown */
 
 	/* other bits unused/unknown */
-	if (data & 0xf8)
-	{
-		char baf[40];
-		logerror("%04x: (ccount) write %02x\n",cpu_get_pc(), data);
-		sprintf(baf,"ccnt = %02x", data);
+	//if (data & 0xf8)
+	//{
+	//	char baf[40];
+	//	logerror("%04x: (ccount) write %02x\n",cpu_get_pc(), data);
+	//	sprintf(baf,"ccnt = %02x", data);
 //		usrintf_showmessage(baf);
-	}
+	//}
 }
 
 static WRITE_HANDLER( gbusters_unknown_w )
 {
-	logerror("%04x: ??? write %02x\n",cpu_get_pc(), data);
+	//logerror("%04x: ??? write %02x\n",cpu_get_pc(), data);
 
-{
-char baf[40];
-	sprintf(baf,"??? = %02x", data);
+//{
+//char baf[40];
+//	sprintf(baf,"??? = %02x", data);
 //	usrintf_showmessage(baf);
-}
+//}
 }
 
 WRITE_HANDLER( gbusters_sh_irqtrigger_w )
@@ -429,10 +431,10 @@ static void gbusters_banking( int lines )
 	offs += (lines & 0x0f)*0x2000;
 	cpu_setbank( 1, &RAM[offs] );
 
-	if (lines & 0xf0){
+	//if (lines & 0xf0){
 		//logerror("%04x: (lines) write %02x\n",cpu_get_pc(), lines);
 		//usrintf_showmessage("lines = %02x", lines);
-	}
+	//}
 
 	/* other bits unknown */
 }

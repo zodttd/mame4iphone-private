@@ -1,3 +1,5 @@
+#include "../vidhrdw/supbtime.cpp"
+
 /***************************************************************************
 
   Super Burger Time     (c) 1990 Data East Corporation (DE-0343)
@@ -55,7 +57,7 @@ static READ_HANDLER( supbtime_controls_r )
 			return 0;
 	}
 
-	logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset);
+	//logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset);
 	return 0xffff;
 }
 

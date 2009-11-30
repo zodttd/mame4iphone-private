@@ -46,8 +46,8 @@
 
 /* The interface structure */
 struct TTL74123_interface {
-	double res;
-	double cap;
+	float res;
+	float cap;
 	void (*output_changed_cb)(void);
 };
 

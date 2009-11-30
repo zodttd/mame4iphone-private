@@ -1,3 +1,6 @@
+#include "../machine/avalnche.cpp"
+#include "../vidhrdw/avalnche.cpp"
+
 /***************************************************************************
 
 Atari Avalanche Driver

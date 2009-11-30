@@ -29,7 +29,7 @@ extern unsigned int coinlockedout[COIN_COUNTERS];
 
 /* MARTINEZ.F 990207 Memory Card */
 #ifndef MESS
-#ifndef TINY_COMPILE
+#ifdef NEOMAME
 int 		memcard_menu(struct osd_bitmap *bitmap, int);
 extern int	mcd_action;
 extern int	mcd_number;
@@ -937,7 +937,7 @@ void ui_displaymessagewindow(struct osd_bitmap *bitmap,const char *text)
 
 
 #ifndef MESS
-#ifndef TINY_COMPILE
+#ifdef NEOMAME
 extern int no_of_tiles;
 void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
@@ -969,7 +969,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 	}
 
 #ifndef MESS
-#ifndef TINY_COMPILE
+#ifdef NEOMAME
 	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
 				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
@@ -1098,7 +1098,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 				switch_true_orientation();
 			}
 #ifndef MESS
-#ifndef TINY_COMPILE
+#ifdef NEOMAME
 			else	/* neogeo sprite tiles */
 			{
 				struct rectangle clip;
@@ -1259,52 +1259,6 @@ static void showcharset(struct osd_bitmap *bitmap)
 
 	return;
 }
-
-
-#ifdef MAME_DEBUG
-static void showtotalcolors(struct osd_bitmap *bitmap)
-{
-	char *used;
-	int i,l,x,y,total;
-	unsigned char r,g,b;
-	char buf[40];
-
-
-	used = malloc(64*64*64);
-	if (!used) return;
-
-	for (i = 0;i < 64*64*64;i++)
-		used[i] = 0;
-
-	for (y = 0;y < bitmap->height;y++)
-	{
-		for (x = 0;x < bitmap->width;x++)
-		{
-			osd_get_pen(read_pixel(bitmap,x,y),&r,&g,&b);
-			r >>= 2;
-			g >>= 2;
-			b >>= 2;
-			used[64*64*r+64*g+b] = 1;
-		}
-	}
-
-	total = 0;
-	for (i = 0;i < 64*64*64;i++)
-		if (used[i]) total++;
-
-	switch_ui_orientation();
-
-	sprintf(buf,"%5d colors",total);
-	l = strlen(buf);
-	for (i = 0;i < l;i++)
-		drawgfx(bitmap,Machine->uifont,buf[i],total>256?UI_COLOR_INVERSE:UI_COLOR_NORMAL,0,0,Machine->uixmin+i*Machine->uifontwidth,Machine->uiymin,0,TRANSPARENCY_NONE,0);
-
-	switch_true_orientation();
-
-	free(used);
-}
-#endif
-
 
 static int setdipswitches(struct osd_bitmap *bitmap,int selected)
 {
@@ -2675,7 +2629,7 @@ static int displayhistory (struct osd_bitmap *bitmap, int selected)
 
 
 #ifndef MESS
-#ifndef TINY_COMPILE
+#ifdef NEOMAME
 int memcard_menu(struct osd_bitmap *bitmap, int selection)
 {
 	int sel;
@@ -2872,7 +2826,7 @@ static void setup_menu_init(void)
 	}
 
 #ifndef MESS
-#ifndef TINY_COMPILE
+#ifdef NEOMAME
 	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
 				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
@@ -2951,7 +2905,7 @@ static int setup_menu(struct osd_bitmap *bitmap, int selected)
 				res = cheat_menu(bitmap, sel >> SEL_BITS);
 				break;
 #ifndef MESS
-#ifndef TINY_COMPILE
+#ifdef NEOMAME
 			case UI_MEMCARD:
 				res = memcard_menu(bitmap, sel >> SEL_BITS);
 				break;
@@ -3242,7 +3196,7 @@ static void onscrd_vector_intensity(struct osd_bitmap *bitmap,int increment,int 
 static void onscrd_overclock(struct osd_bitmap *bitmap,int increment,int arg)
 {
 	char buf[30];
-	double overclock;
+	float overclock;
 	int cpu, doallcpus = 0, oc;
 
 	if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
@@ -3421,9 +3375,6 @@ void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
 int handle_user_interface(struct osd_bitmap *bitmap)
 {
 	static int show_profiler;
-#ifdef MAME_DEBUG
-	static int show_total_colors;
-#endif
 
 #ifdef MESS
 if (Machine->gamedrv->flags & GAME_COMPUTER)
@@ -3601,11 +3552,6 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 					draw_screen(bitmap_dirty);
 					bitmap_dirty = 0;
 				}
-#ifdef MAME_DEBUG
-/* keep calling vh_screenrefresh() while paused so we can stuff */
-/* debug code in there */
-draw_screen(bitmap_dirty);
-#endif
 			}
 			profiler_mark(PROFILER_END);
 
@@ -3680,16 +3626,6 @@ draw_screen(bitmap_dirty);
 			need_to_clear_bitmap = 1;
 		}
 	}
-#ifdef MAME_DEBUG
-	if (input_ui_pressed(IPT_UI_SHOW_COLORS))
-	{
-		show_total_colors ^= 1;
-		if (show_total_colors == 0)
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
-	}
-	if (show_total_colors) showtotalcolors(bitmap);
-#endif
 
 	if (show_profiler) profiler_show(bitmap);
 

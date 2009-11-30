@@ -1,3 +1,5 @@
+#include "../vidhrdw/lazercmd.cpp"
+
 /***************************************************************************
   Lazer Command memory map (preliminary)
 

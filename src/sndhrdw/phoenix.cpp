@@ -10,6 +10,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "osinline.h"
 
 /****************************************************************************
  * 4006
@@ -549,7 +550,11 @@ static void phoenix_sound_update(int param, INT16 *buffer, int length)
 	{
 		int sum = 0;
 		sum = (tone1(samplerate) + tone2(samplerate) + noise(samplerate)) / 4;
+#ifndef clip_short_ret
 		*buffer++ = sum < 32768 ? sum > -32768 ? sum : -32768 : 32767;
+#else
+ 		*buffer++ = clip_short_ret(sum);
+#endif
 	}
 }
 

@@ -26,7 +26,7 @@ static int stream[MAX_2612];
 static const struct YM2612interface *intf;
 
 static void *Timer[MAX_2612][2];
-static double lastfired[MAX_2612][2];
+static float lastfired[MAX_2612][2];
 
 /*------------------------- TM2612 -------------------------------*/
 /* IRQ Handler */
@@ -48,7 +48,7 @@ static void timer_callback_2612(int param)
 }
 
 /* TimerHandler from fm.c */
-static void TimerHandler(int n,int c,int count,double stepTime)
+static void TimerHandler(int n,int c,int count,timer_tm stepTime)
 {
 	if( count == 0 )
 	{	/* Reset FM Timer */
@@ -61,11 +61,11 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 	}
 	else
 	{	/* Start FM Timer */
-		double timeSec = (double)count * stepTime;
+		timer_tm timeSec = (timer_tm)count * stepTime;
 
 		if( Timer[n][c] == 0 )
 		{
-			double slack;
+			float slack;
 
 			slack = timer_get_time() - lastfired[n][c];
 			/* hackish way to make bstars intro sync without */
@@ -74,7 +74,7 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 
 //			logerror("2612 TimerSet %d %f slack %f\n",c,timeSec,slack);
 
-			Timer[n][c] = timer_set (timeSec - slack, (c<<7)|n, timer_callback_2612 );
+			Timer[n][c] = timer_set (timeSec - TIME_IN_SEC(slack), (c<<7)|n, timer_callback_2612 );
 		}
 	}
 }

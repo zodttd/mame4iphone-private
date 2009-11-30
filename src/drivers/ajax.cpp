@@ -1,3 +1,6 @@
+#include "../machine/ajax.cpp"
+#include "../vidhrdw/ajax.cpp"
+
 /***************************************************************************
 
 "AJAX/Typhoon"	(Konami GX770)

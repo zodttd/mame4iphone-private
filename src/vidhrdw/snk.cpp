@@ -9,23 +9,6 @@ int snk_bg_tilemap_baseaddr, gwar_sprite_placement;
 
 static int shadows_visible = 0; /* toggles rapidly to fake translucency in ikari warriors */
 
-static void print( struct osd_bitmap *bitmap, int num, int row ){
-	char *digit = "0123456789abcdef";
-
-	drawgfx( bitmap,Machine->uifont,
-		digit[(num>>4)&0xf],
-		0,
-		0,0, /* no flip */
-		24,row*8+8,
-		0,TRANSPARENCY_NONE,0);
-	drawgfx( bitmap,Machine->uifont,
-		digit[num&0xf],
-		0,
-		0,0, /* no flip */
-		32,row*8+8,
-		0,TRANSPARENCY_NONE,0);
-}
-
 #define GFX_CHARS			0
 #define GFX_TILES			1
 #define GFX_SPRITES			2

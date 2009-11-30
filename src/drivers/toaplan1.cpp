@@ -1,3 +1,6 @@
+#include "../machine/toaplan1.cpp"
+#include "../vidhrdw/toaplan1.cpp"
+
 /***************************************************************************
 
 		ToaPlan game hardware from 1988-1991

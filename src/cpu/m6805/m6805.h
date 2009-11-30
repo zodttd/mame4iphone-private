@@ -151,8 +151,4 @@ extern unsigned hd63705_dasm(char *buffer, unsigned pc);
 #    define TRUE (!FALSE)
 #endif
 
-#ifdef MAME_DEBUG
-extern unsigned Dasm6805(char *buf, unsigned pc);
-#endif
-
 #endif /* _M6805_H */

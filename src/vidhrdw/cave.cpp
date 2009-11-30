@@ -74,8 +74,8 @@ Offset:
 #define CAVE_TILEMAP(_n_) \
 static void get_tile_info_##_n_( int tile_index ) \
 { \
-	int code		=	(READ_WORD(&cave_vram_##_n_[ tile_index * 4 + 0]) << 16 )+ \
-						 READ_WORD(&cave_vram_##_n_[ tile_index * 4 + 2]); \
+	int code		=	(READ_WORD(&cave_vram_##_n_[tile_index<<2]) << 16 )+ \
+						 READ_WORD(&cave_vram_##_n_[(tile_index<<2)|2]); \
 	SET_TILE_INFO( _n_ ,  code & 0x00ffffff , (code & 0x3f000000) >> (32-8) ); \
 	tile_info.priority = (code & 0xc0000000)>> (32-2); \
 } \
@@ -83,15 +83,15 @@ static void get_tile_info_##_n_( int tile_index ) \
 WRITE_HANDLER( cave_vram_##_n_##_w ) \
 { \
 	COMBINE_WORD_MEM(&cave_vram_##_n_[offset],data); \
-	if ( (offset/4) < DIM_NX * DIM_NY ) \
-		tilemap_mark_tile_dirty(tilemap_##_n_, offset/4 ); \
+	if ( (offset>>2) < DIM_NX * DIM_NY ) \
+		tilemap_mark_tile_dirty(tilemap_##_n_, offset>>2 ); \
 } \
 \
 WRITE_HANDLER( cave_vram_##_n_##_8x8_w ) \
 { \
-	offset %= (DIM_NX * DIM_NY * 4 * 4); /* mirrored RAM */ \
+	offset &= ((DIM_NX*DIM_NY)<<4)-1; /* mirrored RAM */ \
 	COMBINE_WORD_MEM(&cave_vram_##_n_[offset],data); \
-	tilemap_mark_tile_dirty(tilemap_##_n_, offset/4 ); \
+	tilemap_mark_tile_dirty(tilemap_##_n_, offset>>2 ); \
 }
 
 CAVE_TILEMAP(0)
@@ -531,30 +531,6 @@ static void get_sprite_info(void)
 		if (flipx)	sprite->flags |= SPRITE_FLIPX;
 		if (flipy)	sprite->flags |= SPRITE_FLIPY;
 
-
-#if 0
-
-#ifdef MAME_DEBUG
-		if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_N) )
-		{
-			struct DisplayText dt[3];
-			char buf1[40],buf2[40];
-
-			if ( (zoomx == 0x100) && (zoomy == 0x100) )	continue;
-
-			dt[0].text = buf1;		dt[1].text = buf2;	dt[2].text = 0;
-			dt[0].color			=	dt[1].color = UI_COLOR_NORMAL;
-			dt[0].x = y;			dt[1].x = dt[0].x;
-			dt[0].y = max_x-x;		dt[1].y = dt[0].y + 8;
-
-			sprintf(buf1, "1:%04X", zoomx);
-			sprintf(buf2, "2:%04X", zoomy);
-			displaytext(dt,0,0);
-		}
-#endif
-
-#endif
-
 	}
 }
 
@@ -593,41 +569,6 @@ void cave_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx(tilemap_2, 0, READ_WORD(&cave_vctrl_2[0]) );
 		tilemap_set_scrolly(tilemap_2, 0, READ_WORD(&cave_vctrl_2[2]) );
 	}
-
-
-#ifdef MAME_DEBUG
-if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) || keyboard_pressed(KEYCODE_C) ||
-     keyboard_pressed(KEYCODE_V) || keyboard_pressed(KEYCODE_B) )
-{
-	int msk = 0, val = 0;
-
-	if (keyboard_pressed(KEYCODE_X))	val = 1;	// priority 0 only
-	if (keyboard_pressed(KEYCODE_C))	val = 2;	// ""       1
-	if (keyboard_pressed(KEYCODE_V))	val = 4;	// ""       2
-	if (keyboard_pressed(KEYCODE_B))	val = 8;	// ""       3
-
-	if (keyboard_pressed(KEYCODE_Z))	val = 1|2|4|8;	// All of the above priorities
-
-	if (keyboard_pressed(KEYCODE_Q))	msk |= val << 0;	// for layer 0
-	if (keyboard_pressed(KEYCODE_W))	msk |= val << 4;	// for layer 1
-	if (keyboard_pressed(KEYCODE_E))	msk |= val << 8;	// for layer 2
-	if (keyboard_pressed(KEYCODE_A))	msk |= val << 12;	// for sprites
-	if (msk != 0) layers_ctrl &= msk;
-
-#if 1
-	{
-		char buf[80];
-		sprintf(buf,"%04X %04X %04X %04X %04X %04X %04X %04X",
-			READ_WORD(&cave_videoregs[0x0]),READ_WORD(&cave_videoregs[0x2]),
-			READ_WORD(&cave_videoregs[0x4]),READ_WORD(&cave_videoregs[0x6]),
-			READ_WORD(&cave_videoregs[0x8]),READ_WORD(&cave_videoregs[0xa]),
-			READ_WORD(&cave_videoregs[0xc]),READ_WORD(&cave_videoregs[0xe]) );
-		usrintf_showmessage(buf);
-	}
-#endif
-
-}
-#endif
 
 	tilemap_update(ALL_TILEMAPS);
 

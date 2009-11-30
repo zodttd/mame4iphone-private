@@ -1,3 +1,5 @@
+#include "../vidhrdw/tumblep.cpp"
+
 /***************************************************************************
 
   Tumblepop (World)     (c) 1991 Data East Corporation

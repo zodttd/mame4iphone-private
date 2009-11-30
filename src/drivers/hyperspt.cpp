@@ -1,3 +1,5 @@
+#include "../vidhrdw/hyperspt.cpp"
+
 /***************************************************************************
 
 Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)

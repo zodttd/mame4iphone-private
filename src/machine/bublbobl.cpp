@@ -216,8 +216,8 @@ WRITE_HANDLER( bublbobl_68705_portB_w )
 //logerror("%04x: 68705 read %02x from address %04x\n",cpu_get_pc(),bublbobl_sharedram2[address],address);
 				latch = bublbobl_sharedram2[address & 0x03ff];
 			}
-			else
-logerror("%04x: 68705 unknown read address %04x\n",cpu_get_pc(),address);
+//			else
+//logerror("%04x: 68705 unknown read address %04x\n",cpu_get_pc(),address);
 		}
 		else	/* write */
 		{
@@ -226,8 +226,8 @@ logerror("%04x: 68705 unknown read address %04x\n",cpu_get_pc(),address);
 //logerror("%04x: 68705 write %02x to address %04x\n",cpu_get_pc(),portA_out,address);
 				bublbobl_sharedram2[address & 0x03ff] = portA_out;
 			}
-			else
-logerror("%04x: 68705 unknown write to address %04x\n",cpu_get_pc(),address);
+//			else
+//logerror("%04x: 68705 unknown write to address %04x\n",cpu_get_pc(),address);
 		}
 	}
 	if ((ddrB & 0x20) && (~data & 0x20) && (portB_out & 0x20))
@@ -238,6 +238,7 @@ logerror("%04x: 68705 unknown write to address %04x\n",cpu_get_pc(),address);
 		cpu_irq_line_vector_w(0,0,bublbobl_sharedram2[0]);
 		cpu_set_irq_line(0,0,HOLD_LINE);
 	}
+/*
 	if ((ddrB & 0x40) && (~data & 0x40) && (portB_out & 0x40))
 	{
 logerror("%04x: 68705 unknown port B bit %02x\n",cpu_get_pc(),data);
@@ -246,7 +247,7 @@ logerror("%04x: 68705 unknown port B bit %02x\n",cpu_get_pc(),data);
 	{
 logerror("%04x: 68705 unknown port B bit %02x\n",cpu_get_pc(),data);
 	}
-
+*/
 	portB_out = data;
 }
 

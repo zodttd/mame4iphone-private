@@ -1,3 +1,6 @@
+#include "../machine/galaga.cpp"
+#include "../vidhrdw/galaga.cpp"
+
 /***************************************************************************
 
 Galaga memory map (preliminary)

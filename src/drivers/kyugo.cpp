@@ -1,3 +1,5 @@
+#include "../vidhrdw/kyugo.cpp"
+
 /***************************************************************************
 
 This driver supports the following games:

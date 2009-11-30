@@ -72,8 +72,4 @@ extern unsigned konami_dasm(char *buffer, unsigned pc);
 #    define TRUE (!FALSE)
 #endif
 
-#ifdef MAME_DEBUG
-extern unsigned Dasmknmi (char *buffer, unsigned pc);
-#endif
-
 #endif /* _KONAMI_H */

@@ -189,7 +189,7 @@ void system1_vh_stop(void)
 
 WRITE_HANDLER( system1_videomode_w )
 {
-if (data & 0xef) logerror("videomode = %02x\n",data);
+//if (data & 0xef) logerror("videomode = %02x\n",data);
 
 	/* bit 0 is coin counter */
 
@@ -743,14 +743,6 @@ void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
 		fillbitmap(bitmap,palette_transparent_color,&Machine->visible_area);
-
-
-#ifdef MAME_DEBUG
-	if (keyboard_pressed(KEYCODE_SPACE))		// goto next level
-	{
-		memory_region(REGION_CPU1)[0xC085]=33;
-	}
-#endif
 }
 
 

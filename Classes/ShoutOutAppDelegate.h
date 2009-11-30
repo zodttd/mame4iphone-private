@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-#define NUMBER_OF_AD_PAGES 4
+#define NUMBER_OF_AD_PAGES 1
 
 @interface ShoutOutAppDelegate : NSObject <UIApplicationDelegate> {
 	

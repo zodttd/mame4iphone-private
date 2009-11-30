@@ -51,7 +51,7 @@ struct GfxElement
 	unsigned char *gfxdata;	/* pixel data */
 	int line_modulo;	/* amount to add to get to the next line (usually = width) */
 	int char_modulo;	/* = line_modulo * height */
-};
+} __attribute__ ((__aligned__ (32)));
 
 struct GfxDecodeInfo
 {

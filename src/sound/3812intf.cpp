@@ -39,7 +39,7 @@ typedef struct non_emu3812_state {
 	int aOPLFreqArray[16];		/* Up to 9 channels.. */
 }NE_OPL_STATE;
 
-static double timer_step;
+static timer_tm timer_step;
 static NE_OPL_STATE *nonemu_state;
 
 /* These ones are used by both */
@@ -70,7 +70,7 @@ static void timer1_callback (int chip)
 	}
 
 	/* next! */
-	st->timer1 = timer_set ((double)st->timer1_val*4*timer_step, chip, timer1_callback);
+	st->timer1 = timer_set ((timer_tm)st->timer1_val*4*timer_step, chip, timer1_callback);
 }
 
 static void timer2_callback (int chip)
@@ -85,7 +85,7 @@ static void timer2_callback (int chip)
 	}
 
 	/* next! */
-	st->timer2 = timer_set ((double)st->timer2_val*16*timer_step, chip, timer2_callback);
+	st->timer2 = timer_set ((timer_tm)st->timer2_val*16*timer_step, chip, timer2_callback);
 }
 
 static int nonemu_YM3812_sh_start(const struct MachineSound *msound)
@@ -107,7 +107,7 @@ static int nonemu_YM3812_sh_start(const struct MachineSound *msound)
 		nonemu_state[i].timer1_val =
 		nonemu_state[i].timer2_val = 256;
 	}
-	timer_step = TIME_IN_HZ((double)intf->baseclock / 72.0);
+	timer_step = TIME_IN_HZ((float)intf->baseclock / 72.0);
 	return 0;
 }
 
@@ -141,9 +141,9 @@ static void nonemu_YM3812_control_port_w(int chip,int data)
 static void nonemu_WriteConvertedFrequency( int chip,int nFrq, int nCh )
 {
 	int		nRealOctave;
-	double	vRealFrq;
+	int	vRealFrq;
 
-	vRealFrq = (((nFrq&0x3ff)<<((nFrq&0x7000)>>12))) * (double)intf->baseclock / (double)ym3812_StdClock;
+	vRealFrq = (((nFrq&0x3ff)<<((nFrq&0x7000)>>12))) * (float)intf->baseclock / (float)ym3812_StdClock;
 	nRealOctave = 0;
 
 	while( (vRealFrq>1023.0)&&(nRealOctave<7) )
@@ -203,7 +203,7 @@ static void nonemu_YM3812_write_port_w(int chip,int data)
 				if (data & 0x01)
 				{
 					if (!st->timer1)
-						st->timer1 = timer_set ((double)st->timer1_val*4*timer_step, chip, timer1_callback);
+						st->timer1 = timer_set ((timer_tm)st->timer1_val*4*timer_step, chip, timer1_callback);
 				}
 				else if (st->timer1)
 				{
@@ -214,7 +214,7 @@ static void nonemu_YM3812_write_port_w(int chip,int data)
 				if (data & 0x02)
 				{
 					if (!st->timer2)
-						st->timer2 = timer_set ((double)st->timer2_val*16*timer_step, chip, timer2_callback);
+						st->timer2 = timer_set ((timer_tm)st->timer2_val*16*timer_step, chip, timer2_callback);
 				}
 				else if (st->timer2)
 				{
@@ -289,7 +289,7 @@ static void timer_callback_3812(int param)
 }
 
 /* TimerHandler from fm.c */
-static void TimerHandler(int c,double period)
+static void TimerHandler(int c,timer_tm period)
 {
 	if( period == 0 )
 	{	/* Reset FM Timer */
@@ -366,6 +366,7 @@ static void emu_YM3812_sh_stop(void)
 }
 
 /* reset */
+/*
 static void emu_YM3812_sh_reset(void)
 {
 	int i;
@@ -373,6 +374,7 @@ static void emu_YM3812_sh_reset(void)
 	for (i = 0;i < intf->num;i++)
 		OPLResetChip(F3812[i]);
 }
+*/
 
 static int emu_YM3812_status_port_r(int chip)
 {

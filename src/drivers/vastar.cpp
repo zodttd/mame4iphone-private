@@ -1,3 +1,5 @@
+#include "../vidhrdw/vastar.cpp"
+
 /***************************************************************************
 
 Vastar memory map (preliminary)

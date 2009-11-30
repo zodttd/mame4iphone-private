@@ -4,9 +4,8 @@
 #import "helpers.h"
 #import "TabBar.h"
 #import "AltAds.h"
-#import "RootViewController.h"
+#import "RomController.h"
 #import "ShoutOutAppDelegate.h"
-//#import "BookmarksController.h"
 #import "NowPlayingController.h"
 #import "SaveStatesController.h"
 #import "RecentController.h"
@@ -15,18 +14,16 @@
 #define SOApp ((SOApplication *)[UIApplication sharedApplication])
 @interface SOApplication : UIApplication 
 {
-				RootViewController			* tblView;
-//	IBOutlet	BookmarksController			* bookmarksView;
+	IBOutlet	RomController           * romView;
 	IBOutlet	NowPlayingController		* nowPlayingView;
 	IBOutlet	SaveStatesController		* saveStatesView;
-	IBOutlet	RecentController			* recentView;
-	IBOutlet	OptionsController			* optionsView;
+	IBOutlet	RecentController        * recentView;
+	IBOutlet	OptionsController       * optionsView;
 }
 
-@property(assign)	RootViewController			* tblView;
-//@property(assign)	BookmarksController			* bookmarksView;
-@property(assign)	NowPlayingController		* nowPlayingView;
-@property(assign)	SaveStatesController		* saveStatesView;
+@property(assign)	RomController         * romView;
+@property(assign)	NowPlayingController	* nowPlayingView;
+@property(assign)	SaveStatesController	* saveStatesView;
 @property(assign)	RecentController			* recentView;
 @property(assign)	OptionsController			* optionsView;
 

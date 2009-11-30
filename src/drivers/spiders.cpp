@@ -1,3 +1,7 @@
+#include "../machine/spiders.cpp"
+#include "../vidhrdw/crtc6845.cpp"
+#include "../vidhrdw/spiders.cpp"
+
 /***************************************************************************
 
 Spiders driver by K.Wilkins May 1998

@@ -84,10 +84,6 @@ void ccpu_SetInputs(int inputs, int switches);
 /* nicer config function */
 void ccpu_Config (int jmi, int msize, int monitor);
 
-#ifdef MAME_DEBUG
-extern unsigned DasmCCPU(char *buffer, unsigned pc);
-#endif
-
 /*============================================================================================*
 
 	BELOW LIES THE CORE OF THE CCPU. THE CODE WAS KINDLY GIVEN TO MAME BY ZONN MOORE,

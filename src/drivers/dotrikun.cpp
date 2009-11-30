@@ -1,3 +1,5 @@
+#include "../vidhrdw/dotrikun.cpp"
+
 /***************************************************************************
 
 Dottori Kun (Head On's mini game)

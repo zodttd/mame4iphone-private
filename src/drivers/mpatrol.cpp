@@ -1,3 +1,5 @@
+#include "../vidhrdw/mpatrol.cpp"
+
 /***************************************************************************
 
 Moon Patrol memory map (preliminary)

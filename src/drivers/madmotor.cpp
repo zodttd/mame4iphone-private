@@ -1,3 +1,5 @@
+#include "../vidhrdw/madmotor.cpp"
+
 /***************************************************************************
 
   Mad Motor								(c) 1989 Mitchell Corporation
@@ -56,7 +58,7 @@ static READ_HANDLER( madmotor_control_r )
 			return readinputport(2);
 	}
 
-	logerror("Unknown control read at %d\n",offset);
+	//logerror("Unknown control read at %d\n",offset);
 	return 0xffff;
 }
 

@@ -30,32 +30,32 @@
 #define MAX_SN76477 4
 
 /* Little helpers for magnitude conversions */
-#define RES_K(res) ((double)res*1e3)
-#define RES_M(res) ((double)res*1e6)
-#define CAP_U(cap) ((double)cap*1e-6)
-#define CAP_N(cap) ((double)cap*1e-9)
-#define CAP_P(cap) ((double)cap*1e-12)
+#define RES_K(res) ((float)res*1e3)
+#define RES_M(res) ((float)res*1e6)
+#define CAP_U(cap) ((float)cap*1e-6)
+#define CAP_N(cap) ((float)cap*1e-9)
+#define CAP_P(cap) ((float)cap*1e-12)
 
 /* The interface structure */
 struct SN76477interface {
 	int num;
 	int mixing_level[MAX_SN76477];
-	double noise_res[MAX_SN76477];
-	double filter_res[MAX_SN76477];
-	double filter_cap[MAX_SN76477];
-	double decay_res[MAX_SN76477];
-	double attack_decay_cap[MAX_SN76477];
-	double attack_res[MAX_SN76477];
-	double amplitude_res[MAX_SN76477];
-	double feedback_res[MAX_SN76477];
-	double vco_voltage[MAX_SN76477];
-    double vco_cap[MAX_SN76477];
-    double vco_res[MAX_SN76477];
-    double pitch_voltage[MAX_SN76477];
-    double slf_res[MAX_SN76477];
-    double slf_cap[MAX_SN76477];
-    double oneshot_cap[MAX_SN76477];
-    double oneshot_res[MAX_SN76477];
+	float noise_res[MAX_SN76477];
+	float filter_res[MAX_SN76477];
+	float filter_cap[MAX_SN76477];
+	float decay_res[MAX_SN76477];
+	float attack_decay_cap[MAX_SN76477];
+	float attack_res[MAX_SN76477];
+	float amplitude_res[MAX_SN76477];
+	float feedback_res[MAX_SN76477];
+	float vco_voltage[MAX_SN76477];
+    float vco_cap[MAX_SN76477];
+    float vco_res[MAX_SN76477];
+    float pitch_voltage[MAX_SN76477];
+    float slf_res[MAX_SN76477];
+    float slf_cap[MAX_SN76477];
+    float oneshot_cap[MAX_SN76477];
+    float oneshot_res[MAX_SN76477];
 };
 
 /* Noise clock write, useful only if noise_res is zero */
@@ -82,22 +82,22 @@ extern void SN76477_envelope_2_w(int chip, int data);
 /* VCO select (one input line: 0 external control, 1: SLF control) */
 extern void SN76477_vco_w(int chip, int data);
 
-void SN76477_set_noise_res(int chip, double res);
-void SN76477_set_filter_res(int chip, double res);
-void SN76477_set_filter_cap(int chip, double cap);
-void SN76477_set_decay_res(int chip, double res);
-void SN76477_set_attack_decay_cap(int chip, double cap);
-void SN76477_set_attack_res(int chip, double res);
-void SN76477_set_amplitude_res(int chip, double res);
-void SN76477_set_feedback_res(int chip, double res);
-void SN76477_set_slf_res(int chip, double res);
-void SN76477_set_slf_cap(int chip, double cap);
-void SN76477_set_oneshot_res(int chip, double res);
-void SN76477_set_oneshot_cap(int chip, double cap);
-void SN76477_set_vco_res(int chip, double res);
-void SN76477_set_vco_cap(int chip, double cap);
-void SN76477_set_pitch_voltage(int chip, double voltage);
-void SN76477_set_vco_voltage(int chip, double voltage);
+void SN76477_set_noise_res(int chip, float res);
+void SN76477_set_filter_res(int chip, float res);
+void SN76477_set_filter_cap(int chip, float cap);
+void SN76477_set_decay_res(int chip, float res);
+void SN76477_set_attack_decay_cap(int chip, float cap);
+void SN76477_set_attack_res(int chip, float res);
+void SN76477_set_amplitude_res(int chip, float res);
+void SN76477_set_feedback_res(int chip, float res);
+void SN76477_set_slf_res(int chip, float res);
+void SN76477_set_slf_cap(int chip, float cap);
+void SN76477_set_oneshot_res(int chip, float res);
+void SN76477_set_oneshot_cap(int chip, float cap);
+void SN76477_set_vco_res(int chip, float res);
+void SN76477_set_vco_cap(int chip, float cap);
+void SN76477_set_pitch_voltage(int chip, float voltage);
+void SN76477_set_vco_voltage(int chip, float voltage);
 
 int SN76477_sh_start(const struct MachineSound *msound);
 void SN76477_sh_stop(void);

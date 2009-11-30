@@ -1,3 +1,6 @@
+#include "../machine/atarifb.cpp"
+#include "../vidhrdw/atarifb.cpp"
+
 /***************************************************************************
 
 Atari Football Driver

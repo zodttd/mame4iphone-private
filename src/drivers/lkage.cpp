@@ -1,3 +1,6 @@
+#include "../machine/lkage.cpp"
+#include "../vidhrdw/lkage.cpp"
+
 /***************************************************************************
 
 Legend of Kage

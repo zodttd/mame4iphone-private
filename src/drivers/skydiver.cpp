@@ -1,3 +1,5 @@
+#include "../vidhrdw/skydiver.cpp"
+
 /***************************************************************************
 
 Atari Sky Diver Driver

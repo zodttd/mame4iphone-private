@@ -12,7 +12,16 @@ static void * upper_malloc(size_t size)
 {
   	int i=0,j=0;
  	void *mem = NULL;
- 	int BSize = ((size-1)/UPPERMEM_BLOCKSIZE) + 1;
+ 	int BSize;
+
+    if (size%UPPERMEM_BLOCKSIZE==0)
+    {
+        BSize=size/UPPERMEM_BLOCKSIZE;
+    }
+    else
+    {
+        BSize=(size/UPPERMEM_BLOCKSIZE)+1;
+    }
 
   	while (i<UPPERMEM_SIZE/UPPERMEM_BLOCKSIZE)
   	{
@@ -41,9 +50,17 @@ void upper_malloc_init(void *pointer)
 
 void * upper_take(int Start, size_t Size)
 {
-	uppermap[(Start - UPPERMEM_START) / UPPERMEM_BLOCKSIZE] = ((Size-1)/UPPERMEM_BLOCKSIZE) + 1;
-  	void* mem = ((char*)uppermem) + (Start-UPPERMEM_START);
-	return(mem);
+ 	int BSize;
+ 	if (Size%UPPERMEM_BLOCKSIZE==0)
+    {
+        BSize=Size/UPPERMEM_BLOCKSIZE;
+    }
+    else
+    {
+        BSize=(Size/UPPERMEM_BLOCKSIZE)+1;
+    }
+	uppermap[(Start - UPPERMEM_START) / UPPERMEM_BLOCKSIZE] = BSize;
+	return(((char*)uppermem) + (Start-UPPERMEM_START));
 }
 
 

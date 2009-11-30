@@ -1,3 +1,5 @@
+#include "../vidhrdw/toaplan2.cpp"
+
 /*****************************************************************************
 
 		ToaPlan game hardware from 1991-1994
@@ -327,20 +329,20 @@ static WRITE_HANDLER( toaplan2_coin_w )
 		case 0x00:	coin_lockout_global_w(0,1); break;	/* Lock all coin slots */
 		case 0x0c:	coin_lockout_global_w(0,0); break;	/* Unlock all coin slots */
 		case 0x0d:	coin_counter_w(0,1); coin_counter_w(0,0);	/* Count slot A */
-					logerror("Count coin slot A\n"); break;
+					/*logerror("Count coin slot A\n");*/ break;
 		case 0x0e:	coin_counter_w(1,1); coin_counter_w(1,0);	/* Count slot B */
-					logerror("Count coin slot B\n"); break;
+					/*logerror("Count coin slot B\n");*/ break;
 	/* The following are coin counts after coin-lock active (faulty coin-lock ?) */
 		case 0x01:	coin_counter_w(0,1); coin_counter_w(0,0); coin_lockout_w(0,1); break;
 		case 0x02:	coin_counter_w(1,1); coin_counter_w(1,0); coin_lockout_global_w(0,1); break;
 
-		default:	logerror("Writing unknown command (%04x) to coin control\n",data);
+		default:	//logerror("Writing unknown command (%04x) to coin control\n",data);
 					break;
 	}
-	if (data > 0xf)
-	{
-		logerror("Writing unknown upper bits command (%04x) to coin control\n",data);
-	}
+	//if (data > 0xf)
+	//{
+	//	logerror("Writing unknown upper bits command (%04x) to coin control\n",data);
+	//}
 }
 
 static WRITE_HANDLER( oki_bankswitch_w )
@@ -370,7 +372,7 @@ static WRITE_HANDLER( toaplan2_hd647180_cpu_w )
 	else									/* Teki Paki */
 	{
 		mcu_data = data;
-		logerror("PC:%08x Writing command (%04x) to secondary CPU shared port\n",cpu_getpreviouspc(),mcu_data);
+		//logerror("PC:%08x Writing command (%04x) to secondary CPU shared port\n",cpu_getpreviouspc(),mcu_data);
 	}
 }
 
@@ -471,10 +473,10 @@ static WRITE_HANDLER( ghox_mcu_w )
 		WRITE_WORD (&toaplan2_shared_ram[offset  ],0x05);	/* Return address for */
 		WRITE_WORD (&toaplan2_shared_ram[offset-2],0x56);	/*   RTS instruction */
 	}
-	else
-	{
-		logerror("PC:%08x Writing %08x to HD647180 cpu shared ram status port\n",cpu_getpreviouspc(),mcu_data);
-	}
+	//else
+	//{
+	//	logerror("PC:%08x Writing %08x to HD647180 cpu shared ram status port\n",cpu_getpreviouspc(),mcu_data);
+	//}
 	WRITE_WORD (&toaplan2_shared_ram[0x56],0x4e);	/* Return a RTS instruction */
 	WRITE_WORD (&toaplan2_shared_ram[0x58],0x75);
 
@@ -539,7 +541,7 @@ static READ_HANDLER( kbash_sub_cpu_r )
 
 static WRITE_HANDLER( kbash_sub_cpu_w )
 {
-	logerror("PC:%08x writing %04x to Zx80 secondary CPU status port %02x\n",cpu_getpreviouspc(),mcu_data,offset/2);
+	//logerror("PC:%08x writing %04x to Zx80 secondary CPU status port %02x\n",cpu_getpreviouspc(),mcu_data,offset/2);
 }
 
 static READ_HANDLER( shared_ram_r )
@@ -561,7 +563,7 @@ static WRITE_HANDLER( shared_ram_w )
 	if (offset == 0xff8)
 	{
 		WRITE_WORD (&toaplan2_shared_ram[offset + 2],data);
-		logerror("PC:%08x Writing  (%04x) to secondary CPU\n",cpu_getpreviouspc(),data);
+		//logerror("PC:%08x Writing  (%04x) to secondary CPU\n",cpu_getpreviouspc(),data);
 		if ((data & 0xffff) == 0x81) data = 0x01;
 	}
 	WRITE_WORD (&toaplan2_shared_ram[offset],data);
@@ -580,14 +582,14 @@ static READ_HANDLER( Zx80_status_port_r )
 	if (mcu_data == 0xffaa) mcu_data = 0x8000ffaa;		/* fixeight */
 	if (mcu_data == 0xff00) mcu_data = 0xffaa;			/* fixeight */
 
-	logerror("PC:%08x reading %08x from Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
+	//logerror("PC:%08x reading %08x from Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
 	data = mcu_data & 0x0000ffff;
 	return data;
 }
 static WRITE_HANDLER( Zx80_command_port_w )
 {
 	mcu_data = data;
-	logerror("PC:%08x Writing command (%04x) to Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
+	//logerror("PC:%08x Writing command (%04x) to Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
 }
 
 READ_HANDLER( Zx80_sharedram_r )

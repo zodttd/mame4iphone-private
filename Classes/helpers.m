@@ -21,7 +21,7 @@ const char* get_documents_path(char* file)
   const char* path = [documentsDirectory UTF8String];
   sprintf(documents_path, "%s/%s", path, file);
 #else
-  sprintf(documents_path, "/var/mobile/Media/ROMs/MAME/%s", file);
+  sprintf(documents_path, "/var/mobile/Media/ROMs/MAME/roms/%s", file);
 #endif
   return documents_path;
 }

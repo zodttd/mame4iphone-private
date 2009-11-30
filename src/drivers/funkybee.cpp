@@ -1,3 +1,5 @@
+#include "../vidhrdw/funkybee.cpp"
+
 /***************************************************************************
 
 Funky Bee/Sky Lancer memory map (preliminary)

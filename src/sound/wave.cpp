@@ -639,7 +639,7 @@ int wave_status(int id, int newstatus)
 		if( !newstatus && w->timer )
 		{
 			if( w->timer )
-				w->offset += timer_timeelapsed(w->timer) * w->smpfreq;
+				w->offset += (((float)timer_timeelapsed(w->timer))/(float)TIME_ONE_SEC) * w->smpfreq;
 			timer_remove(w->timer);
 			w->timer = NULL;
 			bitmap_dirty = 1;
@@ -886,7 +886,7 @@ int wave_seek(int id, int offset, int whence)
 		break;
 	case SEEK_CUR:
 		if( w->timer )
-			pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
+			pos = w->offset + ((((float)timer_timeelapsed(w->timer))/(float)TIME_ONE_SEC) * w->smpfreq);
 		w->offset = pos + offset;
 		if( w->offset < 0 )
 			w->offset = 0;
@@ -909,7 +909,7 @@ int wave_tell(int id)
 	struct wave_file *w = &wave[id];
     UINT32 pos = 0;
 	if( w->timer )
-		pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
+		pos = w->offset + ((((float)timer_timeelapsed(w->timer))/(float)TIME_ONE_SEC) * w->smpfreq);
 	if( pos >= w->samples )
 		pos = w->samples -1;
     return pos;
@@ -929,7 +929,7 @@ int wave_input(int id)
 
     if( w->timer )
 	{
-		pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
+		pos = w->offset + ((((float)timer_timeelapsed(w->timer))/(float)TIME_ONE_SEC) * w->smpfreq);
 		if( pos >= w->samples )
 			pos = w->samples - 1;
         w->playpos = pos;
@@ -962,7 +962,7 @@ void wave_output(int id, int data)
 
     if( w->timer )
     {
-		pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
+		pos = w->offset + ((((float)timer_timeelapsed(w->timer))/(float)TIME_ONE_SEC) * w->smpfreq);
         while( pos >= w->samples )
         {
             /* add one second of data */
@@ -999,7 +999,7 @@ int wave_input_chunk(int id, void *dst, int count)
 
     if( w->timer )
 	{
-        pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
+        pos = w->offset + ((((float)timer_timeelapsed(w->timer))/(float)TIME_ONE_SEC) * w->smpfreq);
 		if( pos >= w->samples )
 			pos = w->samples - 1;
 	}
@@ -1028,7 +1028,7 @@ int wave_output_chunk(int id, void *src, int count)
 
     if( w->timer )
 	{
-        pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
+        pos = w->offset + ((((float)timer_timeelapsed(w->timer))/(float)TIME_ONE_SEC) * w->smpfreq);
 		if( pos >= w->length )
 			pos = w->length - 1;
 	}

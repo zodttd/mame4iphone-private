@@ -1,3 +1,5 @@
+#include "../vidhrdw/sharkatt.cpp"
+
 /***************************************************************************
 
  Shark Attack
@@ -45,10 +47,10 @@ static READ_HANDLER( sharkatt_8255_r )
 			if (PA_8255 & 0x08)
 				return input_port_3_r(offset);
 
-			logerror("8255: read from port B, PA = %X\n",PA_8255);
+			//logerror("8255: read from port B, PA = %X\n",PA_8255);
 			break;
 		default:
-			logerror("8255: read from port<>B, offset %d\n",offset);
+			//logerror("8255: read from port<>B, offset %d\n",offset);
 			break;
 	}
 
@@ -62,7 +64,7 @@ static WRITE_HANDLER( sharkatt_8255_w )
 		case 0:		PA_8255 = data;	break;
 		case 1:		PB_8255 = data;	break;
 		case 2:		PC_8255 = data;	break;
-		case 3:		logerror("8255 Control = %02X\n",data);
+		case 3:		/* logerror("8255 Control = %02X\n",data); */ break;
 	}
 }
 

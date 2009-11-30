@@ -1,3 +1,5 @@
+#include "../vidhrdw/tehkanwc.cpp"
+
 /***************************************************************************
 
 Tehkan World Cup - (c) Tehkan 1985

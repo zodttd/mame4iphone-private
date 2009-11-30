@@ -1,3 +1,5 @@
+#include "../vidhrdw/wc90.cpp"
+
 /*
 World Cup 90 ( Tecmo ) driver
 -----------------------------

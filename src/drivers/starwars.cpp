@@ -1,3 +1,7 @@
+#include "../machine/starwars.cpp"
+#include "../machine/swmathbx.cpp"
+#include "../sndhrdw/starwars.cpp"
+
 /***************************************************************************
 File: drivers\starwars.c
 
@@ -96,7 +100,7 @@ WRITE_HANDLER( starwars_out_w )
 			osd_led_w (0, data >> 7);
 			break;	/* LED 1 */
 		case 7:
-			logerror("recall\n"); /* what's that? */
+			/*logerror("recall\n");*/ /* what's that? */
 			break;
 	}
 }

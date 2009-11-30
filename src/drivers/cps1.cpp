@@ -1,3 +1,5 @@
+#include "../vidhrdw/cps1.cpp"
+
 /***************************************************************************
 
   Capcom System 1
@@ -55,7 +57,7 @@ static WRITE_HANDLER( cps1_snd_bankswitch_w )
 	bankaddr = (data * 0x4000) & (length-1);
 	cpu_setbank(1,&RAM[0x10000 + bankaddr]);
 
-	if (data & 0xfe) logerror("%04x: write %02x to f004\n",cpu_get_pc(),data);
+	//if (data & 0xfe) logerror("%04x: write %02x to f004\n",cpu_get_pc(),data);
 }
 
 static WRITE_HANDLER( cps1_sound_fade_w )
@@ -203,7 +205,7 @@ static WRITE_HANDLER( qsound_banksw_w )
 	int bankaddress=0x10000+((data&0x0f)*0x4000);
 	if (bankaddress >= memory_region_length(REGION_CPU2))
 	{
-		logerror("WARNING: Q sound bank overflow (%02x)\n", data);
+		//logerror("WARNING: Q sound bank overflow (%02x)\n", data);
 		bankaddress=0x10000;
 	}
 	cpu_setbank(1, &RAM[bankaddress]);
@@ -479,10 +481,10 @@ INPUT_PORTS_START( forgottn )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_ANALOGX( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER1, 100, 20, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+	PORT_ANALOGX( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER1, 100, 20, 0, 0, JOYCODE_1_BUTTON5, JOYCODE_1_BUTTON6, 0, 0 )
 
 	PORT_START
-	PORT_ANALOGX( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 100, 20, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
+	PORT_ANALOGX( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 100, 20, 0, 0, JOYCODE_2_BUTTON5, JOYCODE_2_BUTTON6, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ghouls )

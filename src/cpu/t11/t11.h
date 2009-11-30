@@ -63,8 +63,4 @@ extern void t11_SetBank(int banknum, unsigned char *address);
 #define T11_WRMEM(A,V) (cpu_writemem16lew(A,V))
 #define T11_WRMEM_WORD(A,V) (cpu_writemem16lew_word(A,V))
 
-#ifdef MAME_DEBUG
-extern unsigned DasmT11(char *buffer, unsigned pc);
-#endif
-
 #endif /* _T11_H */

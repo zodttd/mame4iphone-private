@@ -542,7 +542,7 @@ struct pia6821_interface turbocs_pia_intf =
 /********* internal interfaces ***********/
 static WRITE_HANDLER( squawkntalk_porta1_w )
 {
-	logerror("Write to AY-8912\n");
+	//logerror("Write to AY-8912\n");
 }
 
 static WRITE_HANDLER( squawkntalk_porta2_w )

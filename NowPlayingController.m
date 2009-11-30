@@ -13,11 +13,9 @@
 #define IPHONE_MENU_MAIN                1
 #define IPHONE_MENU_SAVE_CURRENT        2
 #define IPHONE_MENU_SAVE_NEW            3
-#define IPHONE_MENU_TOGGLE_CHEAT_LOAD   4
-#define IPHONE_MENU_QUIT_LOAD           5
-#define IPHONE_MENU_TOGGLE_CHEAT        6
-#define IPHONE_MENU_QUIT                7
-#define IPHONE_MENU_MAIN_LOAD           8
+#define IPHONE_MENU_QUIT_LOAD           4
+#define IPHONE_MENU_QUIT                5
+#define IPHONE_MENU_MAIN_LOAD           6
 
 char romfile[1024];
 char ourArgsStr[16][256];
@@ -30,53 +28,41 @@ long long iphone_last_upd_ticks = 0;
 int iphone_controller_opacity = 100;
 int iphone_is_landscape = 0;
 pthread_t sound_tid;
+static unsigned long newtouches[10];
+static unsigned long oldtouches[10];
 
 enum  { GP2X_UP=0x1,       GP2X_LEFT=0x4,       GP2X_DOWN=0x10,  GP2X_RIGHT=0x40,
-	GP2X_START=1<<8,   GP2X_SELECT=1<<9,    GP2X_L=1<<10,    GP2X_R=1<<11,
-	GP2X_A=1<<12,      GP2X_B=1<<13,        GP2X_X=1<<14,    GP2X_Y=1<<15,
-GP2X_VOL_UP=1<<23, GP2X_VOL_DOWN=1<<22, GP2X_PUSH=1<<27 };
+	      GP2X_START=1<<8,   GP2X_SELECT=1<<9,    GP2X_L=1<<10,    GP2X_R=1<<11,
+	      GP2X_A=1<<12,      GP2X_B=1<<13,        GP2X_X=1<<14,    GP2X_Y=1<<15,
+        GP2X_VOL_UP=1<<23, GP2X_VOL_DOWN=1<<22, GP2X_PUSH=1<<27 };
 
 unsigned long global_enable_audio = 1;
 
 extern float __audioVolume;
-extern unsigned short BaseAddress[240*160];
+extern volatile unsigned short BaseAddress[240*160];
 extern unsigned long gp2x_pad_status;
-extern int __emulation_run;
-extern int __emulation_saving;
-extern int __emulation_paused;
+extern volatile int __emulation_run;
+extern volatile int __emulation_saving;
+extern volatile int __emulation_paused;
 extern int tArgc;
 extern char** tArgv;
 extern pthread_t main_tid;
 extern unsigned char gamepak_filename[512];
 extern char test_print_buffer[128];
 extern unsigned short* videobuffer;
+extern unsigned char *vrambuffer;
 
 extern void save_state(char *savestate_filename, unsigned short *screen_capture);
 extern void set_save_state(void);
 extern int iphone_main (int argc, char **argv);
-extern void toggle_cheat(unsigned char cheat_num);
-extern int check_cheat(unsigned char cheat_num);
-extern unsigned char* name_cheat(unsigned char cheat_num);
 
 static ScreenView *sharedInstance = nil;
 
 void updateScreen()
 {
   //usleep(100);
-  sched_yield();
-	//[sharedInstance performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:NO];
-}
-
-void* sound_Thread_Start(void* args)
-{
-  if(global_enable_audio)
-  {
-    app_DemuteSound();
-  }
-	while(__emulation_run)
-	{
-    usleep(1000000);
-	}
+  //sched_yield();
+	[sharedInstance performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:NO];
 }
 
 void* app_Thread_Start(void* args)
@@ -148,12 +134,12 @@ void* app_Thread_Start(void* args)
 		{
 			if([SOApp.optionsView getCurrentScaling])
 			{
-				screenLayer.frame = CGRectMake(0.0f, 0.0f, 318.0f, 238.0f);
+				screenLayer.frame = CGRectMake(0.0f, 0.0f, 320.0f, 238.0f);
 				[ screenLayer setOpaque: YES ];
 			}
 			else
 			{
-				screenLayer.frame = CGRectMake(0.0f, 0.0f, 318.0f, 238.0f);
+				screenLayer.frame = CGRectMake(0.0f, 0.0f, 320.0f, 238.0f);
 				[ screenLayer setOpaque: YES ];				
 			}
 		}
@@ -171,7 +157,7 @@ void* app_Thread_Start(void* args)
 			{
 				CGAffineTransform transform = CGAffineTransformMakeRotation(M_PI / 2.0f); // = CGAffineTransformMakeTranslation(1.0, 1.0);
 				[screenLayer setAffineTransform:transform];
-				screenLayer.frame = CGRectMake(40.0f, 80.0f, 320.0f, 480.0f);
+				screenLayer.frame = CGRectMake(40.0f, 80.0f, 238.0f, 320.0f);
 				//[screenLayer setCenter:CGPointMake(240.0f,160.0f)];
 				[ screenLayer setOpaque:YES ];				
 			}
@@ -193,7 +179,7 @@ void* app_Thread_Start(void* args)
 
 		screenbuffer = CoreSurfaceBufferGetBaseAddress(_screenSurface);
 		//[NSThread setThreadPriority:0.0];
-		[NSThread detachNewThreadSelector:@selector(updateScreen) toTarget:self withObject:nil];
+		//[NSThread detachNewThreadSelector:@selector(updateScreen) toTarget:self withObject:nil];
 		
     iphone_last_upd_ticks = 0;
 		/*
@@ -236,56 +222,32 @@ void* app_Thread_Start(void* args)
 
 - (void)updateScreen
 {
-  [NSThread setThreadPriority:1.0];
-#if 1
-/*  if(iphone_touches == 1)
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
+  //[NSThread setThreadPriority:0.9];
+/*
+	struct sched_param    param;
+  param.sched_priority = 46;
+  if(pthread_setschedparam(pthread_self(), SCHED_RR, &param) != 0)
   {
-		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
-		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
-		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+    fprintf(stderr, "Error setting pthread priority\n");
   }
-  else if(iphone_touches >= 2)
+*/
+/*
+	struct sched_param    param;
+  param.sched_priority = -47;
+  if(pthread_setschedparam(pthread_self(), SCHED_OTHER, &param) != 0)
   {
-		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+    fprintf(stderr, "Error setting pthread priority\n");
   }
-  else*/
-  {
-		//[self setNeedsDisplay];
-		  NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-		while(__emulation_run)
-		{
-		  [self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:NO];
-      usleep(16666);
-      sched_yield();
-		}
-    [pool release];
-		/*[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
-		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
-		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
-		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
-		[self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
-  */
-  }
-#else
-	struct timeval current_time;
-  long long current_ticks;
-	gettimeofday(&current_time, NULL);
-	current_ticks = ((long long)current_time.tv_sec * 1000ll) + ((long long)current_time.tv_usec / 1000ll);
-	
-	if(iphone_last_upd_ticks > 0)
-	{		
-		if((current_ticks - iphone_last_upd_ticks) >= (iphone_touches > 1 ? 40 : 33))
-		{
-			[self setNeedsDisplay];
-			iphone_last_upd_ticks = current_ticks;
-		}
-	}
-	else
+*/
+	while(__emulation_run)
 	{
-		[self setNeedsDisplay];
-		iphone_last_upd_ticks = current_ticks;
+	  [self performSelectorOnMainThread:@selector(setNeedsDisplay) withObject:nil waitUntilDone:YES];
+    //usleep(16666);
+    //sched_yield();
 	}
-#endif
+  [pool release];
 }
 
 @end
@@ -433,8 +395,8 @@ void* app_Thread_Start(void* args)
 		pthread_create(&main_tid, NULL, app_Thread_Start, NULL);
 		
 		struct sched_param    param;
-    param.sched_priority = 63;
-    if(pthread_setschedparam(main_tid, SCHED_RR, &param) != 0)
+    param.sched_priority = 46;
+    if(pthread_setschedparam(main_tid, SCHED_OTHER, &param) != 0)
     {
       fprintf(stderr, "Error setting pthread priority\n");
     }
@@ -445,12 +407,6 @@ void* app_Thread_Start(void* args)
     }
     //[NSThread detachNewThreadSelector:@selector(runSound) toTarget:self withObject:nil];  
 	}
-}
-
-- (void)runSound
-{
-  //[NSThread setThreadPriority:1.0];
-  sound_Thread_Start(NULL);
 }
 
 - (void)runProgram
@@ -588,6 +544,10 @@ void* app_Thread_Start(void* args)
 
 - (void)runMenu
 {
+  if(__emulation_paused)
+  {
+    return;
+  }
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
   __emulation_paused = 1;
   iphone_menu = IPHONE_MENU_MAIN_LOAD;
@@ -600,6 +560,7 @@ void* app_Thread_Start(void* args)
 		}
 		else
 		{
+      sched_yield();
       usleep(1000000);
 		}
 	}
@@ -623,103 +584,151 @@ void* app_Thread_Start(void* args)
 		(point.y <= rect.origin.y + rect.size.height)) ? 1 : 0)
 
 #if 1
-- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {	
-	int i;
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{	    
+  int touchstate[10];
 	//Get all the touches.
+  int i;
 	NSSet *allTouches = [event allTouches];
 	int touchcount = [allTouches count];
 	
-	gp2x_pad_status = 0;
-	
-  iphone_touches = touchcount;
-			
-	for (i = 0; i < touchcount; i++) 
+	if(!__emulation_run)
 	{
-		UITouch *touch = [[allTouches allObjects] objectAtIndex:i];
-		
-		if(touch == nil)
-		{
-			return;
-		}
-		
-		/*if(touch.phase == UITouchPhaseBegan)
-		{
-			NSLog([NSString stringWithFormat:@"%s", test_print_buffer]);
-		}*/
-		if( touch.phase == UITouchPhaseBegan		||
-			touch.phase == UITouchPhaseMoved		||
-			touch.phase == UITouchPhaseStationary	)
+    return;
+	}
+	
+  for (i = 0; i < 10; i++) 
+  {
+    touchstate[i] = 0;
+    oldtouches[i] = newtouches[i];
+  }
+
+  for (i = 0; i < touchcount; i++) 
+  {
+	  UITouch *touch = [[allTouches allObjects] objectAtIndex:i];
+    
+		if( touch != nil && 
+		    ( touch.phase == UITouchPhaseBegan ||
+			    touch.phase == UITouchPhaseMoved ||
+  			  touch.phase == UITouchPhaseStationary) )
 		{
 			struct CGPoint point;
 			point = [touch locationInView:self.view];
 			
-			if (MyCGRectContainsPoint(ButtonUp, point)) {
-				gp2x_pad_status |= GP2X_Y;
-			}
-			else if (MyCGRectContainsPoint(ButtonDown, point)) {
-				gp2x_pad_status |= GP2X_X;
-			}
-			else if (MyCGRectContainsPoint(ButtonLeft, point)) {
-				gp2x_pad_status |= GP2X_A;
-			}
-			else if (MyCGRectContainsPoint(ButtonRight, point)) {
-				gp2x_pad_status |= GP2X_B;
-			}
-			else if (MyCGRectContainsPoint(ButtonUpLeft, point)) {
-				gp2x_pad_status |= GP2X_Y | GP2X_A;
-			}
-			else if (MyCGRectContainsPoint(ButtonDownLeft, point)) {
-				gp2x_pad_status |= GP2X_X | GP2X_A;
-			}
-			else if (MyCGRectContainsPoint(ButtonUpRight, point)) {
-				gp2x_pad_status |= GP2X_Y | GP2X_B;
-			}			
-			else if (MyCGRectContainsPoint(ButtonDownRight, point)) {
-				gp2x_pad_status |= GP2X_X | GP2X_B;
-			} 
-			else if (MyCGRectContainsPoint(Select, point)) {
-				gp2x_pad_status |= GP2X_SELECT;
-			}
-			else if (MyCGRectContainsPoint(Start, point)) {
-				gp2x_pad_status |= GP2X_START;
-			}
-			else if (MyCGRectContainsPoint(Up, point)) {
-				gp2x_pad_status |= GP2X_UP;
-			}			
-			else if (MyCGRectContainsPoint(Down, point)) {
-				gp2x_pad_status |= GP2X_DOWN;
-			}			
-			else if (MyCGRectContainsPoint(Left, point)) {
+      touchstate[i] = 1;
+			
+			if (MyCGRectContainsPoint(Left, point)) 
+			{
 				gp2x_pad_status |= GP2X_LEFT;
-			}			
-			else if (MyCGRectContainsPoint(Right, point)) {
+        newtouches[i] = GP2X_LEFT;
+			}
+			else if (MyCGRectContainsPoint(Right, point)) 
+			{
 				gp2x_pad_status |= GP2X_RIGHT;
-			}			
-			else if (MyCGRectContainsPoint(UpLeft, point)) {
+				newtouches[i] = GP2X_RIGHT;
+			}
+			else if (MyCGRectContainsPoint(Up, point)) 
+			{
+				gp2x_pad_status |= GP2X_UP;
+				newtouches[i] = GP2X_UP;
+			}
+			else if (MyCGRectContainsPoint(Down, point))
+			{
+				gp2x_pad_status |= GP2X_DOWN;
+				newtouches[i] = GP2X_DOWN;
+			}
+			else if (MyCGRectContainsPoint(ButtonLeft, point)) 
+			{
+				gp2x_pad_status |= GP2X_A;
+				newtouches[i] = GP2X_A;
+			}
+			else if (MyCGRectContainsPoint(ButtonRight, point)) 
+			{
+				gp2x_pad_status |= GP2X_B;
+				newtouches[i] = GP2X_B;
+			}
+			else if (MyCGRectContainsPoint(ButtonUp, point)) 
+			{
+				gp2x_pad_status |= GP2X_Y;
+				newtouches[i] = GP2X_Y;
+			}
+			else if (MyCGRectContainsPoint(ButtonDown, point)) 
+			{
+				gp2x_pad_status |= GP2X_X;
+				newtouches[i] = GP2X_X;
+			}
+			else if (MyCGRectContainsPoint(ButtonUpLeft, point)) 
+			{
+				gp2x_pad_status |= GP2X_A | GP2X_Y;
+				newtouches[i] = GP2X_A | GP2X_Y;
+			}
+			else if (MyCGRectContainsPoint(ButtonDownLeft, point)) 
+			{
+				gp2x_pad_status |= GP2X_X | GP2X_A;
+				newtouches[i] = GP2X_X | GP2X_A;
+			}
+			else if (MyCGRectContainsPoint(ButtonUpRight, point)) 
+			{
+				gp2x_pad_status |= GP2X_B | GP2X_Y;
+				newtouches[i] = GP2X_B | GP2X_Y;
+			}
+			else if (MyCGRectContainsPoint(ButtonDownRight, point)) 
+			{
+				gp2x_pad_status |= GP2X_X | GP2X_B;
+				newtouches[i] = GP2X_X | GP2X_B;
+			}
+			else if (MyCGRectContainsPoint(UpLeft, point)) 
+			{
 				gp2x_pad_status |= GP2X_UP | GP2X_LEFT;
-			}			
-			else if (MyCGRectContainsPoint(UpRight, point)) {
-				gp2x_pad_status |= GP2X_UP | GP2X_RIGHT;
-			}			
-			else if (MyCGRectContainsPoint(DownLeft, point)) {
+				newtouches[i] = GP2X_UP | GP2X_LEFT;
+			} 
+			else if (MyCGRectContainsPoint(DownLeft, point)) 
+			{
 				gp2x_pad_status |= GP2X_DOWN | GP2X_LEFT;
-			}			
-			else if (MyCGRectContainsPoint(DownRight, point)) {
+				newtouches[i] = GP2X_DOWN | GP2X_LEFT;
+			}
+			else if (MyCGRectContainsPoint(UpRight, point)) 
+			{
+				gp2x_pad_status |= GP2X_UP | GP2X_RIGHT;
+				newtouches[i] = GP2X_UP | GP2X_RIGHT;
+			}
+			else if (MyCGRectContainsPoint(DownRight, point)) 
+			{
 				gp2x_pad_status |= GP2X_DOWN | GP2X_RIGHT;
-			}
-			else if (MyCGRectContainsPoint(LPad, point)) {
+				newtouches[i] = GP2X_DOWN | GP2X_RIGHT;
+			}			
+			else if (MyCGRectContainsPoint(LPad, point)) 
+			{
 				gp2x_pad_status |= GP2X_L;
+				newtouches[i] = GP2X_L;
 			}
-			else if (MyCGRectContainsPoint(RPad, point)) {
+			else if (MyCGRectContainsPoint(RPad, point)) 
+			{
 				gp2x_pad_status |= GP2X_R;
+				newtouches[i] = GP2X_R;
 			}			
-			else if (MyCGRectContainsPoint(LPad2, point)) {
+			else if (MyCGRectContainsPoint(LPad2, point)) 
+			{
 				gp2x_pad_status |= GP2X_VOL_DOWN;
+				newtouches[i] = GP2X_VOL_DOWN;
 			}
-			else if (MyCGRectContainsPoint(RPad2, point)) {
+			else if (MyCGRectContainsPoint(RPad2, point)) 
+			{
 				gp2x_pad_status |= GP2X_VOL_UP;
-			}			
-			else if (MyCGRectContainsPoint(Menu, point)) {
+				newtouches[i] = GP2X_VOL_UP;
+			}
+			else if (MyCGRectContainsPoint(Select, point)) 
+			{
+				gp2x_pad_status |= GP2X_SELECT;
+				newtouches[i] = GP2X_SELECT;
+			}
+			else if (MyCGRectContainsPoint(Start, point)) 
+			{
+				gp2x_pad_status |= GP2X_START;
+				newtouches[i] = GP2X_START;
+			}
+			else if (MyCGRectContainsPoint(Menu, point)) 
+			{
 				if(touch.phase == UITouchPhaseBegan || touch.phase == UITouchPhaseStationary)
 				{
 					if(__emulation_run)
@@ -731,10 +740,27 @@ void* app_Thread_Start(void* args)
   					[SOApp.delegate switchToBrowse];
   					[tabBar didMoveToWindow];
 					}
+					
+          //return;
 				}
 			}
-		}
-	}
+			
+      if(oldtouches[i] != newtouches[i])
+      {
+        gp2x_pad_status &= ~(oldtouches[i]);
+      }
+		}	
+	} 
+
+  for (i = 0; i < 10; i++) 
+  {
+    if(touchstate[i] == 0)
+    {
+      gp2x_pad_status &= ~(newtouches[i]);
+      newtouches[i] = 0;
+      oldtouches[i] = 0;
+    }
+  }
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
@@ -743,12 +769,10 @@ void* app_Thread_Start(void* args)
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
 	[self touchesBegan:touches withEvent:event];
-  iphone_touches = 0;
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
 	[self touchesBegan:touches withEvent:event];
-  iphone_touches = 0;
 }
 #endif
 /*
@@ -959,13 +983,6 @@ void* app_Thread_Start(void* args)
 
 
 - (void)dealloc {
-	if(currentPath)
-		[ currentPath release ];
-	if(currentFile)
-		[ currentFile release ];
-	if(currentDir)
-		[ currentDir release ];
-	
 	[super dealloc];
 }
 
@@ -975,55 +992,6 @@ void* app_Thread_Start(void* args)
 	__audioVolume = volumeSlider.value;
 #endif
 }
-
-- (void)setCurrentStation:(NSString*)thePath withFile:(NSString*)theFile withDir:(NSString*)theDir {
-	if(currentPath)
-	{	[ currentPath release ]; currentPath = NULL; }
-	if(currentFile)
-	{	[ currentFile release ]; currentFile = NULL; }
-	if(currentDir)
-	{	[ currentDir release ]; currentDir = NULL; }
-	
-	if(thePath)
-	{
-		currentPath = [[NSString alloc] initWithString: thePath];	
-	}
-	if(theFile)
-	{
-		currentFile = [[NSString alloc] initWithString: theFile];	
-	}
-	if(theDir)
-	{
-		currentDir = [[NSString alloc] initWithString: theDir];	
-	}
-}
-
-#if 0
-- (void)setBookmark:(id)sender 
-{
-	if(__emulation_run)
-	{
-		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Save Game State" message:@"Save Game State?" delegate:self cancelButtonTitle:@"Dont Save?" otherButtonTitles:@"Save Game!", nil];
-		[alert show];
-		[alert release];
-		__emulation_saving = 1;
-		__emulation_run = 0;
-		pthread_join(main_tid, NULL);
-		[screenView release];
-	}	
-	if(currentPath && currentFile && currentDir)
-	{
-		[SOApp.bookmarksView addBookmark:currentPath withFile:currentFile withDir:currentDir];
-		[SOApp.delegate switchToBookmarks];
-		[tabBar didMoveToWindowBookmarks];		
-	}
-	else
-	{
-		[SOApp.delegate switchToBookmarks];
-		[tabBar didMoveToWindowBookmarks];
-	}
-}
-#endif
 
 - (void)setSaveState:(id)sender 
 {

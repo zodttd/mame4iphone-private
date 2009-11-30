@@ -107,7 +107,7 @@
 #include "ui_text.h"
 
 #ifndef MESS
-#ifndef TINY_COMPILE
+#ifdef NEOMAME
 extern struct GameDriver driver_neogeo;
 #endif
 #endif
@@ -1602,7 +1602,7 @@ static int build_tables (int cpu)
 	}
 #endif
 #ifndef MESS
-#ifndef TINY_COMPILE
+#ifdef NEOMAME
 	if (Machine->gamedrv->clone_of == &driver_neogeo)
 	{
 		/* games based on NEOGEO driver */
@@ -2151,6 +2151,7 @@ void RestoreSearch (void)
 #pragma mark -
 #endif
 
+/*
 static int FindFreeWatch (void)
 {
 	int i;
@@ -2160,9 +2161,9 @@ static int FindFreeWatch (void)
 			return i;
 	}
 
-	/* indicate no free watch found */
 	return -1;
 }
+*/
 
 static void DisplayWatches (struct osd_bitmap *bitmap)
 {

@@ -101,7 +101,7 @@ static void clear_callback(int which)
 	{																			\
 		if (COND)																\
 		{																		\
-			double duration = TIME_IN_SEC(0.68 * c->intf->res * c->intf->cap);	\
+			timer_tm duration = TIME_IN_SEC(0.68 * c->intf->res * c->intf->cap);	\
 																				\
 			if (c->timer)														\
 				timer_reset(c->timer, duration);								\

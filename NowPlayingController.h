@@ -222,12 +222,9 @@ typedef struct {
 
 - (void)getControllerCoords:(int)orientation;
 - (void)fixRects;
-- (void)mouseEvent:(myGSEvent*)event;
 - (void)volumeChanged:(id)sender;
 //- (void)setBookmark:(id)sender;
 - (void)setSaveState:(id)sender;
-- (void)setCurrentlyPlaying:(NSString*) str;
-- (void)setCurrentStation:(NSString*)thePath withFile:(NSString*)theFile withDir:(NSString*)theDir;
 - (void)startEmu:(char*)path;
 - (void)runSound;
 - (void)runProgram;

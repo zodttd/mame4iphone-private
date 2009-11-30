@@ -1,3 +1,5 @@
+#include "../vidhrdw/route16.cpp"
+
 /***************************************************************************
 
  Route 16/Stratovox memory map (preliminary)

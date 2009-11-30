@@ -1,3 +1,6 @@
+#include "../machine/twincobr.cpp"
+#include "../vidhrdw/twincobr.cpp"
+
 /****************************************************************************
 
 		ToaPlan game hardware from 1987

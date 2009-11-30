@@ -1,3 +1,6 @@
+#include "../sndhrdw/exidy440.cpp"
+#include "../vidhrdw/exidy440.cpp"
+
 /***************************************************************************
 
 	Exidy 440 system
@@ -384,7 +387,7 @@ static WRITE_HANDLER( bankram_w )
 	if (exidy440_bank == 15 && offset >= 0x2000)
 	{
 		memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + offset] = data;
-		logerror("W EEROM[%04X] = %02X\n", offset - 0x2000, data);
+		//logerror("W EEROM[%04X] = %02X\n", offset - 0x2000, data);
 	}
 
 	/* everything else is ROM and we ignore it */
@@ -480,7 +483,7 @@ static void delayed_sound_command_w(int param)
 
 static WRITE_HANDLER( io1_w )
 {
-	logerror("W I/O1[%02X]=%02X\n", offset, data);
+	//logerror("W I/O1[%02X]=%02X\n", offset, data);
 
 	/* switch off the upper 4 bits of the offset */
 	switch (offset & 0xe0)

@@ -13,15 +13,13 @@
 
 static int cleared_value = 0x00;
 
-static int latch,read_debug;
+static int latch;
 
+static INT64 fps;
 
 static void soundlatch_callback(int param)
 {
-	if (read_debug == 0 && latch != param)
-		logerror("Warning: sound latch written before being read. Previous: %02x, new: %02x\n",latch,param);
 	latch = param;
-	read_debug = 0;
 }
 
 WRITE_HANDLER( soundlatch_w )
@@ -32,7 +30,6 @@ WRITE_HANDLER( soundlatch_w )
 
 READ_HANDLER( soundlatch_r )
 {
-	read_debug = 1;
 	return latch;
 }
 
@@ -42,14 +39,11 @@ WRITE_HANDLER( soundlatch_clear_w )
 }
 
 
-static int latch2,read_debug2;
+static int latch2;
 
 static void soundlatch2_callback(int param)
 {
-	if (read_debug2 == 0 && latch2 != param)
-		logerror("Warning: sound latch 2 written before being read. Previous: %02x, new: %02x\n",latch2,param);
 	latch2 = param;
-	read_debug2 = 0;
 }
 
 WRITE_HANDLER( soundlatch2_w )
@@ -60,7 +54,6 @@ WRITE_HANDLER( soundlatch2_w )
 
 READ_HANDLER( soundlatch2_r )
 {
-	read_debug2 = 1;
 	return latch2;
 }
 
@@ -70,14 +63,11 @@ WRITE_HANDLER( soundlatch2_clear_w )
 }
 
 
-static int latch3,read_debug3;
+static int latch3;
 
 static void soundlatch3_callback(int param)
 {
-	if (read_debug3 == 0 && latch3 != param)
-		logerror("Warning: sound latch 3 written before being read. Previous: %02x, new: %02x\n",latch3,param);
 	latch3 = param;
-	read_debug3 = 0;
 }
 
 WRITE_HANDLER( soundlatch3_w )
@@ -88,7 +78,6 @@ WRITE_HANDLER( soundlatch3_w )
 
 READ_HANDLER( soundlatch3_r )
 {
-	read_debug3 = 1;
 	return latch3;
 }
 
@@ -98,14 +87,11 @@ WRITE_HANDLER( soundlatch3_clear_w )
 }
 
 
-static int latch4,read_debug4;
+static int latch4;
 
 static void soundlatch4_callback(int param)
 {
-	if (read_debug4 == 0 && latch4 != param)
-		logerror("Warning: sound latch 4 written before being read. Previous: %02x, new: %02x\n",latch2,param);
 	latch4 = param;
-	read_debug4 = 0;
 }
 
 WRITE_HANDLER( soundlatch4_w )
@@ -116,7 +102,6 @@ WRITE_HANDLER( soundlatch4_w )
 
 READ_HANDLER( soundlatch4_r )
 {
-	read_debug4 = 1;
 	return latch4;
 }
 
@@ -142,9 +127,6 @@ void soundlatch_setclearedvalue(int value)
 ***************************************************************************/
 
 static void *sound_update_timer;
-static double refresh_period;
-static double refresh_period_inv;
-
 
 struct snd_interface
 {
@@ -276,6 +258,10 @@ int K051649_clock(const struct MachineSound *msound) { return ((struct k051649_i
 #if (HAS_K053260)
 int K053260_clock(const struct MachineSound *msound) { return ((struct K053260_interface*)msound->sound_interface)->clock; }
 #endif
+#if (HAS_K054539)
+int K054539_clock(const struct MachineSound *msound) { return ((struct K054539interface*)msound->sound_interface)->clock; }
+int K054539_num(const struct MachineSound *msound) { return ((struct K054539interface*)msound->sound_interface)->num; }
+#endif
 #if (HAS_CEM3394)
 int cem3394_num(const struct MachineSound *msound) { return ((struct cem3394_interface*)msound->sound_interface)->numchips; }
 #endif
@@ -336,6 +322,18 @@ struct snd_interface sndintf[] =
 		0,
 		0
 	},
+#endif
+#if (HAS_DISCRETE)
+    {
+                SOUND_DISCRETE,
+                "Discrete Components",
+                0,
+                0,
+                discrete_sh_start,
+                discrete_sh_stop,
+                0,
+                discrete_sh_reset
+        },
 #endif
 #if (HAS_AY8910)
     {
@@ -720,6 +718,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_K054539)
+    {
+		SOUND_K054539,
+		"054539",
+		K054539_num,
+		K054539_clock,
+		K054539_sh_start,
+		K054539_sh_stop,
+		0,
+		0
+	},
+#endif
 #if (HAS_SEGAPCM)
 	{
 		SOUND_SEGAPCM,
@@ -826,9 +836,7 @@ logerror("Sound #%d wrong ID %d: check enum SOUND_... in src/sndintrf.h!\n",i,sn
 
 	/* samples will be read later if needed */
 	Machine->samples = 0;
-
-	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
-	refresh_period_inv = 1.0 / refresh_period;
+    fps = (INT64)Machine->drv->frames_per_second;
 	sound_update_timer = timer_set(TIME_NEVER,0,NULL);
 
 	if (mixer_sh_start() != 0)
@@ -951,7 +959,7 @@ int sound_clock(const struct MachineSound *msound)
 
 int sound_scalebufferpos(int value)
 {
-	int result = (int)((double)value * timer_timeelapsed (sound_update_timer) * refresh_period_inv);
+	int result = ( ((INT64)timer_timeelapsed(sound_update_timer)) * fps * ((INT64)value) ) / ((INT64)TIME_ONE_SEC);
 	if (value >= 0) return (result < value) ? result : value;
 	else return (result > value) ? result : value;
 }

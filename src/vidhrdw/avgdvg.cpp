@@ -270,7 +270,7 @@ static void dvg_generate_vector_list(void)
 				stack [sp] = pc;
 				if (sp == (MAXSTACK - 1))
 	    			{
-					logerror("\n*** Vector generator stack overflow! ***\n");
+					//logerror("\n*** Vector generator stack overflow! ***\n");
 					done = 1;
 					sp = 0;
 				}
@@ -286,7 +286,7 @@ static void dvg_generate_vector_list(void)
 #endif
 				if (sp == 0)
 	    			{
-					logerror("\n*** Vector generator stack underflow! ***\n");
+					//logerror("\n*** Vector generator stack underflow! ***\n");
 					done = 1;
 					sp = MAXSTACK - 1;
 				}
@@ -334,7 +334,7 @@ static void dvg_generate_vector_list(void)
 				break;
 
 			default:
-				logerror("Unknown DVG opcode found\n");
+				//logerror("Unknown DVG opcode found\n");
 				done = 1;
 		}
 #ifdef VG_DEBUG
@@ -445,7 +445,7 @@ static void avg_generate_vector_list (void)
 	}
 	if ((firstwd == 0) && (secondwd == 0))
 	{
-		logerror("VGO with zeroed vector memory\n");
+		//logerror("VGO with zeroed vector memory\n");
 		return;
 	}
 
@@ -657,7 +657,7 @@ static void avg_generate_vector_list (void)
 				{
 					if (firstwd & 0x0800)
 					{
-						logerror("CLIP %d\n", firstwd & 0x0800);
+						//logerror("CLIP %d\n", firstwd & 0x0800);
 						if (ywindow == 0)
 						{
 							ywindow = 1;
@@ -697,7 +697,7 @@ static void avg_generate_vector_list (void)
 #endif
 				if (sp == 0)
 				{
-					logerror("\n*** Vector generator stack underflow! ***\n");
+					//logerror("\n*** Vector generator stack underflow! ***\n");
 					done = 1;
 					sp = MAXSTACK - 1;
 				}
@@ -740,7 +740,7 @@ static void avg_generate_vector_list (void)
 					stack [sp] = pc;
 					if (sp == (MAXSTACK - 1))
 					{
-						logerror("\n*** Vector generator stack overflow! ***\n");
+						//logerror("\n*** Vector generator stack overflow! ***\n");
 						done = 1;
 						sp = 0;
 					}
@@ -752,7 +752,8 @@ static void avg_generate_vector_list (void)
 				break;
 
 			default:
-				logerror("internal error\n");
+				//logerror("internal error\n");
+				break;
 		}
 #ifdef VG_DEBUG
 		logerror("\n");
@@ -814,7 +815,7 @@ int avgdvg_init (int vgType)
 
 	if (vectorram_size == 0)
 	{
-		logerror("Error: vectorram_size not initialized\n");
+		//logerror("Error: vectorram_size not initialized\n");
 		return 1;
 	}
 
@@ -827,7 +828,7 @@ int avgdvg_init (int vgType)
 	vectorEngine = vgType;
 	if ((vectorEngine<AVGDVG_MIN) || (vectorEngine>AVGDVG_MAX))
 	{
-		logerror("Error: unknown Atari Vector Game Type\n");
+		//logerror("Error: unknown Atari Vector Game Type\n");
 		return 1;
 	}
 
@@ -992,7 +993,7 @@ void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colo
 			}
 			break;
 		default:
-			logerror("Wrong palette type in avgdvg.c");
+			//logerror("Wrong palette type in avgdvg.c");
 			break;
 	}
 }
@@ -1042,7 +1043,7 @@ WRITE_HANDLER( mhavoc_colorram_w )
 #else /* high intensity */
 	int trans[]= { 7, 6, 5, 4,  7,  6,  5,  4, 3, 2, 1, 0,  3,  2, 1, 0 };
 #endif
-	logerror("colorram: %02x: %02x\n", offset, data);
+	//logerror("colorram: %02x: %02x\n", offset, data);
 	colorram_w (offset , trans[data & 0x0f]);
 }
 

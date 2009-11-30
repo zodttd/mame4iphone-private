@@ -1,3 +1,5 @@
+#include "../vidhrdw/tail2nos.cpp"
+
 /***************************************************************************
 
 Tail to Nose / Super Formula - (c) 1989 Video System Co.
@@ -27,10 +29,10 @@ void tail2nos_vh_stop(void);
 void tail2nos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static READ_HANDLER( pip )
+/*static READ_HANDLER( pip )
 {
 	return rand()&0xffff;
-}
+}*/
 static void tail2nos_init_machine(void)
 {
 	/* point to the extra ROMs */

@@ -1,3 +1,6 @@
+#include "../machine/simpsons.cpp"
+#include "../vidhrdw/simpsons.cpp"
+
 /***************************************************************************
 
 The Simpsons (c) 1991 Konami Co. Ltd
@@ -86,14 +89,14 @@ static WRITE_HANDLER( z80_bankswitch_w )
 	cpu_setbank( 2, &RAM[ offset ] );
 }
 
-static int nmi_enabled;
+//static int nmi_enabled;
 
-static void sound_nmi_callback( int param )
+/*static void sound_nmi_callback( int param )
 {
 	cpu_set_nmi_line( 1, ( nmi_enabled ) ? CLEAR_LINE : ASSERT_LINE );
 
 	nmi_enabled = 0;
-}
+}*/
 
 static void nmi_callback(int param)
 {

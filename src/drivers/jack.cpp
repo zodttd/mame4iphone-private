@@ -1,3 +1,5 @@
+#include "../vidhrdw/jack.cpp"
+
 /***************************************************************************
 
 Jack the Giant Killer memory map (preliminary)

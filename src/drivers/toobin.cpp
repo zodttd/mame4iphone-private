@@ -1,3 +1,5 @@
+#include "../vidhrdw/toobin.cpp"
+
 /***************************************************************************
 
 Toobin Memory Map (preliminary)

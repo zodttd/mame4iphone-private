@@ -189,8 +189,4 @@ extern void mips_set_irq_callback(int (*callback)(int irqline));
 extern const char *mips_info(void *context, int regnum);
 extern unsigned mips_dasm(char *buffer, unsigned pc);
 
-#ifdef MAME_DEBUG
-extern unsigned DasmMIPS(char *buff, unsigned _pc);
-#endif
-
 #endif

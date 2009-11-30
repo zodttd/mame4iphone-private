@@ -1,3 +1,6 @@
+#include "../machine/dominos.cpp"
+#include "../vidhrdw/dominos.cpp"
+
 /***************************************************************************
 
 Atari Dominos Driver

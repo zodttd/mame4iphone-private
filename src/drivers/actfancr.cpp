@@ -1,3 +1,5 @@
+#include "../vidhrdw/actfancr.cpp"
+
 /*******************************************************************************
 
 	Act Fancer (Japan)				FD (c) 1989 Data East Corporation

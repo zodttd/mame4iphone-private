@@ -439,7 +439,7 @@ int dotron_vh_start(void)
 			dotron_palettes[2][i * 3 + 2] = MIN(artwork_backdrop->orig_palette[i * 3 + 2] * 3, 255);
 		}
 
-		logerror("Backdrop loaded.\n");
+		//logerror("Backdrop loaded.\n");
 	}
 
 	return 0;

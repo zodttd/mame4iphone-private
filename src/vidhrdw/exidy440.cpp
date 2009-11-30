@@ -397,11 +397,11 @@ void collide_firq_callback(int param)
  *
  *************************************/
 
-double compute_pixel_time(int x, int y)
+timer_tm compute_pixel_time(int x, int y)
 {
 	/* assuming this is called at refresh time, compute how long until we
 	 * hit the given x,y position */
-	return cpu_getscanlinetime(y) + (cpu_getscanlineperiod() * (double)x * (1.0 / 320.0));
+	return cpu_getscanlinetime(y) + (cpu_getscanlineperiod() * (timer_tm)x * (TIME_ONE_SEC / 320));
 }
 
 
@@ -422,7 +422,7 @@ void exidy440_update_callback(int param)
 
 	int y, i;
 	int xoffs, yoffs;
-	double time, increment;
+	timer_tm time, increment;
 	int beamx, beamy;
 
 	/* make sure color 256 is white for our crosshair */

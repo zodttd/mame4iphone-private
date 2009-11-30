@@ -1,3 +1,6 @@
+#include "../machine/arkanoid.cpp"
+#include "../vidhrdw/arkanoid.cpp"
+
 /***************************************************************************
 
 	Arkanoid driver (Preliminary)

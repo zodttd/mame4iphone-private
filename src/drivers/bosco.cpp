@@ -1,3 +1,7 @@
+#include "../machine/bosco.cpp"
+#include "../sndhrdw/bosco.cpp"
+#include "../vidhrdw/bosco.cpp"
+
 /***************************************************************************
 
 Bosconian

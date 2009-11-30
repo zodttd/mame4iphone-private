@@ -846,7 +846,7 @@ void wms_yunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline)
 	if (last_display_addr != 0 && ((offs ^ last_display_addr) & 0x00100000))
 		page_flipping = 2;
 	last_display_addr = offs;
-	logerror("Display address = %08X\n", offs);
+	//logerror("Display address = %08X\n", offs);
 }
 
 

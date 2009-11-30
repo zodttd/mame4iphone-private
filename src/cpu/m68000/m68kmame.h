@@ -7,7 +7,6 @@
 
 #include "cpuintrf.h"
 #include "memory.h"
-#include "mamedbg.h"
 
 /* Configuration switches (see m68kconf.h for explanation) */
 #define M68K_SEPARATE_READ_IMM      OPT_ON
@@ -30,7 +29,7 @@
 #define M68K_SET_PC_CALLBACK(A)     change_pc32(A)
 
 #define M68K_INSTRUCTION_HOOK       OPT_SPECIFY_HANDLER
-#define M68K_INSTRUCTION_CALLBACK() CALL_MAME_DEBUG
+#define M68K_INSTRUCTION_CALLBACK()
 
 #define M68K_EMULATE_PREFETCH       OPT_ON
 

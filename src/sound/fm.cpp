@@ -104,6 +104,10 @@
   #define DELTAT_MIXING_LEVEL (4) /* DELTA-T ADPCM MIXING LEVEL */
 #endif
 
+#ifdef MAME_FASTSOUND
+extern int fast_sound;
+#endif
+
 /* -------------------- sound quality define selection --------------------- */
 /* sinwave entries */
 /* used static memory = SIN_ENT * 4 (byte) */
@@ -239,8 +243,8 @@ typedef struct fm_state {
 	UINT8 index;		/* chip index (number of chip) */
 	int clock;			/* master clock  (Hz)  */
 	int rate;			/* sampling rate (Hz)  */
-	double freqbase;	/* frequency base      */
-	double TimerBase;	/* Timer base time     */
+	float freqbase;	/* frequency base      */
+	timer_tm TimerBase;	/* Timer base time     */
 	UINT8 address;		/* address register    */
 	UINT8 irq;			/* interrupt level     */
 	UINT8 irqmask;		/* irq mask            */
@@ -334,8 +338,8 @@ static const int MUL_TABLE[4*16]= {
 
 #define PMS_RATE 0x400
 /* LFO runtime work */
-static UINT32 lfo_amd;
-static INT32 lfo_pmd;
+/*static*/ UINT32 lfo_amd;
+/*static*/ INT32 lfo_pmd;
 #endif
 
 /* Dummy table of Attack / Decay rate ( use when rate == 0 ) */
@@ -368,8 +372,8 @@ static UINT32 LFOCnt,LFOIncr;	/* LFO PhaseGenerator */
 #endif
 
 /* runtime work */
-static INT32 out_ch[4];		/* channel output NONE,LEFT,RIGHT or CENTER */
-static INT32 pg_in1,pg_in2,pg_in3,pg_in4;	/* PG input of SLOTs */
+/*static*/ INT32 out_ch[4];		/* channel output NONE,LEFT,RIGHT or CENTER */
+/*static*/ INT32 pg_in1,pg_in2,pg_in3,pg_in4;	/* PG input of SLOTs */
 
 /* -------------------- log output  -------------------- */
 /* log output level */
@@ -378,9 +382,10 @@ static INT32 pg_in1,pg_in2,pg_in3,pg_in4;	/* PG input of SLOTs */
 #define LOG_INF  1      /* INFORMATION */
 #define LOG_LEVEL LOG_INF
 
-#ifndef __RAINE__
-#define LOG(n,x) if( (n)>=LOG_LEVEL ) logerror x
-#endif
+//#ifndef __RAINE__
+//#define LOG(n,x) if( (n)>=LOG_LEVEL ) logerror x
+//#endif
+#define LOG(n,x)
 
 /* ----- limitter ----- */
 #define Limit(val, max,min) { \
@@ -413,8 +418,8 @@ static INT32 pg_in1,pg_in2,pg_in3,pg_in4;	/* PG input of SLOTs */
 		out_ch[OUTD_RIGHT] += out_ch[OUTD_CENTER];				\
 		Limit( out_ch[OUTD_RIGHT], FM_MAXOUT, FM_MINOUT );	\
 		/* buffering */										\
-		bufL[i] = out_ch[OUTD_LEFT] >>FM_OUTSB;				\
-		bufR[i] = out_ch[OUTD_RIGHT]>>FM_OUTSB;				\
+		*bufL++ = out_ch[OUTD_LEFT] >>FM_OUTSB;				\
+		*bufR++ = out_ch[OUTD_RIGHT]>>FM_OUTSB;				\
 	}
 	#endif
 #else
@@ -430,9 +435,9 @@ static INT32 pg_in1,pg_in2,pg_in3,pg_in4;	/* PG input of SLOTs */
 	#define FM_BUFFERING_STEREO \
 	{ \
 		mix_sample(out_ch[OUTD_LEFT],out_ch[OUTD_CENTER]); \
-		bufL[i]=out_ch[OUTD_LEFT] >>FM_OUTSB; \
+		*bufL++=out_ch[OUTD_LEFT] >>FM_OUTSB; \
 		mix_sample(out_ch[OUTD_RIGHT],out_ch[OUTD_CENTER]); \
-		bufR[i]=out_ch[OUTD_RIGHT] >>FM_OUTSB; \
+		*bufR++=out_ch[OUTD_RIGHT] >>FM_OUTSB; \
 	}
 	#endif
 #endif
@@ -757,8 +762,10 @@ INLINE void set_sl_rr(FM_SLOT *SLOT,int v,INT32 *dr_table)
 }
 
 /* operator output calcrator */
-#define OP_OUT(PG,EG)   SIN_TABLE[(PG/(0x1000000/SIN_ENT))&(SIN_ENT-1)][EG]
-#define OP_OUTN(PG,EG)  NOISE_TABLE[(PG/(0x1000000/SIN_ENT))&(SIN_ENT-1)][EG]
+//#define OP_OUT(PG,EG)   SIN_TABLE[(PG/(0x1000000/SIN_ENT))&(SIN_ENT-1)][EG]
+//#define OP_OUTN(PG,EG)  NOISE_TABLE[(PG/(0x1000000/SIN_ENT))&(SIN_ENT-1)][EG]
+#define OP_OUT(PG,EG)   SIN_TABLE[(PG>>13)&0x7ff][EG]
+#define OP_OUTN(PG,EG)  NOISE_TABLE[(PG>>13)&0x7ff][EG]
 
 /* eg calcration */
 #if FM_LFO_SUPPORT
@@ -874,12 +881,12 @@ INLINE void OPN_CALC_FCOUNT(FM_CH *CH )
 static void init_timetables( FM_ST *ST , UINT8 *DTTABLE , int ARRATE , int DRRATE )
 {
 	int i,d;
-	double rate;
+	float rate;
 
 	/* DeTune table */
 	for (d = 0;d <= 3;d++){
 		for (i = 0;i <= 31;i++){
-			rate = (double)DTTABLE[d*32 + i] * ST->freqbase * FREQ_RATE;
+			rate = (float)DTTABLE[d*32 + i] * ST->freqbase * FREQ_RATE;
 			ST->DT_TABLE[d][i]   = (INT32) rate;
 			ST->DT_TABLE[d+4][i] = (INT32)-rate;
 		}
@@ -890,7 +897,7 @@ static void init_timetables( FM_ST *ST , UINT8 *DTTABLE , int ARRATE , int DRRAT
 		rate  = ST->freqbase;						/* frequency rate */
 		if( i < 60 ) rate *= 1.0+(i&3)*0.25;		/* b0-1 : x1 , x1.25 , x1.5 , x1.75 */
 		rate *= 1<<((i>>2)-1);						/* b2-5 : shift bit */
-		rate *= (double)(EG_ENT<<ENV_BITS);
+		rate *= (float)(EG_ENT<<ENV_BITS);
 		ST->AR_TABLE[i] = (INT32)(rate / ARRATE);
 		ST->DR_TABLE[i] = (INT32)(rate / DRRATE);
 	}
@@ -904,8 +911,8 @@ static void init_timetables( FM_ST *ST , UINT8 *DTTABLE , int ARRATE , int DRRAT
 #if 0
 	for (i = 0;i < 64 ;i++){
 		LOG(LOG_WAR,("rate %2d , ar %f ms , dr %f ms \n",i,
-			((double)(EG_ENT<<ENV_BITS) / ST->AR_TABLE[i]) * (1000.0 / ST->rate),
-			((double)(EG_ENT<<ENV_BITS) / ST->DR_TABLE[i]) * (1000.0 / ST->rate) ));
+			((float)(EG_ENT<<ENV_BITS) / ST->AR_TABLE[i]) * (1000.0 / ST->rate),
+			((float)(EG_ENT<<ENV_BITS) / ST->DR_TABLE[i]) * (1000.0 / ST->rate) ));
 	}
 #endif
 }
@@ -1169,9 +1176,9 @@ static void OPNSetPris(FM_OPN *OPN , int pris , int TimerPris, int SSGpris)
 	int i;
 
 	/* frequency base */
-	OPN->ST.freqbase = (OPN->ST.rate) ? ((double)OPN->ST.clock / OPN->ST.rate) / pris : 0;
+	OPN->ST.freqbase = (OPN->ST.rate) ? ((float)OPN->ST.clock / OPN->ST.rate) / pris : 0;
 	/* Timer base time */
-	OPN->ST.TimerBase = 1.0/((double)OPN->ST.clock / (double)TimerPris);
+	OPN->ST.TimerBase = (float)TIME_ONE_SEC/((float)OPN->ST.clock / (float)TimerPris);
 	/* SSG part  priscaler set */
 	if( SSGpris ) SSGClk( OPN->ST.index, OPN->ST.clock * 2 / SSGpris );
 	/* make time tables */
@@ -1181,14 +1188,14 @@ static void OPNSetPris(FM_OPN *OPN , int pris , int TimerPris, int SSGpris)
 	{
 		/* it is freq table for octave 7 */
 		/* opn freq counter = 20bit */
-		OPN->FN_TABLE[i] = (UINT32)( (double)i * OPN->ST.freqbase * FREQ_RATE * (1<<7) / 2 );
+		OPN->FN_TABLE[i] = (UINT32)( (float)i * OPN->ST.freqbase * FREQ_RATE * (1<<7) / 2 );
 	}
 #if FM_LFO_SUPPORT
 	/* LFO freq. table */
 	{
 		/* 3.98Hz,5.56Hz,6.02Hz,6.37Hz,6.88Hz,9.63Hz,48.1Hz,72.2Hz @ 8MHz */
-#define FM_LF(Hz) ((double)LFO_ENT*(1<<LFO_SHIFT)*(Hz)/(8000000.0/144))
-		static const double freq_table[8] = { FM_LF(3.98),FM_LF(5.56),FM_LF(6.02),FM_LF(6.37),FM_LF(6.88),FM_LF(9.63),FM_LF(48.1),FM_LF(72.2) };
+#define FM_LF(Hz) ((float)LFO_ENT*(1<<LFO_SHIFT)*(Hz)/(8000000.0/144))
+		static const float freq_table[8] = { FM_LF(3.98),FM_LF(5.56),FM_LF(6.02),FM_LF(6.37),FM_LF(6.88),FM_LF(9.63),FM_LF(48.1),FM_LF(72.2) };
 #undef FM_LF
 		for(i=0;i<8;i++)
 		{
@@ -1343,7 +1350,7 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 #if FM_LFO_SUPPORT
 				/* b0-2 PMS */
 				/* 0,3.4,6.7,10,14,20,40,80(cent) */
-				static const double pmd_table[8]={0,3.4,6.7,10,14,20,40,80};
+				static const float pmd_table[8]={0,3.4,6.7,10,14,20,40,80};
 				static const int amd_table[4]={(int)(0/EG_STEP),(int)(1.4/EG_STEP),(int)(5.9/EG_STEP),(int)(11.8/EG_STEP) };
 				CH->pms = (INT32)( (1.5/1200.0)*pmd_table[v & 7] * PMS_RATE);
 				/* b4-5 AMS */
@@ -1414,7 +1421,7 @@ void YM2203UpdateOne(int num, INT16 *buffer, int length)
 		}
 	}else OPN_CALC_FCOUNT( cch[2] );
 
-    for( i=0; i < length ; i++ )
+    for (i=0;i<length;i++)
 	{
 		/*            channel A         channel B         channel C      */
 		out_ch[OUTD_CENTER] = 0;
@@ -1674,7 +1681,7 @@ static void InitOPNB_ADPCMATable(void){
 
 	for (step = 0; step <= 48; step++)
 	{
-		double stepval = floor(16.0 * pow (11.0 / 10.0, (double)step) * ADPCMA_MIXING_LEVEL);
+		float stepval = floor(16.0 * pow (11.0 / 10.0, (double)step) * ADPCMA_MIXING_LEVEL);
 		/* loop over all nibbles and compute the difference */
 		for (nib = 0; nib < 16; nib++)
 		{
@@ -1934,7 +1941,7 @@ void YM2608UpdateOne(int num, INT16 **buffer, int length)
 	YM2608 *F2608 = &(FM2608[num]);
 	FM_OPN *OPN   = &(FM2608[num].OPN);
 	YM_DELTAT *DELTAT = &(F2608[num].deltaT);
-	int i,j;
+	int j;
 	FM_CH *ch;
 	FMSAMPLE  *bufL,*bufR;
 
@@ -1983,7 +1990,7 @@ void YM2608UpdateOne(int num, INT16 **buffer, int length)
 	OPN_CALC_FCOUNT( cch[4] );
 	OPN_CALC_FCOUNT( cch[5] );
 	/* buffering */
-    for( i=0; i < length ; i++ )
+    do
 	{
 #if FM_LFO_SUPPORT
 		/* LFO */
@@ -2016,6 +2023,7 @@ void YM2608UpdateOne(int num, INT16 **buffer, int length)
 		/* timer A controll */
 		INTERNAL_TIMER_A( State , cch[2] )
 	}
+	while (--length);
 	INTERNAL_TIMER_B(State,length)
 	if (DELTAT->arrivedFlag) FM_STATUS_SET(State, 0x04);	/* ASG */
 
@@ -2195,7 +2203,11 @@ int YM2608Write(int n, int a,UINT8 v)
 			SSGWrite(n,a,v);
 			break;
 		case 0x10:	/* 0x10-0x1f : Rhythm section */
+#ifndef MAME_FASTSOUND
 			YM2608UpdateReq(n);
+#else
+			if (!fast_sound) YM2608UpdateReq(n);
+#endif
 			FM_ADPCMAWrite(F2608,addr-0x10,v);
 			break;
 		case 0x20:	/* Mode Register */
@@ -2210,12 +2222,20 @@ int YM2608Write(int n, int a,UINT8 v)
 				FM_IRQMASK_SET(&OPN->ST,v&0x1f);
 				break;
 			default:
+#ifndef MAME_FASTSOUND
 				YM2608UpdateReq(n);
+#else
+				if (!fast_sound) YM2608UpdateReq(n);
+#endif
 				OPNWriteMode(OPN,addr,v);
 			}
 			break;
 		default:	/* OPN section */
+#ifndef MAME_FASTSOUND
 			YM2608UpdateReq(n);
+#else
+			if (!fast_sound) YM2608UpdateReq(n);
+#endif
 			OPNWriteReg(OPN,addr,v);
 		}
 		break;
@@ -2224,7 +2244,11 @@ int YM2608Write(int n, int a,UINT8 v)
 		break;
 	case 3:	/* data port 1    */
 		addr = F2608->address1;
+#ifndef MAME_FASTSOUND
 		YM2608UpdateReq(n);
+#else
+		if (!fast_sound) YM2608UpdateReq(n);
+#endif
 		switch( addr & 0xf0 )
 		{
 		case 0x00:	/* ADPCM PORT */
@@ -2319,7 +2343,7 @@ void YM2610UpdateOne(int num, INT16 **buffer, int length)
 	YM2610 *F2610 = &(FM2610[num]);
 	FM_OPN *OPN   = &(FM2610[num].OPN);
 	YM_DELTAT *DELTAT = &(F2610[num].deltaT);
-	int i,j;
+	int j;
 	int ch;
 	FMSAMPLE  *bufL,*bufR;
 
@@ -2370,7 +2394,7 @@ void YM2610UpdateOne(int num, INT16 **buffer, int length)
 	OPN_CALC_FCOUNT( cch[3] );
 
 	/* buffering */
-    for( i=0; i < length ; i++ )
+    do
 	{
 #if FM_LFO_SUPPORT
 		/* LFO */
@@ -2399,6 +2423,7 @@ void YM2610UpdateOne(int num, INT16 **buffer, int length)
 		/* timer A controll */
 		INTERNAL_TIMER_A( State , cch[1] )
 	}
+	while (--length);
 	INTERNAL_TIMER_B(State,length)
 #if FM_LFO_SUPPORT
 	OPN->LFOCnt = LFOCnt;
@@ -2413,7 +2438,7 @@ void YM2610BUpdateOne(int num, INT16 **buffer, int length)
 	YM2610 *F2610 = &(FM2610[num]);
 	FM_OPN *OPN   = &(FM2610[num].OPN);
 	YM_DELTAT *DELTAT = &(FM2610[num].deltaT);
-	int i,j;
+	int j;
 	FM_CH *ch;
 	FMSAMPLE  *bufL,*bufR;
 
@@ -2460,7 +2485,7 @@ void YM2610BUpdateOne(int num, INT16 **buffer, int length)
 	OPN_CALC_FCOUNT( cch[5] );
 
 	/* buffering */
-    for( i=0; i < length ; i++ )
+    do
 	{
 #if FM_LFO_SUPPORT
 		/* LFO */
@@ -2489,6 +2514,7 @@ void YM2610BUpdateOne(int num, INT16 **buffer, int length)
 		/* timer A controll */
 		INTERNAL_TIMER_A( State , cch[2] )
 	}
+	while (--length);
 	INTERNAL_TIMER_B(State,length)
 #if FM_LFO_SUPPORT
 	OPN->LFOCnt = LFOCnt;
@@ -2640,7 +2666,11 @@ int YM2610Write(int n, int a,UINT8 v)
 			SSGWrite(n,a,v);
 			break;
 		case 0x10: /* DeltaT ADPCM */
+#ifndef MAME_FASTSOUND
 			YM2610UpdateReq(n);
+#else
+			if (!fast_sound) YM2610UpdateReq(n);
+#endif
 			switch(addr)
 			{
 			case 0x1c: /*  FLAG CONTROL : Extend Status Clear/Mask */
@@ -2661,11 +2691,19 @@ int YM2610Write(int n, int a,UINT8 v)
 			}
 			break;
 		case 0x20:	/* Mode Register */
+#ifndef MAME_FASTSOUND
 			YM2610UpdateReq(n);
+#else
+			if (!fast_sound) YM2610UpdateReq(n);
+#endif
 			OPNWriteMode(OPN,addr,v);
 			break;
 		default:	/* OPN section */
+#ifndef MAME_FASTSOUND
 			YM2610UpdateReq(n);
+#else
+			if (!fast_sound) YM2610UpdateReq(n);
+#endif
 			/* write register */
 			 OPNWriteReg(OPN,addr,v);
 		}
@@ -2674,7 +2712,11 @@ int YM2610Write(int n, int a,UINT8 v)
 		F2610->address1 = v & 0xff;
 		break;
 	case 3:	/* data port 1    */
+#ifndef MAME_FASTSOUND
 		YM2610UpdateReq(n);
+#else
+		if (!fast_sound) YM2610UpdateReq(n);
+#endif
 		addr = F2610->address1;
 		if( addr < 0x30 )
 			/* 100-12f : ADPCM A section */
@@ -2761,7 +2803,6 @@ void YM2612UpdateOne(int num, INT16 **buffer, int length)
 {
 	YM2612 *F2612 = &(FM2612[num]);
 	FM_OPN *OPN   = &(FM2612[num].OPN);
-	int i;
 	FM_CH *ch,*ech;
 	FMSAMPLE  *bufL,*bufR;
 	int dacout  = F2612->dacout;
@@ -2807,7 +2848,7 @@ void YM2612UpdateOne(int num, INT16 **buffer, int length)
 
 	ech = dacen ? cch[4] : cch[5];
 	/* buffering */
-    for( i=0; i < length ; i++ )
+    do
 	{
 #if FM_LFO_SUPPORT
 		/* LFO */
@@ -2828,6 +2869,7 @@ void YM2612UpdateOne(int num, INT16 **buffer, int length)
 		/* timer A controll */
 		INTERNAL_TIMER_A( State , cch[2] )
 	}
+	while (--length);
 	INTERNAL_TIMER_B(State,length)
 #if FM_LFO_SUPPORT
 	OPN->LFOCnt = LFOCnt;
@@ -2934,7 +2976,11 @@ int YM2612Write(int n, int a,UINT8 v)
 			switch( addr )
 			{
 			case 0x2a:	/* DAC data (YM2612) */
+#ifndef MAME_FASTSOUND
 				YM2612UpdateReq(n);
+#else
+				if (!fast_sound) YM2612UpdateReq(n);
+#endif
 				F2612->dacout = ((int)v - 0x80)<<(TL_BITS-7);
 				break;
 			case 0x2b:	/* DAC Sel  (YM2612) */
@@ -2943,13 +2989,21 @@ int YM2612Write(int n, int a,UINT8 v)
 				cur_chip = NULL;
 				break;
 			default:	/* OPN section */
+#ifndef MAME_FASTSOUND
 				YM2612UpdateReq(n);
+#else
+				if (!fast_sound) YM2612UpdateReq(n);
+#endif
 				/* write register */
 				 OPNWriteMode(&(F2612->OPN),addr,v);
 			}
 			break;
 		default:	/* 0x30-0xff OPN section */
+#ifndef MAME_FASTSOUND
 			YM2612UpdateReq(n);
+#else
+			if (!fast_sound) YM2612UpdateReq(n);
+#endif
 			/* write register */
 			 OPNWriteReg(&(F2612->OPN),addr,v);
 		}
@@ -2959,7 +3013,11 @@ int YM2612Write(int n, int a,UINT8 v)
 		break;
 	case 3:	/* data port 1    */
 		addr = F2612->address1;
+#ifndef MAME_FASTSOUND
 		YM2612UpdateReq(n);
+#else
+		if (!fast_sound) YM2612UpdateReq(n);
+#endif
 		OPNWriteReg(&(F2612->OPN),addr|0x100,v);
 		break;
 	}
@@ -3184,11 +3242,20 @@ static void OPMResetTable( int num )
 {
     YM2151 *OPM = &(FMOPM[num]);
 	int i;
-	double pom;
-	double rate;
+	float pom;
+	float rate;
 
 	if (FMOPM[num].ST.rate)
-		rate = (double)(1<<FREQ_BITS) / (3579545.0 / FMOPM[num].ST.clock * FMOPM[num].ST.rate);
+	{
+#ifndef MAME_FASTSOUND
+		rate = (float)(1<<FREQ_BITS) / (3579545.0 / FMOPM[num].ST.clock * FMOPM[num].ST.rate);
+#else
+	    if (fast_sound)
+    		rate = (float)(1<<FREQ_BITS) / ((3579545.0/2.0) / FMOPM[num].ST.clock * FMOPM[num].ST.rate);
+        else
+	    	rate = (float)(1<<FREQ_BITS) / (3579545.0 / FMOPM[num].ST.clock * FMOPM[num].ST.rate);
+#endif
+	}
 	else rate = 1;
 
 	for (i=0; i<8*12*64+950; i++)
@@ -3270,13 +3337,13 @@ static void OPMWriteReg(int n, int r, int v)
 		case 0x18:	/* lfreq   */
 			/* f = fm * 2^(LFRQ/16) / (4295*10^6) */
 			{
-				static double drate[16]={
+				static float drate[16]={
 					1.0        ,1.044273782,1.090507733,1.138788635, //0-3
 					1.189207115,1.241857812,1.296839555,1.354255547, //4-7
 					1.414213562,1.476826146,1.542210825,1.610490332, //8-11
 					1.681792831,1.75625216 ,1.834008086,1.915206561};
-				double rate = pow(2.0,v/16)*drate[v&0x0f] / 4295000000.0;
-				OPM->LFOIncr = (UINT32)((double)LFO_ENT*(1<<LFO_SHIFT) * (OPM->ST.freqbase*64) * rate);
+				float rate = pow(2.0,v/16)*drate[v&0x0f] / 4295000000.0;
+				OPM->LFOIncr = (UINT32)((float)LFO_ENT*(1<<LFO_SHIFT) * (OPM->ST.freqbase*64) * rate);
 				cur_chip = NULL;
 			}
 			break;
@@ -3383,12 +3450,6 @@ static void OPMWriteReg(int n, int r, int v)
     }
 }
 
-/* ---------- read status port ---------- */
-static UINT8 OPMReadStatus(int n)
-{
-	return FMOPM[n].ST.status;
-}
-
 int YM2151Write(int n,int a,UINT8 v)
 {
 	YM2151 *F2151 = &(FMOPM[n]);
@@ -3400,7 +3461,11 @@ int YM2151Write(int n,int a,UINT8 v)
 	else
 	{	/* data port */
 		int addr = F2151->ST.address;
+#ifndef MAME_FASTSOUND
 		YM2151UpdateReq(n);
+#else
+		if (!fast_sound) YM2151UpdateReq(n);
+#endif
 		/* write register */
 		 OPMWriteReg(n,addr,v);
 	}
@@ -3456,8 +3521,8 @@ int OPMInit(int num, int clock, int rate,
 		/* FMOPM[i].ST.irq  = 0; */
 		/* FMOPM[i].ST.status = 0; */
 		FMOPM[i].ST.timermodel = FM_TIMER_INTERVAL;
-		FMOPM[i].ST.freqbase  = rate ? ((double)clock / rate) / 64 : 0;
-		FMOPM[i].ST.TimerBase = 1.0/((double)clock / 64.0);
+		FMOPM[i].ST.freqbase  = rate ? ((float)clock / rate) / 64 : 0;
+		FMOPM[i].ST.TimerBase = (float)TIME_ONE_SEC/((float)clock / 64.0);
 		/* Extend handler */
 		FMOPM[i].ST.Timer_Handler = TimerHandler;
 		FMOPM[i].ST.IRQ_Handler   = IRQHandler;
@@ -3488,7 +3553,6 @@ UINT8 YM2151Read(int n,int a)
 void OPMUpdateOne(int num, INT16 **buffer, int length)
 {
 	YM2151 *OPM = &(FMOPM[num]);
-	int i;
 	int amd,pmd;
 	FM_CH *ch;
 	FMSAMPLE  *bufL,*bufR;
@@ -3537,7 +3601,7 @@ void OPMUpdateOne(int num, INT16 **buffer, int length)
 	OPM_CALC_FCOUNT( OPM , cch[6] );
 	OPM_CALC_FCOUNT( OPM , cch[7] );
 
-	for( i=0; i < length ; i++ )
+	do
 	{
 #if FM_LFO_SUPPORT
 		/* LFO */
@@ -3559,6 +3623,7 @@ void OPMUpdateOne(int num, INT16 **buffer, int length)
 		/* timer A controll */
 		INTERNAL_TIMER_A( State , cch[7] )
     }
+    while (--length);
 	INTERNAL_TIMER_B(State,length)
 	OPM->NoiseCnt = NoiseCnt;
 #if FM_LFO_SUPPORT

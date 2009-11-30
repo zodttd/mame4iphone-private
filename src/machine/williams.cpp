@@ -575,6 +575,7 @@ static WRITE_HANDLER( williams2_snd_cmd_w )
 
 WRITE_HANDLER( williams2_7segment_w )
 {
+	/*
 	int n;
 	char dot;
 	char buffer[5];
@@ -607,6 +608,7 @@ WRITE_HANDLER( williams2_7segment_w )
 		sprintf(buffer, "[%d%c]\n", n, dot);
 
 	logerror(buffer);
+	*/
 }
 
 
@@ -834,7 +836,7 @@ static READ_HANDLER( tshoot_input_port_0_3_r )
 static WRITE_HANDLER( tshoot_maxvol_w )
 {
 	/* something to do with the sound volume */
-	logerror("tshoot maxvol = %d (pc:%x)\n", data, cpu_get_pc());
+	//logerror("tshoot maxvol = %d (pc:%x)\n", data, cpu_get_pc());
 }
 
 

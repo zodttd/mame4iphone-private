@@ -1,3 +1,5 @@
+#include "../vidhrdw/suna8.cpp"
+
 /***************************************************************************
 
 							-=  SunA 8 Bit Games =-
@@ -775,7 +777,7 @@ static READ_HANDLER( hardhead_ip_r )
 		case 2:	return readinputport(2);
 		case 3:	return readinputport(3);
 		default:
-			logerror("CPU #0 - PC %04X: Unknown IP read: %02X\n",cpu_get_pc(),hardhead_ip);
+			//logerror("CPU #0 - PC %04X: Unknown IP read: %02X\n",cpu_get_pc(),hardhead_ip);
 			return 0xff;
 	}
 }
@@ -790,7 +792,7 @@ static WRITE_HANDLER( hardhead_bankswitch_w )
 	data8_t *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
-	if (data & ~0xef) 	logerror("CPU #0 - PC %04X: unknown bank bits: %02X\n",cpu_get_pc(),data);
+	//if (data & ~0xef) 	logerror("CPU #0 - PC %04X: unknown bank bits: %02X\n",cpu_get_pc(),data);
 
 	RAM = &RAM[0x4000 * bank + 0x10000];
 	cpu_setbank(1, RAM);
@@ -869,7 +871,7 @@ static WRITE_HANDLER( rranger_bankswitch_w )
 	int bank = data & 0x07;
 	if ((~data & 0x10) && (bank >= 4))	bank += 4;
 
-	if (data & ~0xf7) 	logerror("CPU #0 - PC %04X: unknown bank bits: %02X\n",cpu_get_pc(),data);
+	//if (data & ~0xf7) 	logerror("CPU #0 - PC %04X: unknown bank bits: %02X\n",cpu_get_pc(),data);
 
 	RAM = &RAM[0x4000 * bank + 0x10000];
 
@@ -952,7 +954,7 @@ static READ_HANDLER( brickzn_c140_r )
 static WRITE_HANDLER( brickzn_palettebank_w )
 {
 	suna8_palettebank = (data >> 1) & 1;
-	if (data & ~0x02) 	logerror("CPU #0 - PC %04X: unknown palettebank bits: %02X\n",cpu_get_pc(),data);
+	//if (data & ~0x02) 	logerror("CPU #0 - PC %04X: unknown palettebank bits: %02X\n",cpu_get_pc(),data);
 
 	/* Also used as soundlatch - depending on c0c0? */
 	soundlatch_w(0,data);
@@ -966,7 +968,7 @@ static WRITE_HANDLER( brickzn_palettebank_w )
 static WRITE_HANDLER( brickzn_spritebank_w )
 {
 	suna8_spritebank = (data >> 1) & 1;
-	if (data & ~0x03) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",cpu_get_pc(),data);
+	//if (data & ~0x03) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",cpu_get_pc(),data);
 	flip_screen_w (0, data & 0x01 );
 }
 
@@ -984,7 +986,7 @@ static WRITE_HANDLER( brickzn_rombank_w )
 	data8_t *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
-	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",cpu_get_pc(),data);
+	//if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",cpu_get_pc(),data);
 
 	RAM = &RAM[0x4000 * bank + 0x10000];
 
@@ -1044,7 +1046,7 @@ static data8_t suna8_nmi_enable;
 static WRITE_HANDLER( hardhea2_nmi_w )
 {
 	suna8_nmi_enable = data & 0x01;
-	if (data & ~0x01) 	logerror("CPU #0 - PC %04X: unknown nmi bits: %02X\n",cpu_get_pc(),data);
+	//if (data & ~0x01) 	logerror("CPU #0 - PC %04X: unknown nmi bits: %02X\n",cpu_get_pc(),data);
 }
 
 /*
@@ -1054,7 +1056,7 @@ static WRITE_HANDLER( hardhea2_nmi_w )
 static WRITE_HANDLER( hardhea2_flipscreen_w )
 {
 	flip_screen_w(0, data & 0x01);
-	if (data & ~0x01) 	logerror("CPU #0 - PC %04X: unknown flipscreen bits: %02X\n",cpu_get_pc(),data);
+	//if (data & ~0x01) 	logerror("CPU #0 - PC %04X: unknown flipscreen bits: %02X\n",cpu_get_pc(),data);
 }
 
 WRITE_HANDLER( hardhea2_leds_w )
@@ -1062,7 +1064,7 @@ WRITE_HANDLER( hardhea2_leds_w )
 	osd_led_w(0, data & 0x01);
 	osd_led_w(1, data & 0x02);
 	coin_counter_w(0, data & 0x04);
-	if (data & ~0x07)	logerror("CPU#0  - PC %06X: unknown leds bits: %02X\n",cpu_get_pc(),data);
+	//if (data & ~0x07)	logerror("CPU#0  - PC %06X: unknown leds bits: %02X\n",cpu_get_pc(),data);
 }
 
 /*
@@ -1073,7 +1075,7 @@ WRITE_HANDLER( hardhea2_leds_w )
 static WRITE_HANDLER( hardhea2_spritebank_w )
 {
 	suna8_spritebank = (data >> 1) & 1;
-	if (data & ~0x02) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",cpu_get_pc(),data);
+	//if (data & ~0x02) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",cpu_get_pc(),data);
 }
 
 static READ_HANDLER( hardhea2_c080_r )
@@ -1090,7 +1092,7 @@ static WRITE_HANDLER( hardhea2_rombank_w )
 	data8_t *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
-	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",cpu_get_pc(),data);
+	//if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",cpu_get_pc(),data);
 
 	RAM = &RAM[0x4000 * bank + 0x10000];
 
@@ -1148,7 +1150,7 @@ static data8_t spritebank_latch;
 static WRITE_HANDLER( starfigh_spritebank_latch_w )
 {
 	spritebank_latch = (data >> 2) & 1;
-	if (data & ~0x04) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",cpu_get_pc(),data);
+	//if (data & ~0x04) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",cpu_get_pc(),data);
 }
 
 static WRITE_HANDLER( starfigh_spritebank_w )

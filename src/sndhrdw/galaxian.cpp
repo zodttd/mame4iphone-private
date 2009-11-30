@@ -308,30 +308,30 @@ int galaxian_sh_start(const struct MachineSound *msound)
 */
 #define NE555_FM_ADJUST_RATE 0.80
 		/* discharge : 100K * 1uF */
-		double v  = 5.0;
-		double vK = (shoot_rate) ? exp(-1 / (R41__*C25__) / shoot_rate) : 0;
+		float v  = 5.0;
+		float vK = (shoot_rate) ? exp(-1 / (R41__*C25__) / shoot_rate) : 0;
 		/* -- SHOOT KEY port -- */
-		double IC8L3 = IC8L3_L; /* key on */
+		float IC8L3 = IC8L3_L; /* key on */
 		int IC8Lcnt = SHOOT_KEYON_TIME * shoot_rate; /* count for key off */
 		/* C28 : KEY port capacity */
 		/*       connection : 8L-3 - R47(2.2K) - C28(47u) - R48(2.2K) - C29 */
-		double c28v = IC8L3_H - (IC8L3_H-(NOISE_H+NOISE_L)/2)/(R46__+R47__+R48__)*R47__;
-		double c28K = (shoot_rate) ? exp(-1 / (22000 * 0.000047 ) / shoot_rate) : 0;
+		float c28v = IC8L3_H - (IC8L3_H-(NOISE_H+NOISE_L)/2)/(R46__+R47__+R48__)*R47__;
+		float c28K = (shoot_rate) ? exp(-1 / (22000 * 0.000047 ) / shoot_rate) : 0;
 		/* C29 : NOISE capacity */
 		/*       connection : NOISE - R46(10K) - C29(0.1u) - R48(2.2K) - C28 */
-		double c29v  = IC8L3_H - (IC8L3_H-(NOISE_H+NOISE_L)/2)/(R46__+R47__+R48__)*(R47__+R48__);
-		double c29K1 = (shoot_rate) ? exp(-1 / (22000  * 0.00000001 ) / shoot_rate) : 0; /* form C28   */
-		double c29K2 = (shoot_rate) ? exp(-1 / (100000 * 0.00000001 ) / shoot_rate) : 0; /* from noise */
+		float c29v  = IC8L3_H - (IC8L3_H-(NOISE_H+NOISE_L)/2)/(R46__+R47__+R48__)*(R47__+R48__);
+		float c29K1 = (shoot_rate) ? exp(-1 / (22000  * 0.00000001 ) / shoot_rate) : 0; /* form C28   */
+		float c29K2 = (shoot_rate) ? exp(-1 / (100000 * 0.00000001 ) / shoot_rate) : 0; /* from noise */
 		/* NE555 timer */
 		/* RA = 10K , RB = 22K , C=.01u ,FM = C29 */
-		double ne555cnt = 0;
-		double ne555step = (shoot_rate) ? ((1.44/((R44__+R45__*2)*C27__)) / shoot_rate) : 0;
-		double ne555duty = (double)(R44__+R45__)/(R44__+R45__*2); /* t1 duty */
-		double ne555sr;		/* threshold (FM) rate */
+		float ne555cnt = 0;
+		float ne555step = (shoot_rate) ? ((1.44/((R44__+R45__*2)*C27__)) / shoot_rate) : 0;
+		float ne555duty = (float)(R44__+R45__)/(R44__+R45__*2); /* t1 duty */
+		float ne555sr;		/* threshold (FM) rate */
 		/* NOISE source */
-		double ncnt  = 0.0;
-		double nstep = (shoot_rate) ? ((double)NOISE_RATE / shoot_rate) : 0;
-		double noise_sh2; /* voltage level */
+		float ncnt  = 0.0;
+		float nstep = (shoot_rate) ? ((float)NOISE_RATE / shoot_rate) : 0;
+		float noise_sh2; /* voltage level */
 
 		for( i = 0; i < shoot_length; i++ )
 		{
@@ -413,8 +413,8 @@ int galaxian_sh_start(const struct MachineSound *msound)
 	for( i = 0; i < TOOTHSAW_LENGTH; i++ )
 	{
 		#define V(r0,r1) 2*TOOTHSAW_AMPLITUDE*(r0)/(r0+r1)-TOOTHSAW_AMPLITUDE
-		double r0a = 1.0/1e12, r1a = 1.0/1e12;
-		double r0b = 1.0/1e12, r1b = 1.0/1e12;
+		float r0a = 1.0/1e12, r1a = 1.0/1e12;
+		float r0b = 1.0/1e12, r1b = 1.0/1e12;
 
 		/* #0: VOL1=0 and VOL2=0
 		 * only the 33k and the 22k resistors R51 and R50
@@ -545,7 +545,7 @@ WRITE_HANDLER( galaxian_lfo_freq_w )
 
 	/* R18 1M,R17 470K,R16 220K,R15 100K */
 	const int rv[4] = { 1000000,470000,220000,100000};
-	double r1,r2,Re,td;
+	float r1,r2,Re,td;
 	int i;
 
 	if( (data & 1) == lfobit[offset] )
@@ -595,11 +595,11 @@ WRITE_HANDLER( galaxian_lfo_freq_w )
 #undef Cap
 #undef Vbe
 #undef Vcc
-	logerror("lfo timer bits:%d%d%d%d r1:%d, r2:%d, re: %d, td: %9.2fsec\n", lfobit[0], lfobit[1], lfobit[2], lfobit[3], (int)r1, (int)r2, (int)Re, td);
+	//logerror("lfo timer bits:%d%d%d%d r1:%d, r2:%d, re: %d, td: %9.2fsec\n", lfobit[0], lfobit[1], lfobit[2], lfobit[3], (int)r1, (int)r2, (int)Re, td);
 	lfotimer = timer_pulse( TIME_IN_SEC(td / (MAXFREQ-MINFREQ)), 0, lfo_timer_cb);
 #else
 	static int lfobit[4];
-	double r0, r1, rx = 100000.0;
+	float r0, r1, rx = 100000.0;
 
 	if( (data & 1) == lfobit[offset] )
 		return;

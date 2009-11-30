@@ -10,7 +10,6 @@
 #include <strings.h>
 #include "driver.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "s2650.h"
 #include "s2650cpu.h"
 
@@ -26,21 +25,6 @@
 
 /* define this to expand all EA calculations inline */
 #define INLINE_EA	1
-
-static UINT8 s2650_reg_layout[] = {
-	S2650_PC, S2650_PS, S2650_R0, S2650_R1, S2650_R2, S2650_R3, -1,
-	S2650_SI, S2650_FO, S2650_R1A, S2650_R2A, S2650_R3A, -1,
-	S2650_HALT, S2650_IRQ_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 s2650_win_layout[] = {
-	32, 0,48, 4,	/* register window (top rows) */
-	 0, 0,31,22,	/* disassembler window (left colums) */
-	32, 5,48, 8,	/* memory #1 window (right, upper middle) */
-	32,14,48, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
 
 int s2650_ICount = 0;
 
@@ -925,8 +909,6 @@ int s2650_execute(int cycles)
 	{
 		S.ppc = S.page + S.iar;
 
-		CALL_MAME_DEBUG;
-
 		S.ir = ROP();
 		s2650_ICount -= S2650_Cycles[S.ir];
 		S.r = S.ir & 3; 		/* register / value */
@@ -1477,68 +1459,20 @@ void s2650_state_load(void *file)
  ****************************************************************************/
 const char *s2650_info(void *context, int regnum)
 {
-	static char buffer[16][47+1];
-	static int which = 0;
-	s2650_Regs *r = (s2650_Regs *)context;
-
-	which = ++which % 16;
-	buffer[which][0] = '\0';
-
-    if( !context )
-		r = &S;
-
     switch( regnum )
 	{
-		case CPU_INFO_FLAGS:
-		case CPU_INFO_REG+S2650_PC: sprintf(buffer[which], "PC:%04X", r->page + r->iar); break;
-		case CPU_INFO_REG+S2650_PS: sprintf(buffer[which], "PS:%02X%02X", r->psu, r->psl); break;
-		case CPU_INFO_REG+S2650_R0: sprintf(buffer[which], "R0:%02X", r->reg[0]); break;
-		case CPU_INFO_REG+S2650_R1: sprintf(buffer[which], "R1:%02X", r->reg[1]); break;
-		case CPU_INFO_REG+S2650_R2: sprintf(buffer[which], "R2:%02X", r->reg[2]); break;
-		case CPU_INFO_REG+S2650_R3: sprintf(buffer[which], "R3:%02X", r->reg[3]); break;
-		case CPU_INFO_REG+S2650_R1A: sprintf(buffer[which], "R1'%02X", r->reg[4]); break;
-		case CPU_INFO_REG+S2650_R2A: sprintf(buffer[which], "R2'%02X", r->reg[5]); break;
-		case CPU_INFO_REG+S2650_R3A: sprintf(buffer[which], "R3'%02X", r->reg[6]); break;
-		case CPU_INFO_REG+S2650_HALT: sprintf(buffer[which], "HALT:%X", r->halt); break;
-		case CPU_INFO_REG+S2650_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_REG+S2650_SI: sprintf(buffer[which], "SI:%X", (r->psu & SI) ? 1 : 0); break;
-		case CPU_INFO_REG+S2650_FO: sprintf(buffer[which], "FO:%X", (r->psu & FO) ? 1 : 0); break;
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-				r->psu & 0x80 ? 'S':'.',
-				r->psu & 0x40 ? 'O':'.',
-				r->psu & 0x20 ? 'I':'.',
-				r->psu & 0x10 ? '?':'.',
-				r->psu & 0x08 ? '?':'.',
-				r->psu & 0x04 ? 's':'.',
-				r->psu & 0x02 ? 's':'.',
-				r->psu & 0x01 ? 's':'.',
-                r->psl & 0x80 ? 'M':'.',
-				r->psl & 0x40 ? 'P':'.',
-				r->psl & 0x20 ? 'H':'.',
-				r->psl & 0x10 ? 'R':'.',
-				r->psl & 0x08 ? 'W':'.',
-				r->psl & 0x04 ? 'V':'.',
-				r->psl & 0x02 ? '2':'.',
-				r->psl & 0x01 ? 'C':'.');
-			break;
 		case CPU_INFO_NAME: return "S2650";
 		case CPU_INFO_FAMILY: return "Signetics 2650";
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Written by Juergen Buchmueller for use with MAME";
-		case CPU_INFO_REG_LAYOUT: return (const char *)s2650_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)s2650_win_layout;
 	}
-	return buffer[which];
+	return "";
 }
 
 unsigned s2650_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-    return Dasm2650(buffer,pc);
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }
 

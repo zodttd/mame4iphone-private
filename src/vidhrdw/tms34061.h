@@ -1,3 +1,6 @@
+#ifndef TMS34061_H
+#define TMS34061_H
+
 /****************************************************************************
  *																			*
  *	Function prototypes and constants used by the TMS34061 emulator			*
@@ -53,3 +56,4 @@ READ_HANDLER( TMS34061_r );
 /* Checks whether the display is inhibited */
 int TMS34061_display_blanked(void);
 
+#endif

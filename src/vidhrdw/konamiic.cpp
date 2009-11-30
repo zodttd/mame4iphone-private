@@ -1697,21 +1697,21 @@ READ_HANDLER( K052109_r )
 {
 	if (K052109_RMRD_line == CLEAR_LINE)
 	{
-		if ((offset & 0x1fff) >= 0x1800)
-		{
-			if (offset >= 0x180c && offset < 0x1834)
-			{	/* A y scroll */	}
-			else if (offset >= 0x1a00 && offset < 0x1c00)
-			{	/* A x scroll */	}
-			else if (offset == 0x1d00)
-			{	/* read for bitwise operations before writing */	}
-			else if (offset >= 0x380c && offset < 0x3834)
-			{	/* B y scroll */	}
-			else if (offset >= 0x3a00 && offset < 0x3c00)
-			{	/* B x scroll */	}
-			else
-logerror("%04x: read from unknown 052109 address %04x\n",cpu_get_pc(),offset);
-		}
+//		if ((offset & 0x1fff) >= 0x1800)
+//		{
+//			if (offset >= 0x180c && offset < 0x1834)
+//			{	/* A y scroll */	}
+//			else if (offset >= 0x1a00 && offset < 0x1c00)
+//			{	/* A x scroll */	}
+//			else if (offset == 0x1d00)
+//			{	/* read for bitwise operations before writing */	}
+//			else if (offset >= 0x380c && offset < 0x3834)
+//			{	/* B y scroll */	}
+//			else if (offset >= 0x3a00 && offset < 0x3c00)
+//			{	/* B x scroll */	}
+//			else
+//logerror("%04x: read from unknown 052109 address %04x\n",cpu_get_pc(),offset);
+//		}
 
 		return K052109_ram[offset];
 	}
@@ -1763,7 +1763,7 @@ if (K052109_scrollctrl != data)
 #if 0
 usrintf_showmessage("scrollcontrol = %02x",data);
 #endif
-logerror("%04x: rowscrollcontrol = %02x\n",cpu_get_pc(),data);
+//logerror("%04x: rowscrollcontrol = %02x\n",cpu_get_pc(),data);
 			K052109_scrollctrl = data;
 }
 		}
@@ -1801,12 +1801,12 @@ logerror("%04x: 052109 register 1d00 = %02x\n",cpu_get_pc(),data);
 		}
 		else if (offset == 0x1e00)
 		{
-logerror("%04x: 052109 register 1e00 = %02x\n",cpu_get_pc(),data);
+//logerror("%04x: 052109 register 1e00 = %02x\n",cpu_get_pc(),data);
 			K052109_romsubbank = data;
 		}
 		else if (offset == 0x1e80)
 		{
-if ((data & 0xfe)) logerror("%04x: 052109 register 1e80 = %02x\n",cpu_get_pc(),data);
+//if ((data & 0xfe)) logerror("%04x: 052109 register 1e80 = %02x\n",cpu_get_pc(),data);
 			tilemap_set_flip(K052109_tilemap[0],(data & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 			tilemap_set_flip(K052109_tilemap[1],(data & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 			tilemap_set_flip(K052109_tilemap[2],(data & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
@@ -1844,8 +1844,8 @@ if ((data & 0xfe)) logerror("%04x: 052109 register 1e80 = %02x\n",cpu_get_pc(),d
 		{	/* B y scroll */	}
 		else if (offset >= 0x3a00 && offset < 0x3c00)
 		{	/* B x scroll */	}
-		else
-logerror("%04x: write %02x to unknown 052109 address %04x\n",cpu_get_pc(),data,offset);
+//		else
+//logerror("%04x: write %02x to unknown 052109 address %04x\n",cpu_get_pc(),data,offset);
 	}
 }
 
@@ -2001,29 +2001,6 @@ usrintf_showmessage("%x %x %x %x",
 	tilemap0_preupdate(); tilemap_update(K052109_tilemap[0]);
 	tilemap1_preupdate(); tilemap_update(K052109_tilemap[1]);
 	tilemap2_preupdate(); tilemap_update(K052109_tilemap[2]);
-
-#ifdef MAME_DEBUG
-if ((K052109_scrollctrl & 0x03) == 0x01 ||
-		(K052109_scrollctrl & 0x18) == 0x08 ||
-		((K052109_scrollctrl & 0x04) && (K052109_scrollctrl & 0x03)) ||
-		((K052109_scrollctrl & 0x20) && (K052109_scrollctrl & 0x18)) ||
-		(K052109_scrollctrl & 0xc0) != 0)
-	usrintf_showmessage("scrollcontrol = %02x",K052109_scrollctrl);
-#endif
-
-#if 0
-if (keyboard_pressed(KEYCODE_F))
-{
-	FILE *fp;
-	fp=fopen("TILE.DMP", "w+b");
-	if (fp)
-	{
-		fwrite(K052109_ram, 0x6000, 1, fp);
-		usrintf_showmessage("saved");
-		fclose(fp);
-	}
-}
-#endif
 }
 
 void K052109_tilemap_draw(struct osd_bitmap *bitmap,int num,int flags)
@@ -2180,7 +2157,7 @@ READ_HANDLER( K051937_r )
 			/* some games need bit 0 to pulse */
 			return (counter++) & 1;
 		}
-logerror("%04x: read unknown 051937 address %x\n",cpu_get_pc(),offset);
+//logerror("%04x: read unknown 051937 address %x\n",cpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -2189,10 +2166,6 @@ WRITE_HANDLER( K051937_w )
 {
 	if (offset == 0)
 	{
-#ifdef MAME_DEBUG
-if (data & 0xc6)
-	usrintf_showmessage("051937 reg 00 = %02x",data);
-#endif
 		/* bit 0 is IRQ enable */
 		K051960_irq_enabled = (data & 0x01);
 
@@ -2217,7 +2190,7 @@ logerror("%04x: write %02x to 051937 address %x\n",cpu_get_pc(),data,offset);
 #if 0
 	usrintf_showmessage("%04x: write %02x to 051937 address %x",cpu_get_pc(),data,offset);
 #endif
-logerror("%04x: write %02x to unknown 051937 address %x\n",cpu_get_pc(),data,offset);
+//logerror("%04x: write %02x to unknown 051937 address %x\n",cpu_get_pc(),data,offset);
 		K051960_force_shadows = data & 0x02;
 	}
 	else if (offset >= 2 && offset < 5)
@@ -2229,7 +2202,7 @@ logerror("%04x: write %02x to unknown 051937 address %x\n",cpu_get_pc(),data,off
 #if 0
 	usrintf_showmessage("%04x: write %02x to 051937 address %x",cpu_get_pc(),data,offset);
 #endif
-logerror("%04x: write %02x to unknown 051937 address %x\n",cpu_get_pc(),data,offset);
+//logerror("%04x: write %02x to unknown 051937 address %x\n",cpu_get_pc(),data,offset);
 	}
 }
 
@@ -2687,7 +2660,7 @@ READ_HANDLER( K053244_r )
 	}
 	else
 	{
-logerror("%04x: read from unknown 053244 address %x\n",cpu_get_pc(),offset);
+//logerror("%04x: read from unknown 053244 address %x\n",cpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -2704,10 +2677,6 @@ WRITE_HANDLER( K053244_w )
 		K053245_spriteoffsY = (K053245_spriteoffsY & 0xff00) | data;
 	else if (offset == 0x05)
 	{
-#ifdef MAME_DEBUG
-if (data & 0xc8)
-	usrintf_showmessage("053244 reg 05 = %02x",data);
-#endif
 		/* bit 0/1 = flip screen */
 		K053245_flipscreenX = data & 0x01;
 		K053245_flipscreenY = data & 0x02;
@@ -2728,8 +2697,8 @@ logerror("%04x: write %02x to 053244 address 5\n",cpu_get_pc(),data);
 		K053244_romoffset = (K053244_romoffset & ~(0xff << offset)) | (data << offset);
 		return;
 	}
-	else
-logerror("%04x: write %02x to unknown 053244 address %x\n",cpu_get_pc(),data,offset);
+//	else
+//logerror("%04x: write %02x to unknown 053244 address %x\n",cpu_get_pc(),data,offset);
 }
 
 void K053244_bankselect(int bank)   /* used by TMNT2 for ROM testing */
@@ -3161,7 +3130,7 @@ READ_HANDLER( K053246_r )
 	}
 	else
 	{
-logerror("%04x: read from unknown 053244 address %x\n",cpu_get_pc(),offset);
+//logerror("%04x: read from unknown 053244 address %x\n",cpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -3178,10 +3147,6 @@ WRITE_HANDLER( K053246_w )
 		K053247_spriteoffsY = (K053247_spriteoffsY & 0xff00) | data;
 	else if (offset == 0x05)
 	{
-#ifdef MAME_DEBUG
-if (data & 0xc8)
-	usrintf_showmessage("053246 reg 05 = %02x",data);
-#endif
 		/* bit 0/1 = flip screen */
 		K053247_flipscreenX = data & 0x01;
 		K053247_flipscreenY = data & 0x02;
@@ -3193,7 +3158,7 @@ if (data & 0xc8)
 
 		/* bit 5 = unknown */
 
-logerror("%04x: write %02x to 053246 address 5\n",cpu_get_pc(),data);
+//logerror("%04x: write %02x to 053246 address 5\n",cpu_get_pc(),data);
 	}
 	else if (offset >= 0x04 && offset < 0x08)   /* only 4,6,7 - 5 is handled above */
 	{
@@ -3201,8 +3166,8 @@ logerror("%04x: write %02x to 053246 address 5\n",cpu_get_pc(),data);
 		K053246_romoffset = (K053246_romoffset & ~(0xff << offset)) | (data << offset);
 		return;
 	}
-	else
-logerror("%04x: write %02x to unknown 053246 address %x\n",cpu_get_pc(),data,offset);
+//	else
+//logerror("%04x: write %02x to unknown 053246 address %x\n",cpu_get_pc(),data,offset);
 }
 
 READ_HANDLER( K053246_word_r )
@@ -3724,7 +3689,7 @@ int K051316_vh_start(int chip, int gfx_memory_region,int bpp,
 	}
 	else
 	{
-logerror("K051316_vh_start supports only 4 or 7 bpp\n");
+//logerror("K051316_vh_start supports only 4 or 7 bpp\n");
 		return 1;
 	}
 
@@ -3862,7 +3827,7 @@ int K051316_rom_r(int chip, int offset)
 	}
 	else
 	{
-logerror("%04x: read 051316 ROM offset %04x but reg 0x0c bit 0 not clear\n",cpu_get_pc(),offset);
+//logerror("%04x: read 051316 ROM offset %04x but reg 0x0c bit 0 not clear\n",cpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -3887,7 +3852,7 @@ READ_HANDLER( K051316_rom_2_r )
 void K051316_ctrl_w(int chip,int offset,int data)
 {
 	K051316_ctrlram[chip][offset] = data;
-if (offset >= 0x0c) logerror("%04x: write %02x to 051316 reg %x\n",cpu_get_pc(),data,offset);
+//if (offset >= 0x0c) logerror("%04x: write %02x to 051316 reg %x\n",cpu_get_pc(),data,offset);
 }
 
 WRITE_HANDLER( K051316_ctrl_0_w )
@@ -4052,10 +4017,6 @@ int K053251_get_palette_index(int ci)
 
 
 static unsigned char K054000_ram[0x20];
-
-static WRITE_HANDLER( collision_w )
-{
-}
 
 WRITE_HANDLER( K054000_w )
 {

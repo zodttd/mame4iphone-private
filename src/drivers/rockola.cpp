@@ -1,3 +1,6 @@
+#include "../vidhrdw/rockola.cpp"
+#include "../sndhrdw/rockola.cpp"
+
 /***************************************************************************
 
 Vanguard memory map (preliminary)

@@ -1,3 +1,5 @@
+#include "../vidhrdw/mole.cpp"
+
 //	MOLE ATTACK    YACHIYO  1982
 //	known clones: "Holy Moly"
 //

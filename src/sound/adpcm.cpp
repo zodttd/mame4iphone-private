@@ -94,7 +94,7 @@ static void compute_tables(void)
 	for (step = 0; step <= 48; step++)
 	{
 		/* compute the step value */
-		int stepval = floor(16.0 * pow(11.0 / 10.0, (double)step));
+		int stepval = floor(16.0 * pow(11.0 / 10.0, (float)step));
 
 		/* loop over all nibbles and compute the difference */
 		for (nib = 0; nib < 16; nib++)
@@ -110,7 +110,7 @@ static void compute_tables(void)
 	/* generate the OKI6295 volume table */
 	for (step = 0; step < 16; step++)
 	{
-		double out = 256.0;
+		float out = 256.0;
 		int vol = step;
 
 		/* 3dB per step */
@@ -300,7 +300,7 @@ int ADPCM_sh_start(const struct MachineSound *msound)
 		adpcm[i].volume = 255;
 		adpcm[i].signal = -2;
 		if (Machine->sample_rate)
-			adpcm[i].source_step = (UINT32)((double)intf->frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
+			adpcm[i].source_step = (UINT32)((float)intf->frequency * (float)FRAC_ONE / (float)Machine->sample_rate);
 	}
 
 	/* success */
@@ -569,7 +569,7 @@ int OKIM6295_sh_start(const struct MachineSound *msound)
 		adpcm[i].volume = 255;
 		adpcm[i].signal = -2;
 		if (Machine->sample_rate)
-			adpcm[i].source_step = (UINT32)((double)intf->frequency[chip] * (double)FRAC_ONE / (double)Machine->sample_rate);
+			adpcm[i].source_step = (UINT32)((float)intf->frequency[chip] * (float)FRAC_ONE / (float)Machine->sample_rate);
 	}
 
 	/* success */
@@ -652,7 +652,7 @@ void OKIM6295_set_frequency(int which, int channel, int frequency)
 	/* update the stream and set the new base */
 	stream_update(voice->stream, 0);
 	if (Machine->sample_rate)
-		voice->source_step = (UINT32)((double)frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
+		voice->source_step = (UINT32)((float)frequency * (float)FRAC_ONE / (float)Machine->sample_rate);
 }
 
 

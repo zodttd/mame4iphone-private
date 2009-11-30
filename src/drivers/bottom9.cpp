@@ -1,3 +1,5 @@
+#include "../vidhrdw/bottom9.cpp"
+
 /***************************************************************************
 
 Bottom of the Ninth (c) 1989 Konami

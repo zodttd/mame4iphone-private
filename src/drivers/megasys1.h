@@ -269,49 +269,6 @@ static struct GfxLayout _name_ =\
 
 /***************************************************************************
 
-						Read and Write Errors Logging
-
-***************************************************************************/
-
-
-#ifdef MAME_DEBUG
-#define SHOW_READ_ERROR(_format_,_offset_)\
-{\
-	char buf[80];\
-	sprintf(buf,_format_,_offset_);\
-	usrintf_showmessage(buf);\
-	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
-}
-
-#define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
-{\
-	char buf[80];\
-	sprintf(buf,_format_,_offset_,_data_);\
-	usrintf_showmessage(buf);\
-	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
-}
-
-#else
-
-#define SHOW_READ_ERROR(_format_,_offset_)\
-{\
-	char buf[80];\
-	sprintf(buf,_format_,_offset_);\
-	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf);\
-}
-
-#define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
-{\
-	char buf[80];\
-	sprintf(buf,_format_,_offset_,_data_); \
-	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
-}
-
-#endif
-
-
-/***************************************************************************
-
 						Scrolling Layers Handling
 
 ***************************************************************************/
@@ -346,8 +303,7 @@ void megasys1_scroll_2_flag_w(int data);
 
 
 #define MEGASYS1_VREG_FLAG(_n_) \
-		megasys1_scroll_##_n_##_flag_w(new_data); \
-		if (megasys1_tmap_##_n_ == 0) SHOW_WRITE_ERROR("vreg %04X <- %04X NO MEMORY FOR SCREEN",offset,data);
+		megasys1_scroll_##_n_##_flag_w(new_data);
 
 #define MEGASYS1_VREG_SCROLL(_n_, _dir_)	megasys1_scroll##_dir_[_n_] = new_data;
 

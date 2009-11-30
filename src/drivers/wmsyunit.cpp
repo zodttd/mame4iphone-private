@@ -1,3 +1,6 @@
+#include "../machine/wmsyunit.cpp"
+#include "../vidhrdw/wmsyunit.cpp"
+
 /*************************************************************************
 
 	Driver for Williams/Midway Y/Z-unit games.
@@ -721,7 +724,7 @@ static struct MachineDriver machine_driver_zunit =
 	{
 		{
 			CPU_TMS34010,
-			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 Mhz */
+			((48000000/TMS34010_CLOCK_DIVIDER)/2)/0.8,	/* 48 Mhz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
@@ -767,7 +770,7 @@ static struct MachineDriver machine_driver_yunit_cvsd_4bit =
 	{
 		{
 			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
+			((50000000/TMS34010_CLOCK_DIVIDER)/2)/0.8,	/* 50 Mhz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
@@ -806,7 +809,7 @@ static struct MachineDriver machine_driver_yunit_cvsd_6bit =
 	{
 		{
 			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
+			((50000000/TMS34010_CLOCK_DIVIDER)/2)/0.8,	/* 50 Mhz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
@@ -845,7 +848,7 @@ static struct MachineDriver machine_driver_yunit_adpcm =
 	{
 		{
 			CPU_TMS34010,
-			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 Mhz */
+			((48000000/TMS34010_CLOCK_DIVIDER)/2)/0.8, /* 3.75 Mhz */
 			readmem,writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config

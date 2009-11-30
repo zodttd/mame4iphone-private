@@ -1,3 +1,5 @@
+#include "../vidhrdw/tankbatt.cpp"
+
 /***************************************************************************
 
 Tank Battalion memory map (preliminary)

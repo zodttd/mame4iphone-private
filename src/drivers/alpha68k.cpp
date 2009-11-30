@@ -1,3 +1,5 @@
+#include "../vidhrdw/alpha68k.cpp"
+
 /***************************************************************************
 
 	SNK/Alpha 68000 based games:
@@ -188,7 +190,7 @@ static READ_HANDLER( alpha_II_trigger_r )
 			break;
 	}
 
-	logerror("%04x:  Alpha read trigger at %04x\n",cpu_get_pc(),offset);
+	//logerror("%04x:  Alpha read trigger at %04x\n",cpu_get_pc(),offset);
 
 	return 0; /* Values returned don't matter */
 }
@@ -267,14 +269,14 @@ static READ_HANDLER( alpha_V_trigger_r )
 			break;
 	}
 
-	logerror("%04x:  Alpha read trigger at %04x\n",cpu_get_pc(),offset);
+	//logerror("%04x:  Alpha read trigger at %04x\n",cpu_get_pc(),offset);
 
 	return 0; /* Values returned don't matter */
 }
 
 static WRITE_HANDLER( alpha_microcontroller_w )
 {
-	logerror("%04x:  Alpha write trigger at %04x (%04x)\n",cpu_get_pc(),offset,data);
+	//logerror("%04x:  Alpha write trigger at %04x (%04x)\n",cpu_get_pc(),offset,data);
 	/* 0x44 = coin clear signal to microcontroller? */
 	if (offset==0x5a) alpha68k_flipscreen_w(0,data);
 }
@@ -305,7 +307,7 @@ static READ_HANDLER( kyros_alpha_trigger_r )
 
 	}
 
-	logerror("%04x:  Alpha read trigger at %04x\n",cpu_get_pc(),offset);
+	//logerror("%04x:  Alpha read trigger at %04x\n",cpu_get_pc(),offset);
 
 	return 0; /* Values returned don't matter */
 }
@@ -491,10 +493,10 @@ static struct MemoryReadAddress sstingry_sound_readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static WRITE_HANDLER (soundram_mirror_w)
+/*static WRITE_HANDLER (soundram_mirror_w)
 {
 	sound_ram[offset]=data;
-}
+}*/
 
 static struct MemoryWriteAddress sstingry_sound_writemem[] =
 {
@@ -710,10 +712,10 @@ INPUT_PORTS_START( timesold )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* player 1 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 8, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 8, 0, 0, JOYCODE_1_BUTTON5, JOYCODE_1_BUTTON6, 0, 0 )
 
 	PORT_START	/* player 2 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 8, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 8, 0, 0, JOYCODE_2_BUTTON5, JOYCODE_2_BUTTON6, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( btlfield )
@@ -768,10 +770,10 @@ INPUT_PORTS_START( btlfield )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* player 1 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 8, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 8, 0, 0, JOYCODE_1_BUTTON5, JOYCODE_1_BUTTON6, 0, 0 )
 
 	PORT_START	/* player 2 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 8, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 8, 0, 0, JOYCODE_2_BUTTON5, JOYCODE_2_BUTTON6, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( skysoldr )

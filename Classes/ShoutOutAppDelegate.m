@@ -1,6 +1,5 @@
 //
-//  ShoutOutAppDelegate.m
-//  ShoutOut
+//  mame4iphone
 //
 //  Created by Spookysoft on 9/6/08.
 //  Copyright Spookysoft 2008. All rights reserved.
@@ -26,6 +25,7 @@ extern unsigned long gp2x_pad_status;
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
   int i;
+  
 	[[UIApplication sharedApplication] setStatusBarHidden:NO animated:NO];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:YES];
 	application.delegate = self;
@@ -48,14 +48,24 @@ extern unsigned long gp2x_pad_status;
 	navFrame.origin.y = 20;
 	navFrame.size.height = 460 - 49;
 	[navigationController view].frame = navFrame;
-	
+
 //	tabBar.selectedItem = 0;
 	// Configure and show the window
 	//[SOApp.nowPlayingView startEmu:"/var/mobile/Media/ROMs/GBA/Pokemon - Emerald Version (U) [f1] (Save Type).gba"];
 	//[window addSubview:[SOApp.nowPlayingView view]];
 	//[window makeKeyAndVisible];
+	
 	[window addSubview:[navigationController view]];
+
 	[window makeKeyAndVisible];
+
+  [self switchToBrowse];
+
+	// Load ROMs
+  [SOApp.romView startRootData:2.0f];
+
+	// Load Saves
+  //[SOApp.saveStatesView startSaveData:4.0f];
 }
 
 #ifdef WITH_ADS
@@ -97,7 +107,13 @@ extern unsigned long gp2x_pad_status;
 	navigationController.navigationBarHidden = FALSE;
 	navigationController.navigationBar.hidden = FALSE;
 	
-	[[self navigationController] popToRootViewControllerAnimated:NO];
+	[SOApp.romView reload];
+	  
+	if ([[[self navigationController] viewControllers] containsObject:SOApp.romView]) {
+		[[self navigationController] popToViewController:SOApp.romView animated:NO];
+	} else {
+		[[self navigationController] pushViewController:SOApp.romView animated:NO];
+	}
 }
 - (void)switchToSaveStates {
 	[[UIApplication sharedApplication] setStatusBarHidden:NO animated:NO];
@@ -109,7 +125,8 @@ extern unsigned long gp2x_pad_status;
 	navigationController.navigationBarHidden = FALSE;
 	navigationController.navigationBar.hidden = FALSE;
 	
-	[SOApp.saveStatesView refreshData:[NSString stringWithCString:get_documents_path("/")]]; //  @"/var/mobile/Media/ROMs/GBA/"];
+	[SOApp.saveStatesView reload];
+	
 	if ([[[self navigationController] viewControllers] containsObject:SOApp.saveStatesView]) {
 		[[self navigationController] popToViewController:SOApp.saveStatesView animated:NO];
 	} else {
@@ -144,6 +161,8 @@ extern unsigned long gp2x_pad_status;
 	navigationController.navigationBarHidden = FALSE;
 	navigationController.navigationBar.hidden = FALSE;
 	
+	[SOApp.recentView reload];
+	  
 	if ([[[self navigationController] viewControllers] containsObject:SOApp.recentView]) {
 		[[self navigationController] popToViewController:SOApp.recentView animated:NO];
 	} else {

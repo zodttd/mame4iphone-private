@@ -1,3 +1,5 @@
+#include "../vidhrdw/mikie.cpp"
+
 /***************************************************************************
 
 Mikie memory map (preliminary)

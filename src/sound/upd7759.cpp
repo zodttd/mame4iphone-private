@@ -284,13 +284,14 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 							((((unsigned int)(header[nextoff]))<<8)+(header[nextoff+1]))*2;
 
 	data = &memory_region(upd7759_intf->region[num])[sample->offset];
+	/*
 	logerror("play sample %3d, offset $%06x, length %5d, freq = %4d [data $%02x $%02x $%02x]\n",
 		sample_num,
 		sample->offset,
 		sample->length,
 		sample->freq,
 		data[0],data[1],data[2]);
-
+    */
 	return 1;
 }
 
@@ -474,7 +475,7 @@ void UPD7759_message_w (int num, int data)
 		int offset = -1;
 
 		//LOG(1,("upd7759_message_w $%02x\n", data));
-		logerror("upd7759_message_w $%2x\n",data);
+		//logerror("upd7759_message_w $%2x\n",data);
 
         switch (data) {
 
@@ -514,7 +515,7 @@ void UPD7759_message_w (int num, int data)
 			default:
 
 				//LOG(1,("upd7759_message_w unhandled $%02x\n", data));
-				logerror("upd7759_message_w unhandled $%02x\n", data);
+				//logerror("upd7759_message_w unhandled $%02x\n", data);
 				if ((data & 0xc0) == 0xc0)
 				{
 					if (voice->timer)
@@ -529,7 +530,7 @@ void UPD7759_message_w (int num, int data)
 		{
 			voice->base = &memory_region(upd7759_intf->region[num])[offset];
 			//LOG(1,("upd7759_message_w set base $%08x\n", offset));
-			logerror("upd7759_message_w set base $%08x\n", offset);
+			//logerror("upd7759_message_w set base $%08x\n", offset);
         }
 	}
 	else
@@ -766,8 +767,14 @@ int UPD7759_busy_r (int num)
 	}
 
 	/* bring the chip in sync with the CPU */
+#ifndef MAME_FASTSOUND
 	stream_update(channel[num], 0);
-
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(channel[num], 0);
+    }
+#endif
 	if ( voice->playing == 0 )
 	{
 		LOG(1,("uPD7759 not busy\n"));

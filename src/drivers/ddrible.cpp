@@ -1,3 +1,6 @@
+#include "../machine/ddrible.cpp"
+#include "../vidhrdw/ddrible.cpp"
+
 /***************************************************************************
 
 Double Dribble(GX690) (c) Konami 1986

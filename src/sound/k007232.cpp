@@ -329,9 +329,14 @@ static void K007232_WriteReg( int r, int v, int chip )
 	int  data;
 
 	if (Machine->sample_rate == 0) return;
-
+#ifndef MAME_FASTSOUND
 	stream_update(pcm_chan[chip],0);
-
+#else
+    {
+        extern int fast_sound;
+        if (!fast_sound) stream_update(pcm_chan[chip],0);
+    }
+#endif
 	kpcm[chip].wreg[r] = v;			/* stock write data */
 
 	if (r == 0x05)

@@ -61,9 +61,6 @@ static void unimpl(void)
 	if (PC == 0 || opcode_table[cpu_readop16(TOBYTE(PC)) >> 4] == unimpl)
 	{
 		cpu_set_halt_line(cpu_getactivecpu(),ASSERT_LINE);
-#if MAME_DEBUG
-		debug_key_pressed = 1;
-#endif
 	}
 }
 
@@ -177,11 +174,6 @@ static void pixt_ri_b(void) { PIXT_RI(B); }
 
 #define PIXT_RIXY(R)		                        \
 {													\
-	if (state.window_checking != 0 && state.window_checking != 3)			\
-	{												\
-		logerror("PIXT R,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
-	}												\
-													\
 	if (state.window_checking != 3 ||						\
 		(R##REG_X(R##DSTREG) >= WSTART_X && R##REG_X(R##DSTREG) <= WEND_X &&		\
 		 R##REG_Y(R##DSTREG) >= WSTART_Y && R##REG_Y(R##DSTREG) <= WEND_Y))			\
@@ -225,11 +217,6 @@ static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
 
 #define DRAV(R)			              			      		\
 {															\
-	if (state.window_checking)					\
-	{														\
-		logerror("DRAV  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
-	}														\
-															\
 	WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),COLOR1);				\
 															\
 	R##REG_X(R##DSTREG) += R##REG_X(R##SRCREG);				\

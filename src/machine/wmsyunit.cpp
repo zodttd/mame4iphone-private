@@ -111,7 +111,7 @@ static UINT8 *	t2_hack_mem;
 
 WRITE_HANDLER( wms_yunit_cmos_w )
 {
-	logerror("%08x:CMOS Write @ %05X\n", cpu_get_pc(), offset);
+	//logerror("%08x:CMOS Write @ %05X\n", cpu_get_pc(), offset);
 	COMBINE_WORD_MEM(&wms_cmos_ram[offset + wms_cmos_page], data);
 }
 
@@ -133,7 +133,7 @@ WRITE_HANDLER( wms_yunit_cmos_enable_w )
 {
 	cmos_w_enable = (~data >> 9) & 1;
 
-	logerror("%08x:Protection write = %04X\n", cpu_get_pc(), data);
+	//logerror("%08x:Protection write = %04X\n", cpu_get_pc(), data);
 
 	/* only go down this path if we have a data structure */
 	if (prot_data)
@@ -152,7 +152,7 @@ WRITE_HANDLER( wms_yunit_cmos_enable_w )
 			if (data == 0x500)
 			{
 				prot_result = cpu_readmem29_word(TOBYTE(0x10a4390)) << 4;
-				logerror("  desired result = %04X\n", prot_result);
+				//logerror("  desired result = %04X\n", prot_result);
 			}
 		}
 		
@@ -164,7 +164,7 @@ WRITE_HANDLER( wms_yunit_cmos_enable_w )
 				prot_sequence[1] == prot_data->reset_sequence[1] &&
 				prot_sequence[2] == prot_data->reset_sequence[2])
 			{
-				logerror("Protection reset\n");
+				//logerror("Protection reset\n");
 				prot_index = 0;
 			}
 			
@@ -172,7 +172,7 @@ WRITE_HANDLER( wms_yunit_cmos_enable_w )
 			if ((prot_sequence[1] & 0x0800) != 0 && (prot_sequence[2] & 0x0800) == 0)
 			{
 				prot_result = prot_data->data_sequence[prot_index++];
-				logerror("Protection clock (new data = %04X)\n", prot_result);
+				//logerror("Protection clock (new data = %04X)\n", prot_result);
 			}
 		}
 	}
@@ -182,7 +182,7 @@ WRITE_HANDLER( wms_yunit_cmos_enable_w )
 READ_HANDLER( wms_yunit_protection_r )
 {
 	/* return the most recently clocked value */
-	logerror("%08X:Protection read = %04X\n", cpu_get_pc(), prot_result);
+	//logerror("%08X:Protection read = %04X\n", cpu_get_pc(), prot_result);
 	return prot_result;
 }
 
@@ -1100,7 +1100,7 @@ WRITE_HANDLER( wms_yunit_sound_w )
 	/* check for out-of-bounds accesses */
 	if (offset)
 	{
-		logerror("%08X:Unexpected write to sound (hi) = %04X\n", cpu_get_pc(), data);
+		//logerror("%08X:Unexpected write to sound (hi) = %04X\n", cpu_get_pc(), data);
 		return;
 	}
 	

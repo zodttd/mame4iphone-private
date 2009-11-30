@@ -1,3 +1,5 @@
+#include "../vidhrdw/sauro.cpp"
+
 /***************************************************************************
 
 Sauro Memory Map (preliminary)

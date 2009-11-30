@@ -1,3 +1,5 @@
+#include "../vidhrdw/vendetta.cpp"
+
 /***************************************************************************
 
 Vendetta (GX081) (c) 1991 Konami
@@ -481,7 +483,7 @@ static void vendetta_banking( int lines )
 
 	if ( lines >= 0x1c )
 	{
-		logerror("PC = %04x : Unknown bank selected %02x\n", cpu_get_pc(), lines );
+		//logerror("PC = %04x : Unknown bank selected %02x\n", cpu_get_pc(), lines );
 	}
 	else
 		cpu_setbank( 1, &RAM[ 0x10000 + ( lines * 0x2000 ) ] );

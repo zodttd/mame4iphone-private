@@ -1,3 +1,5 @@
+#include "../vidhrdw/seicross.cpp"
+
 /***************************************************************************
 
 Seicross memory map (preliminary)

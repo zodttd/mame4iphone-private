@@ -232,7 +232,7 @@ WRITE_HANDLER( alpha68k_II_video_bank_w )
 			return;
 	}
 
-	logerror("%04x \n",offset);
+	//logerror("%04x \n",offset);
 }
 
 /******************************************************************************/

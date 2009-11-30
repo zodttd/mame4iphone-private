@@ -174,7 +174,7 @@ static int paletteram_bank;
 
 WRITE_HANDLER( pang_gfxctrl_w )
 {
-logerror("PC %04x: pang_gfxctrl_w %02x\n",cpu_get_pc(),data);
+//logerror("PC %04x: pang_gfxctrl_w %02x\n",cpu_get_pc(),data);
 {
 	char baf[40];
 	sprintf(baf,"%02x",data);

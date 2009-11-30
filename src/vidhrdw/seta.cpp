@@ -199,8 +199,8 @@ WRITE_HANDLER( seta_vregs_w )
 
 				if ( (samples_len > 0x100000) && ((addr+0x40000) <= samples_len) )
 					memcpy(&RAM[0xc0000],&RAM[addr],0x40000);
-				else
-					logerror("PC %06X - Invalid samples bank %02X !\n", cpu_get_pc(), new_bank);
+				/*else
+					logerror("PC %06X - Invalid samples bank %02X !\n", cpu_get_pc(), new_bank);*/
 			}
 
 		}
@@ -731,33 +731,6 @@ void seta_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		order	=	READ_WORD(&seta_vregs[2]);
 	}
-
-
-#ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z))
-{
-	int msk = 0;
-	char buf[80];
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
-	if (keyboard_pressed(KEYCODE_A))	msk |= 8;
-	if (msk != 0) layers_ctrl &= msk;
-
-	if (tilemap_2)
-		sprintf(buf,"%04X-%04X-%04X %04X-%04X",
-					READ_WORD(&seta_vregs[0]),
-					READ_WORD(&seta_vregs[2]),
-					READ_WORD(&seta_vregs[4]),
-
-					READ_WORD(&seta_vctrl_0[4]),
-					READ_WORD(&seta_vctrl_2[4])
-				);
-	else
-		sprintf(buf,"%04X",	READ_WORD(&seta_vctrl_0[4])	);
-
-	usrintf_showmessage(buf);
-}
-#endif
 
 	tilemap_update(ALL_TILEMAPS);
 

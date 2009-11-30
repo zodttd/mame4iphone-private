@@ -18,7 +18,6 @@
 /* #define INLINE static */
 
 #include "osd_cpu.h"
-#include "osd_dbg.h"
 #include "cpuintrf.h"
 
 enum {
@@ -131,10 +130,6 @@ unsigned tms320c10_dasm(char *buffer, unsigned pc);
 #define TMS320C10_RDOP_ARG(A) (unsigned)((cpu_readop_arg((A<<1))<<8) | cpu_readop_arg(((A<<1)+1)))
 #else
 #define TMS320C10_RDOP_ARG(A) (unsigned)((cpu_readop_arg((A<<1))) | cpu_readop_arg(((A<<1)+1))<<8)
-#endif
-
-#ifdef	MAME_DEBUG
-extern unsigned Dasm32010(char *buffer, unsigned pc);
 #endif
 
 #endif  /* _TMS320C10_H */

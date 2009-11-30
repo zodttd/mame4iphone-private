@@ -225,7 +225,7 @@ WRITE_HANDLER( wms_tunit_control_w )
 		other important bits:
 			bit 2 (0x0004) is toggled periodically
 	*/
-	logerror("T-unit control = %04X\n", data);
+	//logerror("T-unit control = %04X\n", data);
 	
 	COMBINE_WORD_MEM(&wms_control, data);
 
@@ -246,7 +246,7 @@ WRITE_HANDLER( wms_wolfu_control_w )
 		other important bits:
 			bit 2 (0x0004) is toggled periodically
 	*/
-	logerror("Wolf-unit control = %04X\n", data);
+	//logerror("Wolf-unit control = %04X\n", data);
 	
 	COMBINE_WORD_MEM(&wms_control, data);
 	
@@ -738,7 +738,7 @@ WRITE_HANDLER( wms_tunit_dma_w )
 		dma_state.offset = gfxoffset;
 	else
 	{
-		logerror("DMA source out of range: %08X\n", gfxoffset);
+		//logerror("DMA source out of range: %08X\n", gfxoffset);
 		goto skipdma;
 	}
 
@@ -875,7 +875,7 @@ static void update_screen(struct osd_bitmap *bitmap)
 
 void wms_tunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline)
 {
-	logerror("Display address = %08X\n", offs);
+	//logerror("Display address = %08X\n", offs);
 }
 
 

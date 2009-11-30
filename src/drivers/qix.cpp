@@ -1,3 +1,6 @@
+#include "../machine/qix.cpp"
+#include "../vidhrdw/qix.cpp"
+
 /***************************************************************************
 
 Qix/ZooKeeper/Space Dungeon

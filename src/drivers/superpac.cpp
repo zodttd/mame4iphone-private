@@ -1,3 +1,6 @@
+#include "../machine/superpac.cpp"
+#include "../vidhrdw/superpac.cpp"
+
 /***************************************************************************
 
 Super Pac-Man memory map (preliminary)

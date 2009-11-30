@@ -1,10 +1,19 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "drz80_z80.h"
+#include "drz80.h"
 
-drz80_regs DRZ80;
+typedef struct {
+	struct DrZ80 regs;
+	unsigned int nmi_state;
+	unsigned int irq_state;
+	int previouspc;
+	int (*MAMEIrqCallback)(int int_level);
+} drz80_regs;
+
+static drz80_regs DRZ80;
+int *drz80_cycles=&DRZ80.regs.cycles;
 
 #define INT_IRQ 0x01
 #define NMI_IRQ 0x02
@@ -16,11 +25,11 @@ void Interrupt(void)
 {
 	if (DRZ80.regs.Z80_IRQ&NMI_IRQ)
 	{
-		DRZ80.previouspc=-1;
+		DRZ80.previouspc=0xffffffff;
 	}
 	else if ((DRZ80.irq_state!=CLEAR_LINE) && (DRZ80.regs.Z80IF&1))
 	{
-		DRZ80.previouspc=-1;
+		DRZ80.previouspc=0xffffffff;
 		DRZ80.regs.Z80_IRQ=DRZ80.regs.Z80_IRQ|INT_IRQ;
 		DRZ80.regs.z80irqvector=(*DRZ80.MAMEIrqCallback)(0);
 	}
@@ -127,7 +136,7 @@ void drz80_burn(int cycles)
 		/* NOP takes 4 cycles per instruction */
 		int n = (cycles + 3) / 4;
 		//DRZ80.regs.Z80R += n;
-		drz80_ICount -= 4 * n;
+		DRZ80.regs.cycles -= 4 * n;
 	}
 }
 
@@ -144,15 +153,6 @@ void drz80_set_context (void *src)
 		memcpy (&DRZ80, src, sizeof (drz80_regs));
 	change_pc(DRZ80.regs.Z80PC - DRZ80.regs.Z80PC_BASE);
 }
-
-enum {
-	Z80_TABLE_op,
-	Z80_TABLE_cb,
-	Z80_TABLE_ed,
-	Z80_TABLE_xy,
-	Z80_TABLE_xycb,
-	Z80_TABLE_ex	/* cycles counts for taken jr/jp/call and interrupt latency (rst opcodes) */
-};
 
 void *drz80_get_cycle_table (int which)
 {
@@ -202,7 +202,7 @@ unsigned drz80_get_reg (int regnum)
 		case Z80_HL: return (DRZ80.regs.Z80HL>>16);
 		case Z80_IX: return (DRZ80.regs.Z80IX>>16);
 		case Z80_IY: return (DRZ80.regs.Z80IY>>16);
-        	case Z80_R: return 0; /*???*/
+        case Z80_R: return DRZ80.regs.Z80R; /*???*/
 		case Z80_I: return DRZ80.regs.Z80I;
 		case Z80_AF2: return ((DRZ80.regs.Z80A2>>16) | (DRZ80.regs.Z80F2>>24));
 		case Z80_BC2: return (DRZ80.regs.Z80BC2>>16);
@@ -218,7 +218,7 @@ unsigned drz80_get_reg (int regnum)
 		case Z80_DC1: return 0; /* daisy chain */
 		case Z80_DC2: return 0; /* daisy chain */
 		case Z80_DC3: return 0; /* daisy chain */
-        	case REG_PREVIOUSPC: return (DRZ80.previouspc==-1?-1:drz80_get_pc()-1);
+        case REG_PREVIOUSPC: return (DRZ80.previouspc==0xffffffff?0xffffffff:drz80_get_pc());
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
@@ -242,7 +242,7 @@ void drz80_set_reg (int regnum, unsigned val)
 		case Z80_HL: DRZ80.regs.Z80HL=(val<<16); break;
 		case Z80_IX: DRZ80.regs.Z80IX=(val<<16); break;
 		case Z80_IY: DRZ80.regs.Z80IY=(val<<16); break;
-        	case Z80_R: /*???*/break;
+        case Z80_R: DRZ80.regs.Z80R=val; break; /*???*/
 		case Z80_I: DRZ80.regs.Z80I = val; break;
 		case Z80_AF2: DRZ80.regs.Z80A2=((val&0xff00)<<16); DRZ80.regs.Z80F2=((val&0x00ff)<<24); break;
 		case Z80_BC2: DRZ80.regs.Z80BC2=(val<<16); break;
@@ -295,28 +295,19 @@ void drz80_state_load(void *file)
 
 const char *drz80_info(void *context, int regnum)
 {
-	static char buffer[32][47+1];
-	static int which = 0;
-	which = ++which % 32;
-	buffer[which][0] = '\0';
-
 	switch( regnum )
 	{
 		case CPU_INFO_NAME: return "DRZ80 Z80";
-        	case CPU_INFO_FAMILY: return "Zilog Z80";
+        case CPU_INFO_FAMILY: return "Zilog Z80";
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright 2005 Reesy, all rights reserved.";
 	}
-	return buffer[which];
+	return "";
 }
 
 unsigned drz80_dasm( char *buffer, unsigned pc )
 {
-#ifdef MAME_DEBUG
-    return DasmZ80( buffer, pc );
-#else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
-#endif
 }

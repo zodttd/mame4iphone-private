@@ -1,3 +1,6 @@
+#include "../machine/digdug.cpp"
+#include "../vidhrdw/digdug.cpp"
+
 /***************************************************************************
 
 Dig Dug

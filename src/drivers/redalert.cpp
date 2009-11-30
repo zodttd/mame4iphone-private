@@ -1,3 +1,6 @@
+#include "../vidhrdw/redalert.cpp"
+#include "../sndhrdw/redalert.cpp"
+
 /***************************************************************************
 
 Irem Red Alert Driver

@@ -267,7 +267,7 @@ WRITE_HANDLER( ninjemak_gfxbank_w )
 
 		int offs;
 
-logerror("%04x: write %02x to port 80\n",cpu_get_pc(),data);
+//logerror("%04x: write %02x to port 80\n",cpu_get_pc(),data);
 
 		for (offs = 0; offs < videoram_size; offs++)
 		{

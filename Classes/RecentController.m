@@ -1,11 +1,3 @@
-//
-//  BookmarksController.m
-//  ShoutOut
-//
-//  Created by ME on 9/13/08.
-//  Copyright 2008 __MyCompanyName__. All rights reserved.
-//
-
 #import "SOApplication.h"
 
 
@@ -49,6 +41,11 @@
 	[super didReceiveMemoryWarning];
 }
 
+- (void)reload
+{
+  [tableview reloadData];
+}
+
 - (NSString*)getDocumentsDirectory
 {
 #ifdef APPSTORE_BUILD
@@ -60,13 +57,11 @@
 #endif
 }
 
-- (void)addRecent:(NSString*)thisPath withFile:(NSString*)thisFile withDir:(NSString*)thisDir {
-	if(thisPath && thisFile && thisDir)
+- (void)addRecent:(NSString*)thisPath {
+	if(thisPath)
 	{
 		[recentArray addObject:[NSDictionary dictionaryWithObjectsAndKeys:
 								thisPath, @"path",
-								thisFile, @"file",
-								thisDir, @"directory",								   
 								nil]];
 		if([recentArray count] > 7)
 		{
@@ -220,28 +215,25 @@
 		if (cell == nil) 
 		{
 			cell = [[[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:@"cell"] autorelease];
-		}
-		cell.accessoryType = UITableViewCellAccessoryNone;
-		if([[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] compare:@""] != NSOrderedSame)
-		{
 			UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 320, 44)];
 			label.numberOfLines = 1;
 			label.adjustsFontSizeToFitWidth = YES;
 			label.minimumFontSize = 9.0f;
 			label.lineBreakMode = UILineBreakModeMiddleTruncation;
-			label.text = [[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] lastPathComponent];
+			label.tag = 1;
 			[cell.contentView addSubview:label];
 			[label release];
+		}
+		cell.accessoryType = UITableViewCellAccessoryNone;
+		if([[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] compare:@""] != NSOrderedSame)
+		{
+			UILabel* tempLabel = (UILabel *)[cell viewWithTag:1];
+      tempLabel.text = [[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] lastPathComponent];
 		}
 	}
 	
 	// Set up the cell
 	return cell;
-}
-
-- (void)setCurrentlyPlaying:(NSString*) str
-{	
-	self.navigationItem.prompt = str;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -251,13 +243,13 @@
 		return;
 	}
 #endif
+
+  [tableview deselectRowAtIndexPath:indexPath animated:YES];
+
 	char *cListingsPath;
 	if([[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] compare:@""] != NSOrderedSame )
 	{
 		cListingsPath = (char*)[[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] UTF8String];
-		[SOApp.nowPlayingView setCurrentStation:[[recentArray objectAtIndex:indexPath.row] objectForKey:@"path"] 
-		 withFile:[[recentArray objectAtIndex:indexPath.row] objectForKey:@"file"] 
-		 withDir:[[recentArray objectAtIndex:indexPath.row] objectForKey:@"directory"]];
 	}
 	
 	
@@ -265,51 +257,5 @@
 	[SOApp.delegate switchToNowPlaying];
 	//[tabBar didMoveToWindowNowPlaying];
 }
-
-#if 0
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
-{	
-	if (editingStyle == UITableViewCellEditingStyleDelete) {
-		// Delete the row from the data source
-		//[tableview deleteRowAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:YES];
-		[bookmarksArray removeObjectAtIndex:indexPath.row];
-		[tableview reloadData];
-		NSString *path=[[self getDocumentsDirectory] stringByAppendingPathComponent:@"bookmarks.bin"];
-		NSData *plistData;
-		
-		NSString *error;
-		
-		
-		
-		plistData = [NSPropertyListSerialization dataFromPropertyList:bookmarksArray
-					 
-															   format:NSPropertyListBinaryFormat_v1_0
-					 
-													 errorDescription:&error];
-		
-		if(plistData)
-			
-		{
-			
-			NSLog(@"No error creating plist data.");
-			
-			[plistData writeToFile:path atomically:YES];
-			
-		}
-		else
-		{
-			
-			NSLog(error);
-			
-			[error release];
-			
-		}
-		
-	}	
-	if (editingStyle == UITableViewCellEditingStyleInsert) {
-		// Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-	}	
-}
-#endif
 
 @end

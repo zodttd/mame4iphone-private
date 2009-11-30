@@ -1,3 +1,6 @@
+#include "../vidhrdw/trackfld.cpp"
+#include "../sndhrdw/trackfld.cpp"
+
 /***************************************************************************
 
 Konami games memory map (preliminary)

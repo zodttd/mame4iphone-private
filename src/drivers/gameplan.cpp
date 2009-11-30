@@ -1,3 +1,5 @@
+#include "../vidhrdw/gameplan.cpp"
+
 /***************************************************************************
 
 GAME PLAN driver, used for games like MegaTack, Killer Comet, Kaos, Challenger
@@ -25,10 +27,6 @@ static int gameplan_current_port;
 
 static WRITE_HANDLER( gameplan_port_select_w )
 {
-#ifdef VERY_VERBOSE
-	logerror("VIA 2: PC %04x: %x -> reg%X\n",cpu_get_pc(), data, offset);
-#endif /* VERY_VERBOSE */
-
 	switch (offset)
 	{
 		case 0x00:
@@ -42,43 +40,12 @@ static WRITE_HANDLER( gameplan_port_select_w )
 				case 0x40: gameplan_current_port = 5; break;
 
 				default:
-#ifdef VERBOSE
-					logerror("  VIA 2: strange port request byte: %02x\n", data);
-#endif
 					return;
 			}
 
-#ifdef VERBOSE
-			logerror("  VIA 2: selected port %d\n", gameplan_current_port);
-#endif
-			break;
-
-		case 0x02:
-#ifdef VERBOSE
-			logerror("  VIA 2: wrote %02x to Data Direction Register B\n", data);
-#endif
-			break;
-
-		case 0x03:
-#ifdef VERBOSE
-			logerror("  VIA 2: wrote %02x to Data Direction Register A\n", data);
-#endif
-			break;
-
-		case 0x0c:
-			if (data == 0xec || data == 0xcc)
-			{
-#ifdef VERBOSE
-				logerror("  VIA 2: initialised Peripheral Control Register to 0x%02x for VIA 2\n",data);
-#endif
-			}
-			else
-				logerror("  VIA 2: unusual Peripheral Control Register value 0x%02x for VIA 2\n",data);
 			break;
 
 		default:
-			logerror("  VIA 2: unexpected register written to in VIA 2: %02x -> %02x\n",
-						data, offset);
 			break;
 	}
 }

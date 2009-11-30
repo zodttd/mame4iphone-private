@@ -20,7 +20,7 @@ typedef signed int		INT32;   /* signed 32bit   */
 #include "ymdeltat.h"
 #endif
 
-typedef void (*OPL_TIMERHANDLER)(int channel,double interval_Sec);
+typedef void (*OPL_TIMERHANDLER)(int channel,timer_tm interval_Sec);
 typedef void (*OPL_IRQHANDLER)(int param,int irq);
 typedef void (*OPL_UPDATEHANDLER)(int param,int min_interval_us);
 typedef void (*OPL_PORTHANDLER_W)(int param,unsigned char data);
@@ -84,8 +84,8 @@ typedef struct fm_opl_f {
 	UINT8 type;			/* chip type                        */
 	int clock;			/* master clock  (Hz)                */
 	int rate;			/* sampling rate (Hz)                */
-	double freqbase;	/* frequency base                    */
-	double TimerBase;	/* Timer base time (==sampling time) */
+	float freqbase;	/* frequency base                    */
+	timer_tm TimerBase;	/* Timer base time (==sampling time) */
 	UINT8 address;		/* address register                  */
 	UINT8 status;		/* status flag                       */
 	UINT8 statusmask;	/* status mask                       */

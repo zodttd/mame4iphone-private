@@ -1,3 +1,5 @@
+#include "../vidhrdw/thunderx.cpp"
+
 /***************************************************************************
 
 Super Contra / Thunder Cross

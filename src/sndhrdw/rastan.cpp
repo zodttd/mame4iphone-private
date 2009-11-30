@@ -84,7 +84,7 @@ READ_HANDLER( rastan_a001_r )
 
 	if (transmit == 0)
 	{
-		logerror("Slave unexpected receiving! (PC = %04x)\n", cpu_get_pc() );
+		//logerror("Slave unexpected receiving! (PC = %04x)\n", cpu_get_pc() );
 	}
 	else
 	{
@@ -125,8 +125,8 @@ WRITE_HANDLER( rastan_a000_w )
 {
 	int pom;
 
-	if (transmit != 0)
-		logerror("Slave mode changed while expecting to transmit! (PC = %04x) \n", cpu_get_pc() );
+	/*if (transmit != 0)
+		logerror("Slave mode changed while expecting to transmit! (PC = %04x) \n", cpu_get_pc() );*/
 
 #ifdef REPORT_SLAVE_MODE_CHANGE
 	logerror("Slave changing its mode to %02x (PC = %04x) \n",data, cpu_get_pc());
@@ -146,8 +146,8 @@ WRITE_HANDLER( rastan_a000_w )
 		nmi_enabled = 1; /* on */
 	}
 
-	if (pom == 0x03)
-		logerror("Int mode = 3! (PC = %04x)\n", cpu_get_pc() );
+	/*if (pom == 0x03)
+		logerror("Int mode = 3! (PC = %04x)\n", cpu_get_pc() );*/
 }
 
 WRITE_HANDLER( rastan_a001_w )
@@ -156,7 +156,7 @@ WRITE_HANDLER( rastan_a001_w )
 
 	if (transmit == 0)
 	{
-		logerror("Slave unexpected transmission! (PC = %04x)\n", cpu_get_pc() );
+		//logerror("Slave unexpected transmission! (PC = %04x)\n", cpu_get_pc() );
 	}
 	else
 	{
@@ -211,17 +211,17 @@ WRITE_HANDLER( rastan_sound_port_w )
 		m_lasthalf = 0;
 		m_tr_mode = m_transmit;
 	}
-	else
-	{
-		if (m_transmit == 1)
-		{
+	//else
+	//{
+		//if (m_transmit == 1)
+		//{
 			/*logerror("single-doubled (first was=%02x)\n",m_lasthalf);*/
-		}
-		else
-		{
-			logerror("rastan_sound_port_w() - unknown innerworking\n");
-		}
-	}
+		//}
+		//else
+		//{
+		//	logerror("rastan_sound_port_w() - unknown innerworking\n");
+		//}
+	//}
 }
 
 WRITE_HANDLER( rastan_sound_comm_w )
@@ -230,7 +230,7 @@ WRITE_HANDLER( rastan_sound_comm_w )
 
 	if (m_transmit == 0)
 	{
-		logerror("Main unexpected transmission! (PC = %08x)\n", cpu_get_pc() );
+		//logerror("Main unexpected transmission! (PC = %08x)\n", cpu_get_pc() );
 	}
 	else
 	{

@@ -1,3 +1,5 @@
+#include "../vidhrdw/marineb.cpp"
+
 /***************************************************************************
 
 Marine Boy hardware memory map (preliminary)

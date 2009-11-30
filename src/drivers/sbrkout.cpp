@@ -1,3 +1,6 @@
+#include "../machine/sbrkout.cpp"
+#include "../vidhrdw/sbrkout.cpp"
+
 /***************************************************************************
 Atari Super Breakout Driver
 

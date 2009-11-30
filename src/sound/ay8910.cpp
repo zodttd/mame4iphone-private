@@ -192,16 +192,16 @@ void _AYWriteReg(int n, int r, int v)
 		if (PSG->EnvelopeC) PSG->VolC = PSG->VolE;
 		break;
 	case AY_PORTA:
-		if ((PSG->Regs[AY_ENABLE] & 0x40) == 0)
-logerror("warning: write to 8910 #%d Port A set as input\n",n);
+//		if ((PSG->Regs[AY_ENABLE] & 0x40) == 0)
+//logerror("warning: write to 8910 #%d Port A set as input\n",n);
 if (PSG->PortAwrite) (*PSG->PortAwrite)(0,v);
-else logerror("PC %04x: warning - write %02x to 8910 #%d Port A\n",cpu_get_pc(),v,n);
+//else logerror("PC %04x: warning - write %02x to 8910 #%d Port A\n",cpu_get_pc(),v,n);
 		break;
 	case AY_PORTB:
-		if ((PSG->Regs[AY_ENABLE] & 0x80) == 0)
-logerror("warning: write to 8910 #%d Port B set as input\n",n);
+//		if ((PSG->Regs[AY_ENABLE] & 0x80) == 0)
+//logerror("warning: write to 8910 #%d Port B set as input\n",n);
 if (PSG->PortBwrite) (*PSG->PortBwrite)(0,v);
-else logerror("PC %04x: warning - write %02x to 8910 #%d Port B\n",cpu_get_pc(),v,n);
+//else logerror("PC %04x: warning - write %02x to 8910 #%d Port B\n",cpu_get_pc(),v,n);
 		break;
 	}
 }
@@ -214,6 +214,7 @@ void AYWriteReg(int chip, int r, int v)
 
 
 	if (r > 15) return;
+#ifndef MAME_FASTSOUND
 	if (r < 14)
 	{
 		if (r == AY_ESHAPE || PSG->Regs[r] != v)
@@ -222,7 +223,17 @@ void AYWriteReg(int chip, int r, int v)
 			stream_update(PSG->Channel,0);
 		}
 	}
-
+#else
+	if (r < 14)
+	{
+	    extern int fast_sound;
+		if ((!fast_sound) && (r == AY_ESHAPE || PSG->Regs[r] != v))
+		{
+			/* update the output buffer before changing the register */
+			stream_update(PSG->Channel,0);
+		}
+	}
+#endif
 	_AYWriteReg(chip,r,v);
 }
 
@@ -238,16 +249,16 @@ unsigned char AYReadReg(int n, int r)
 	switch (r)
 	{
 	case AY_PORTA:
-		if ((PSG->Regs[AY_ENABLE] & 0x40) != 0)
-logerror("warning: read from 8910 #%d Port A set as output\n",n);
+//		if ((PSG->Regs[AY_ENABLE] & 0x40) != 0)
+//logerror("warning: read from 8910 #%d Port A set as output\n",n);
 if (PSG->PortAread) PSG->Regs[AY_PORTA] = (*PSG->PortAread)(0);
-else logerror("PC %04x: warning - read 8910 #%d Port A\n",cpu_get_pc(),n);
+//else logerror("PC %04x: warning - read 8910 #%d Port A\n",cpu_get_pc(),n);
 		break;
 	case AY_PORTB:
-		if ((PSG->Regs[AY_ENABLE] & 0x80) != 0)
-logerror("warning: read from 8910 #%d Port B set as output\n",n);
+//		if ((PSG->Regs[AY_ENABLE] & 0x80) != 0)
+//logerror("warning: read from 8910 #%d Port B set as output\n",n);
 if (PSG->PortBread) PSG->Regs[AY_PORTB] = (*PSG->PortBread)(0);
-else logerror("PC %04x: warning - read 8910 #%d Port B\n",cpu_get_pc(),n);
+//else logerror("PC %04x: warning - read 8910 #%d Port B\n",cpu_get_pc(),n);
 		break;
 	}
 	return PSG->Regs[r];
@@ -576,7 +587,7 @@ void AY8910_set_clock(int chip,int clock)
 	/* at the given sample rate. No. of events = sample rate / (clock/8).    */
 	/* STEP is a multiplier used to turn the fraction into a fixed point     */
 	/* number.                                                               */
-	PSG->UpdateStep = ((double)STEP * PSG->SampleRate * 8) / clock;
+	PSG->UpdateStep = ((float)STEP * PSG->SampleRate * 8) / clock;
 }
 
 
@@ -595,7 +606,7 @@ static void build_mixer_table(int chip)
 {
 	struct AY8910 *PSG = &AYPSG[chip];
 	int i;
-	double out;
+	float out;
 
 
 	/* calculate the volume->voltage conversion table */

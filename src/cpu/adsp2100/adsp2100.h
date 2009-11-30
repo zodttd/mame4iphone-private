@@ -121,10 +121,6 @@ extern unsigned adsp2100_dasm(char *buffer, unsigned pc);
 #define ADSP2100_WRMEM(A,V) (cpu_writemem16lew(A,V))
 #define ADSP2100_WRMEM_WORD(A,V) (cpu_writemem16lew_word(A,V))
 
-#ifdef MAME_DEBUG
-extern unsigned DasmADSP2100(char *buffer, unsigned pc);
-#endif
-
 #if (HAS_ADSP2105)
 /**************************************************************************
  * ADSP2105 section

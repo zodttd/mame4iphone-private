@@ -1,3 +1,6 @@
+#include "../vidhrdw/rastan.cpp"
+#include "../sndhrdw/rastan.cpp"
+
 /***************************************************************************
 
 Rastan

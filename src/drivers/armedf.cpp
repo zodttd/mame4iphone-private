@@ -1,3 +1,5 @@
+#include "../vidhrdw/armedf.cpp"
+
 /**********************************************************************
 
 Armed Formation
@@ -81,7 +83,7 @@ static WRITE_HANDLER( io_w ){
 		break;
 
 		default:
-		logerror("IO OUTPUT [%x] <- %08x\n", offset,data );
+		//logerror("IO OUTPUT [%x] <- %08x\n", offset,data );
 		break;
 	}
 }
@@ -116,7 +118,7 @@ static WRITE_HANDLER( kodure_io_w ){
 		break;
 
 		default:
-		logerror("IO OUTPUT [%x] <- %08x\n", offset,data );
+		//logerror("IO OUTPUT [%x] <- %08x\n", offset,data );
 		break;
 	}
 }

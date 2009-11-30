@@ -1,3 +1,5 @@
+#include "../vidhrdw/pcktgal.cpp"
+
 /***************************************************************************
 
 	Pocket Gal						(c) 1987 Data East Corporation

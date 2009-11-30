@@ -1,3 +1,5 @@
+#include "../vidhrdw/gradius3.cpp"
+
 /***************************************************************************
 
 Gradius 3 (GX945) (c) 1989 Konami
@@ -153,11 +155,11 @@ static WRITE_HANDLER( cpuB_irqtrigger_w )
 {
 	if (irqBmask & 4)
 	{
-logerror("%04x trigger cpu B irq 4 %02x\n",cpu_get_pc(),data);
+//logerror("%04x trigger cpu B irq 4 %02x\n",cpu_get_pc(),data);
 		cpu_cause_interrupt(1,4);
 	}
-	else
-logerror("%04x MISSED cpu B irq 4 %02x\n",cpu_get_pc(),data);
+	/*else
+logerror("%04x MISSED cpu B irq 4 %02x\n",cpu_get_pc(),data);*/
 }
 
 static WRITE_HANDLER( sound_command_w )

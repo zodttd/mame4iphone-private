@@ -1,3 +1,5 @@
+#include "../vidhrdw/milliped.cpp"
+
 /***************************************************************************
 
 Millipede memory map (preliminary)

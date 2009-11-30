@@ -30,8 +30,4 @@ extern int v30_execute(int cycles);
 extern const char *v30_info(void *context, int regnum);
 extern unsigned v30_dasm(char *buffer, unsigned pc);
 
-#ifdef MAME_DEBUG
-extern unsigned DasmV30(char* buffer, unsigned pc);
-#endif
-
 #endif

@@ -11,10 +11,11 @@
 
 int game_num_avail=0;
 static int last_game_selected=0;
+char playemu[16] = "mame\0";
 char playgame[16] = "builtinn\0";
 
 int gp2x_freq=200;
-int gp2x_video_depth=-1;
+int gp2x_video_depth=8;
 int gp2x_video_aspect=0;
 int gp2x_video_sync=0;
 int gp2x_frameskip=-1;
@@ -22,7 +23,7 @@ int gp2x_sound = 1;
 int gp2x_clock_cpu=80;
 int gp2x_clock_sound=80;
 int gp2x_cpu_cores=1;
-int gp2x_ramtweaks=0;
+int gp2x_ramtweaks=1;
 int gp2x_cheat=0;
 
 int master_volume = 100;
@@ -188,7 +189,7 @@ static void game_list_view(int *pos) {
 	}
 }
 
-static void game_list_select (int index, char *game) {
+static void game_list_select (int index, char *game, char *emu) {
 	int i;
 	int aux_pos=0;
 	for (i=0;i<NUMGAMES;i++)
@@ -198,6 +199,8 @@ static void game_list_select (int index, char *game) {
 			if(aux_pos==index)
 			{
 				strcpy(game,drivers[i].name);
+				strcpy(emu,drivers[i].exe);
+				gp2x_cpu_cores=drivers[i].cores;
 				break;
 			}
 			aux_pos++;
@@ -338,7 +341,7 @@ static int show_options(char *game)
 		/* (8) CPU cores */
 		switch (gp2x_cpu_cores)
 		{
-			case 0: gp2x_gamelist_text_out(x_Pos,y_Pos+110, "CPU ASM cores none"); break;
+			case 0: gp2x_gamelist_text_out(x_Pos,y_Pos+110, "CPU ASM cores None"); break;
 			case 1: gp2x_gamelist_text_out(x_Pos,y_Pos+110, "CPU ASM cores Cyclone"); break;
 			case 2: gp2x_gamelist_text_out(x_Pos,y_Pos+110, "CPU ASM cores DrZ80"); break;
 			case 3: gp2x_gamelist_text_out(x_Pos,y_Pos+110, "CPU ASM cores Cyclone+DrZ80"); break;
@@ -565,7 +568,7 @@ static void gp2x_exit(void)
       	execl("gp2xmenu", "gp2xmenu", NULL);
 }
 
-static void select_game(char *game)
+static void select_game(char *emu, char *game)
 {
 
 	unsigned long ExKey;
@@ -598,7 +601,7 @@ static void select_game(char *game)
 		if ((ExKey & GP2X_A) || (ExKey & GP2X_B) || (ExKey & GP2X_PUSH) || (ExKey & GP2X_START))
 		{
 			/* Select the game */
-			game_list_select(last_game_selected, game);
+			game_list_select(last_game_selected, game, emu);
 
 			/* Emulation Options */
 			if(show_options(game))
@@ -609,7 +612,7 @@ static void select_game(char *game)
 	}
 }
 
-void execute_game (char *playgame)
+void execute_game (char *playemu, char *playgame)
 {
 	char *args[255];
 	char str[8][64];
@@ -617,7 +620,7 @@ void execute_game (char *playgame)
 	int i=0;
 	
 	/* executable */
-	args[n]="mame"; n++;
+	args[n]=playemu; n++;
 
 	/* playgame */
 	args[n]=playgame; n++;
@@ -808,7 +811,7 @@ int main (int argc, char **argv)
 	}
 	
 	/* Select Game */
-	select_game(playgame); 
+	select_game(playemu,playgame); 
 
 	/* Write default configuration */
 	f=fopen("frontend/mame.cfg","w");
@@ -820,7 +823,7 @@ int main (int argc, char **argv)
 	}
 	
 	/* Execute Game */
-	execute_game (playgame);
+	execute_game (playemu,playgame);
 	
 	exit (0);
 }

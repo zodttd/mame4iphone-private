@@ -1,3 +1,7 @@
+#include "../vidhrdw/sega.cpp"
+#include "../sndhrdw/sega.cpp"
+#include "../machine/sega.cpp"
+
 /***************************************************************************
 
 4/25/99 - Tac-Scan sound call for coins now works. (Jim Hernandez)

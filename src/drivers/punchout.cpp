@@ -1,3 +1,5 @@
+#include "../vidhrdw/punchout.cpp"
+
 /***************************************************************************
 
 Punch Out memory map (preliminary)
@@ -251,7 +253,7 @@ static READ_HANDLER( spunchout_prot_r ) {
 		break;
 	}
 
-	logerror("Read from unknown protection? port %02x ( selector = %02x )\n", offset, prot_mode_sel );
+	//logerror("Read from unknown protection? port %02x ( selector = %02x )\n", offset, prot_mode_sel );
 
 	return prot_mem[offset];
 }
@@ -311,7 +313,7 @@ static WRITE_HANDLER( spunchout_prot_w ) {
 			return;
 	}
 
-	logerror("Wrote to unknown protection? port %02x ( %02x )\n", offset, data );
+	//logerror("Wrote to unknown protection? port %02x ( %02x )\n", offset, data );
 
 	prot_mem[offset] = data;
 }

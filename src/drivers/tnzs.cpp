@@ -1,3 +1,6 @@
+#include "../machine/tnzs.cpp"
+#include "../vidhrdw/tnzs.cpp"
+
 /***************************************************************************
 
 The New Zealand Story driver, used for tnzs & tnzs2.

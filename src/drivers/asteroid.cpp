@@ -1,3 +1,6 @@
+#include "../machine/asteroid.cpp"
+#include "../sndhrdw/asteroid.cpp"
+
 /***************************************************************************
 
 Asteroids Memory Map (preliminary)
@@ -562,7 +565,7 @@ INPUT_PORTS_END
 
 
 
-static void asteroid1_hisave(void)
+/*static void asteroid1_hisave(void)
 {
 	void *f;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -586,7 +589,7 @@ static void asteroid_hisave(void)
 		osd_fwrite(f,&RAM[0x001d],2*10+3*11);
 		osd_fclose(f);
 	}
-}
+}*/
 
 
 

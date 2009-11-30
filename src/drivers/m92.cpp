@@ -1,3 +1,5 @@
+#include "../vidhrdw/m92.cpp"
+
 /*****************************************************************************
 
 	Irem M92 system games:
@@ -209,7 +211,7 @@ static WRITE_HANDLER( m92_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	logerror("%04x: Bank %04x (%02x)\n",cpu_get_pc(),data,offset);
+	//logerror("%04x: Bank %04x (%02x)\n",cpu_get_pc(),data,offset);
 	if (offset==1) return; /* Unused top byte */
 
 	cpu_setbank(1,&RAM[0x100000 + ((data&0x7)*0x10000)]);

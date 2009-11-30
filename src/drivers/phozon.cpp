@@ -1,3 +1,6 @@
+#include "../machine/phozon.cpp"
+#include "../vidhrdw/phozon.cpp"
+
 /***************************************************************************
 
 Phozon (Namco 1983)

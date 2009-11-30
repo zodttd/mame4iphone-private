@@ -28,12 +28,6 @@ extern int geebee_bgw;
 extern int geebee_ball_on;
 extern int geebee_inv;
 
-#ifdef MAME_DEBUG
-char geebee_msg[32+1];
-int geebee_cnt;
-#endif
-
-
 static unsigned char palette[] =
 {
 	0x00,0x00,0x00, /* black */
@@ -176,15 +170,6 @@ INLINE void mark_dirty(int x, int y)
 void geebee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int offs;
-
-#ifdef MAME_DEBUG
-	if( geebee_cnt > 0 )
-	{
-		ui_text(Machine->scrbitmap, geebee_msg, Machine->visible_area.min_y, Machine->visible_area.max_x - 8);
-		if( --geebee_cnt == 0 )
-			full_refresh = 1;
-    }
-#endif
 
 	if (palette_recalc() || full_refresh )
         memset(dirtybuffer, 1, videoram_size);

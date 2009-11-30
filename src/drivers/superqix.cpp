@@ -1,3 +1,5 @@
+#include "../vidhrdw/superqix.cpp"
+
 /***************************************************************************
 
 Super QIX memory map (preliminary)

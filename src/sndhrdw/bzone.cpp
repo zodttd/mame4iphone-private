@@ -170,7 +170,7 @@ static void bzone_sound_update(int param, INT16 *buffer, int length)
 
 		if( latch & 0x80 )
 		{
-			static double r0 = 1.0/1e12, r1 = 1.0/1e12;
+			static float r0 = 1.0/1e12, r1 = 1.0/1e12;
 
 			/* NE5555 timer
 			 * C = 0.018u, Ra = 100k, Rb = 125k

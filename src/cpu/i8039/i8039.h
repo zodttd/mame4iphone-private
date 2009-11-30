@@ -239,8 +239,4 @@ extern unsigned n7751_dasm(char *buffer, unsigned pc);
  */
 #define I8039_RDOP_ARG(A) ((unsigned)cpu_readop_arg(A))
 
-#ifdef  MAME_DEBUG
-int 	Dasm8039(char *dst, unsigned pc);
-#endif
-
 #endif  /* _I8039_H */

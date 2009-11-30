@@ -256,7 +256,4 @@
  * only reset
  ***************************************************************/
 #define KIL 													\
-	PCW--;														\
-	logerror("M6510 KILL opcode %04x: %02x\n",                  \
-				PCW, cpu_readop(PCW))
-
+	PCW--;

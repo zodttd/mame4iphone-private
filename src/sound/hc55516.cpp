@@ -22,13 +22,13 @@ struct hc55516_data
 
 	UINT32	update_count;
 
-	double 	filter;
-	double	integrator;
+	float 	filter;
+	float	integrator;
 };
 
 
 static struct hc55516_data hc55516[MAX_HC55516];
-static double charge, decay, leak;
+static float charge, decay, leak;
 
 
 static void hc55516_update(int num, INT16 *buffer, int length);
@@ -109,7 +109,7 @@ void hc55516_clock_w(int num, int state)
 	/* speech clock changing (active on rising edge) */
 	if (diffclock && clock)
 	{
-		double integrator = chip->integrator, temp;
+		float integrator = chip->integrator, temp;
 
 		/* clear the update count */
 		chip->update_count = 0;
@@ -156,7 +156,14 @@ void hc55516_clock_w(int num, int state)
 			chip->next_value = (int)(temp / (temp * (1.0 / 32768.0) + 1.0));
 
 		/* update the output buffer before changing the registers */
+#ifndef MAME_FASTSOUND
 		stream_update(chip->channel, 0);
+#else
+        {
+            extern int fast_sound;
+            if (!fast_sound) stream_update(chip->channel, 0);
+        }
+#endif
 	}
 }
 

@@ -1,3 +1,5 @@
+#include "../vidhrdw/firetrap.cpp"
+
 /***************************************************************************
 
 Fire Trap memory map (preliminary)
@@ -111,7 +113,7 @@ READ_HANDLER( firetrap_8751_r )
 
 WRITE_HANDLER( firetrap_8751_w )
 {
-logerror("PC:%04x write %02x to 8751\n",cpu_get_pc(),data);
+//logerror("PC:%04x write %02x to 8751\n",cpu_get_pc(),data);
 	cpu_cause_interrupt(0,0xff);
 }
 
@@ -238,9 +240,9 @@ INPUT_PORTS_START( firetrap )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 
 	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON6 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )	/* bootleg only */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )	/* bootleg only */

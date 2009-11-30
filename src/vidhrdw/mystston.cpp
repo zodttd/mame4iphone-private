@@ -119,7 +119,7 @@ WRITE_HANDLER( mystston_2000_w )
 	}
 
 	/* other bits unused? */
-logerror("PC %04x: 2000 = %02x\n",cpu_get_pc(),data);
+//logerror("PC %04x: 2000 = %02x\n",cpu_get_pc(),data);
 }
 
 

@@ -174,7 +174,7 @@ int redbaron_sh_start(const struct MachineSound *msound)
 	for( i = 0; i < 16; i++ )
 	{
 		/* r0 = R18 and R24, r1 = open */
-        double r0 = 1.0/(5600 + 680), r1 = 1/6e12;
+        float r0 = 1.0/(5600 + 680), r1 = 1/6e12;
 
 		/* R14 */
         if( i & 1 )

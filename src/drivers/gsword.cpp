@@ -1,3 +1,6 @@
+#include "../vidhrdw/gsword.cpp"
+#include "../machine/tait8741.cpp"
+
 /* Great Swordsman (Taito) 1984
 
 Credits:
@@ -156,19 +159,6 @@ static int coins;
 static int fake8910_0,fake8910_1;
 static int gsword_nmi_step,gsword_nmi_count;
 
-
-static int gsword_coins_in(void)
-{
-	/* emulate 8741 coin slot */
-	if (readinputport(4)&0xc0)
-	{
-		logerror("Coin In\n");
-		return 0x80;
-	}
-	logerror("NO Coin\n");
-	return 0x00;
-}
-
 static READ_HANDLER( gsword_8741_2_r )
 {
 	switch (offset)
@@ -180,7 +170,8 @@ static READ_HANDLER( gsword_8741_2_r )
 	case 0x04: /* Player 2 Controller */
 		return readinputport(3);
 	default:
-		logerror("8741-2 unknown read %d PC=%04x\n",offset,cpu_get_pc());
+		//logerror("8741-2 unknown read %d PC=%04x\n",offset,cpu_get_pc());
+		break;
 	}
 	/* unknown */
 	return 0;
@@ -198,7 +189,7 @@ static READ_HANDLER( gsword_8741_3_r )
 		return readinputport(3);
 	}
 	/* unknown */
-	logerror("8741-3 unknown read %d PC=%04x\n",offset,cpu_get_pc());
+	//logerror("8741-3 unknown read %d PC=%04x\n",offset,cpu_get_pc());
 	return 0;
 }
 
@@ -260,7 +251,7 @@ static WRITE_HANDLER( gsword_nmi_set_w )
 		break;
 	}
 	/* bit1= nmi disable , for ram check */
-	logerror("NMI controll %02x\n",data);
+	//logerror("NMI controll %02x\n",data);
 }
 
 static WRITE_HANDLER( gsword_AY8910_control_port_0_w )

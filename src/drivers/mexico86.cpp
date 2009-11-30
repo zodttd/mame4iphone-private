@@ -1,3 +1,6 @@
+#include "../machine/mexico86.cpp"
+#include "../vidhrdw/mexico86.cpp"
+
 /***************************************************************************
 
 Kick & Run - (c) 1987 Taito

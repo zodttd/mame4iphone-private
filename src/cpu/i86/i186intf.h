@@ -31,8 +31,4 @@ extern int i186_execute(int cyclecount);
 extern const char *i186_info(void *context, int regnum);
 extern unsigned i186_dasm(char *buffer, unsigned pc);
 
-#ifdef MAME_DEBUG
-extern unsigned DasmI186(char* buffer, unsigned pc);
-#endif
-
 #endif

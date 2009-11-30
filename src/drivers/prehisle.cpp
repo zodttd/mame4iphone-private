@@ -1,3 +1,5 @@
+#include "../vidhrdw/prehisle.cpp"
+
 /***************************************************************************
 
 	Prehistoric Isle in 1930 (World)		(c) 1989 SNK

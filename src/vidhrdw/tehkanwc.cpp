@@ -147,7 +147,7 @@ static void gridiron_drawled(struct osd_bitmap *bitmap,unsigned char led,int pla
 					0,16,
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
-else logerror("unknown LED %02x for player %d\n",led,player);
+//else logerror("unknown LED %02x for player %d\n",led,player);
 }
 
 

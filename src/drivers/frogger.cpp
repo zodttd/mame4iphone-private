@@ -1,3 +1,6 @@
+#include "../vidhrdw/frogger.cpp"
+#include "../sndhrdw/frogger.cpp"
+
 /***************************************************************************
 
 Frogger memory map (preliminary)

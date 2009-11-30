@@ -75,8 +75,4 @@ extern void v33_set_irq_callback(int (*callback)(int irqline));
 extern const char *v33_info(void *context, int regnum);
 extern unsigned v33_dasm(char *buffer, unsigned pc);
 
-#ifdef MAME_DEBUG
-extern unsigned Dasmnec(char* buffer, unsigned pc);
-#endif
-
 #endif

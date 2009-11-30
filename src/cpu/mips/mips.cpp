@@ -8,7 +8,6 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "mips.h"
 
 #define EXC_INT 	0
@@ -36,55 +35,6 @@
 #define SR_RE ( 1L << 25 )
 
 #define CAUSE_BD ( 0x80000000 )
-
-/* there are more registers but the debugger interface is limited to 127 */
-static UINT8 mips_reg_layout[] =
-{
-	MIPS_PC, MIPS_OC, -1,
-	MIPS_HI, MIPS_LO, -1,
-	-1,
-	MIPS_R0, MIPS_R1, -1,
-	MIPS_R2, MIPS_R3, -1,
-	MIPS_R4, MIPS_R5, -1,
-	MIPS_R6, MIPS_R7, -1,
-	MIPS_R8, MIPS_R9, -1,
-	MIPS_R10, MIPS_R11, -1,
-	MIPS_R12, MIPS_R13, -1,
-	MIPS_R14, MIPS_R15, -1,
-	MIPS_R16, MIPS_R17, -1,
-	MIPS_R18, MIPS_R19, -1,
-	MIPS_R20, MIPS_R21, -1,
-	MIPS_R22, MIPS_R23, -1,
-	MIPS_R24, MIPS_R25, -1,
-	MIPS_R26, MIPS_R27, -1,
-	MIPS_R28, MIPS_R29, -1,
-	MIPS_R30, MIPS_R31, -1,
-	-1,
-	MIPS_CP0R0, MIPS_CP0R1, -1,
-	MIPS_CP0R2, MIPS_CP0R3, -1,
-	MIPS_CP0R4, MIPS_CP0R5, -1,
-	MIPS_CP0R6, MIPS_CP0R7, -1,
-	MIPS_CP0R8, MIPS_CP0R9, -1,
-	MIPS_CP0R10, MIPS_CP0R11, -1,
-	MIPS_CP0R12, MIPS_CP0R13, -1,
-	MIPS_CP0R14, MIPS_CP0R15, -1,
-	MIPS_CP0R16, MIPS_CP0R17, -1,
-	MIPS_CP0R18, MIPS_CP0R19, -1,
-	MIPS_CP0R20, MIPS_CP0R21, -1,
-	MIPS_CP0R22, MIPS_CP0R23, -1,
-	MIPS_CP0R24, MIPS_CP0R25, -1,
-	MIPS_CP0R26, MIPS_CP0R27, -1,
-	MIPS_CP0R28, MIPS_CP0R29, -1,
-	MIPS_CP0R30, MIPS_CP0R31, 0
-};
-
-static UINT8 mips_win_layout[] = {
-	45, 0,35,13,	/* register window (top right) */
-	 0, 0,44,13,	/* disassembler window (left, upper) */
-	 0,14,44, 8,	/* memory #1 window (left, middle) */
-	45,14,35, 8,	/* memory #2 window (lower) */
-	 0,23,80, 1 	/* command line window (bottom rows) */
-};
 
 typedef struct
 {
@@ -148,11 +98,6 @@ static void mips_exception( int exception )
 
 void mips_stop( void )
 {
-#ifdef MAME_DEBUG
-	extern int debug_key_pressed;
-	debug_key_pressed = 1;
-	CALL_MAME_DEBUG;
-#endif
 }
 
 INLINE void mips_set_nextpc( UINT32 adr )
@@ -198,8 +143,6 @@ int mips_execute( int cycles )
 	{
 		THISOP = cpu_readop32(THISPC);
 		THISPC += 4;
-
-        CALL_MAME_DEBUG;
 
 		switch( INS_OP( THISOP ) )
 		{
@@ -1263,111 +1206,23 @@ void mips_set_irq_callback(int (*callback)(int irqline))
 
 const char *mips_info( void *context, int regnum )
 {
-	static char buffer[ 64 ][ 47 + 1 ];
-	static int which = 0;
-	mips_cpu_context *r = (mips_cpu_context *)context;
-
-	which = ++which % 64;
-	buffer[ which ][ 0 ] = '\0';
-	if( !context )
-	{
-		static mips_cpu_context tmp;
-		mips_get_context( &tmp );
-		r = &tmp;
-	}
-
 	switch( regnum )
 	{
-	case CPU_INFO_REG + MIPS_PC:		sprintf( buffer[which], "pc      :%08x", r->pc );         break;
-	case CPU_INFO_REG + MIPS_OC:		sprintf( buffer[which], "oc      :%08x", r->nextpc );     break;
-	case CPU_INFO_REG + MIPS_HI:		sprintf( buffer[which], "hi      :%08x", r->hi );         break;
-	case CPU_INFO_REG + MIPS_LO:		sprintf( buffer[which], "lo      :%08x", r->lo );         break;
-	case CPU_INFO_REG + MIPS_R0:		sprintf( buffer[which], "zero    :%08x", r->r[ 0] );      break;
-	case CPU_INFO_REG + MIPS_R1:		sprintf( buffer[which], "at      :%08x", r->r[ 1] );      break;
-	case CPU_INFO_REG + MIPS_R2:		sprintf( buffer[which], "v0      :%08x", r->r[ 2] );      break;
-	case CPU_INFO_REG + MIPS_R3:		sprintf( buffer[which], "v1      :%08x", r->r[ 3] );      break;
-	case CPU_INFO_REG + MIPS_R4:		sprintf( buffer[which], "a0      :%08x", r->r[ 4] );      break;
-	case CPU_INFO_REG + MIPS_R5:		sprintf( buffer[which], "a1      :%08x", r->r[ 5] );      break;
-	case CPU_INFO_REG + MIPS_R6:		sprintf( buffer[which], "a2      :%08x", r->r[ 6] );      break;
-	case CPU_INFO_REG + MIPS_R7:		sprintf( buffer[which], "a3      :%08x", r->r[ 7] );      break;
-	case CPU_INFO_REG + MIPS_R8:		sprintf( buffer[which], "t0      :%08x", r->r[ 8] );      break;
-	case CPU_INFO_REG + MIPS_R9:		sprintf( buffer[which], "t1      :%08x", r->r[ 9] );      break;
-	case CPU_INFO_REG + MIPS_R10:		sprintf( buffer[which], "t2      :%08x", r->r[10] );      break;
-	case CPU_INFO_REG + MIPS_R11:		sprintf( buffer[which], "t3      :%08x", r->r[11] );      break;
-	case CPU_INFO_REG + MIPS_R12:		sprintf( buffer[which], "t4      :%08x", r->r[12] );      break;
-	case CPU_INFO_REG + MIPS_R13:		sprintf( buffer[which], "t5      :%08x", r->r[13] );      break;
-	case CPU_INFO_REG + MIPS_R14:		sprintf( buffer[which], "t6      :%08x", r->r[14] );      break;
-	case CPU_INFO_REG + MIPS_R15:		sprintf( buffer[which], "t7      :%08x", r->r[15] );      break;
-	case CPU_INFO_REG + MIPS_R16:		sprintf( buffer[which], "s0      :%08x", r->r[16] );      break;
-	case CPU_INFO_REG + MIPS_R17:		sprintf( buffer[which], "s1      :%08x", r->r[17] );      break;
-	case CPU_INFO_REG + MIPS_R18:		sprintf( buffer[which], "s2      :%08x", r->r[18] );      break;
-	case CPU_INFO_REG + MIPS_R19:		sprintf( buffer[which], "s3      :%08x", r->r[19] );      break;
-	case CPU_INFO_REG + MIPS_R20:		sprintf( buffer[which], "s4      :%08x", r->r[20] );      break;
-	case CPU_INFO_REG + MIPS_R21:		sprintf( buffer[which], "s5      :%08x", r->r[21] );      break;
-	case CPU_INFO_REG + MIPS_R22:		sprintf( buffer[which], "s6      :%08x", r->r[22] );      break;
-	case CPU_INFO_REG + MIPS_R23:		sprintf( buffer[which], "s7      :%08x", r->r[23] );      break;
-	case CPU_INFO_REG + MIPS_R24:		sprintf( buffer[which], "t8      :%08x", r->r[24] );      break;
-	case CPU_INFO_REG + MIPS_R25:		sprintf( buffer[which], "t9      :%08x", r->r[25] );      break;
-	case CPU_INFO_REG + MIPS_R26:		sprintf( buffer[which], "k0      :%08x", r->r[26] );      break;
-	case CPU_INFO_REG + MIPS_R27:		sprintf( buffer[which], "k1      :%08x", r->r[27] );      break;
-	case CPU_INFO_REG + MIPS_R28:		sprintf( buffer[which], "gp      :%08x", r->r[28] );      break;
-	case CPU_INFO_REG + MIPS_R29:		sprintf( buffer[which], "sp      :%08x", r->r[29] );      break;
-	case CPU_INFO_REG + MIPS_R30:		sprintf( buffer[which], "fp      :%08x", r->r[30] );      break;
-	case CPU_INFO_REG + MIPS_R31:		sprintf( buffer[which], "ra      :%08x", r->r[31] );      break;
-	case CPU_INFO_REG + MIPS_CP0R0: 	sprintf( buffer[which], "Index   :%08x", r->cp0r[ 0] );   break;
-	case CPU_INFO_REG + MIPS_CP0R1: 	sprintf( buffer[which], "Random  :%08x", r->cp0r[ 1] );   break;
-	case CPU_INFO_REG + MIPS_CP0R2: 	sprintf( buffer[which], "EntryLo :%08x", r->cp0r[ 2] );   break;
-	case CPU_INFO_REG + MIPS_CP0R3: 	sprintf( buffer[which], "cp0r3   :%08x", r->cp0r[ 3] );   break;
-	case CPU_INFO_REG + MIPS_CP0R4: 	sprintf( buffer[which], "Context :%08x", r->cp0r[ 4] );   break;
-	case CPU_INFO_REG + MIPS_CP0R5: 	sprintf( buffer[which], "cp0r5   :%08x", r->cp0r[ 5] );   break;
-	case CPU_INFO_REG + MIPS_CP0R6: 	sprintf( buffer[which], "cp0r6   :%08x", r->cp0r[ 6] );   break;
-	case CPU_INFO_REG + MIPS_CP0R7: 	sprintf( buffer[which], "cp0r7   :%08x", r->cp0r[ 7] );   break;
-	case CPU_INFO_REG + MIPS_CP0R8: 	sprintf( buffer[which], "BadVAddr:%08x", r->cp0r[ 8] );   break;
-	case CPU_INFO_REG + MIPS_CP0R9: 	sprintf( buffer[which], "cp0r9   :%08x", r->cp0r[ 9] );   break;
-	case CPU_INFO_REG + MIPS_CP0R10:	sprintf( buffer[which], "EntryHi :%08x", r->cp0r[10] );   break;
-	case CPU_INFO_REG + MIPS_CP0R11:	sprintf( buffer[which], "cp0r11  :%08x", r->cp0r[11] );   break;
-	case CPU_INFO_REG + MIPS_CP0R12:	sprintf( buffer[which], "SR      :%08x", r->cp0r[12] );   break;
-	case CPU_INFO_REG + MIPS_CP0R13:	sprintf( buffer[which], "Cause   :%08x", r->cp0r[13] );   break;
-	case CPU_INFO_REG + MIPS_CP0R14:	sprintf( buffer[which], "EPC     :%08x", r->cp0r[14] );   break;
-	case CPU_INFO_REG + MIPS_CP0R15:	sprintf( buffer[which], "PRId    :%08x", r->cp0r[15] );   break;
-	case CPU_INFO_REG + MIPS_CP0R16:	sprintf( buffer[which], "cp0r16  :%08x", r->cp0r[16] );   break;
-	case CPU_INFO_REG + MIPS_CP0R17:	sprintf( buffer[which], "cp0r17  :%08x", r->cp0r[17] );   break;
-	case CPU_INFO_REG + MIPS_CP0R18:	sprintf( buffer[which], "cp0r18  :%08x", r->cp0r[18] );   break;
-	case CPU_INFO_REG + MIPS_CP0R19:	sprintf( buffer[which], "cp0r19  :%08x", r->cp0r[19] );   break;
-	case CPU_INFO_REG + MIPS_CP0R20:	sprintf( buffer[which], "cp0r20  :%08x", r->cp0r[20] );   break;
-	case CPU_INFO_REG + MIPS_CP0R21:	sprintf( buffer[which], "cp0r21  :%08x", r->cp0r[21] );   break;
-	case CPU_INFO_REG + MIPS_CP0R22:	sprintf( buffer[which], "cp0r22  :%08x", r->cp0r[22] );   break;
-	case CPU_INFO_REG + MIPS_CP0R23:	sprintf( buffer[which], "cp0r23  :%08x", r->cp0r[23] );   break;
-	case CPU_INFO_REG + MIPS_CP0R24:	sprintf( buffer[which], "cp0r24  :%08x", r->cp0r[24] );   break;
-	case CPU_INFO_REG + MIPS_CP0R25:	sprintf( buffer[which], "cp0r25  :%08x", r->cp0r[25] );   break;
-	case CPU_INFO_REG + MIPS_CP0R26:	sprintf( buffer[which], "cp0r26  :%08x", r->cp0r[26] );   break;
-	case CPU_INFO_REG + MIPS_CP0R27:	sprintf( buffer[which], "cp0r27  :%08x", r->cp0r[27] );   break;
-	case CPU_INFO_REG + MIPS_CP0R28:	sprintf( buffer[which], "cp0r28  :%08x", r->cp0r[28] );   break;
-	case CPU_INFO_REG + MIPS_CP0R29:	sprintf( buffer[which], "cp0r29  :%08x", r->cp0r[29] );   break;
-	case CPU_INFO_REG + MIPS_CP0R30:	sprintf( buffer[which], "cp0r30  :%08x", r->cp0r[30] );   break;
-	case CPU_INFO_REG + MIPS_CP0R31:	sprintf( buffer[which], "cp0r31  :%08x", r->cp0r[31] );   break;
-	case CPU_INFO_FLAGS:		return "";
 	case CPU_INFO_NAME:			return "PSX";
 	case CPU_INFO_FAMILY:		return "MIPS";
 	case CPU_INFO_VERSION:		return "1.0";
 	case CPU_INFO_FILE:			return __FILE__;
 	case CPU_INFO_CREDITS:		return "Copyright 2000 smf";
-	case CPU_INFO_REG_LAYOUT:	return (const char*)mips_reg_layout;
-	case CPU_INFO_WIN_LAYOUT:	return (const char*)mips_win_layout;
 	}
-	return buffer[ which ];
+	return "";
 }
 
 unsigned mips_dasm( char *buffer, UINT32 pc )
 {
 	unsigned ret;
 	change_pc32( pc );
-#ifdef MAME_DEBUG
-	ret = DasmMIPS( buffer, pc );
-#else
 	sprintf( buffer, "$%08x", cpu_readop32( pc ) );
 	ret = 4;
-#endif
 	change_pc32( NEXTPC );
 	return ret;
 }

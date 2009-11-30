@@ -1,3 +1,6 @@
+#include "../machine/scramble.cpp"
+#include "../sndhrdw/scramble.cpp"
+
 /***************************************************************************
 
 Scramble memory map (preliminary)

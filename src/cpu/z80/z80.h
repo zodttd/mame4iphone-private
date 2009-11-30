@@ -12,12 +12,12 @@ enum {
 };
 
 enum {
-	Z80_TABLE_op,
-	Z80_TABLE_cb,
-	Z80_TABLE_ed,
-	Z80_TABLE_xy,
-	Z80_TABLE_xycb,
-	Z80_TABLE_ex	/* cycles counts for taken jr/jp/call and interrupt latency (rst opcodes) */
+	Z80_TABLE_op=0,
+	Z80_TABLE_cb=1,
+	Z80_TABLE_ed=2,
+	Z80_TABLE_xy=3,
+	Z80_TABLE_xycb=4,
+	Z80_TABLE_ex=5	/* cycles counts for taken jr/jp/call and interrupt latency (rst opcodes) */
 };
 
 extern int z80_ICount;              /* T-state count                        */
@@ -47,10 +47,6 @@ extern void z80_state_save(void *file);
 extern void z80_state_load(void *file);
 extern const char *z80_info(void *context, int regnum);
 extern unsigned z80_dasm(char *buffer, unsigned pc);
-
-#ifdef MAME_DEBUG
-extern unsigned DasmZ80(char *buffer, unsigned pc);
-#endif
 
 #endif
 

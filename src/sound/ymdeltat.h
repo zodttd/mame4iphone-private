@@ -7,7 +7,7 @@
 typedef struct deltat_adpcm_state {
 	UINT8 *memory;
 	int memory_size;
-	double freqbase;
+	float freqbase;
 	INT32 *output_pointer; /* pointer of output pointers */
 	int output_range;
 

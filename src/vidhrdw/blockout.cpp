@@ -46,7 +46,7 @@ WRITE_HANDLER( blockout_paletteram_w )
 
 	WRITE_WORD(&paletteram[offset],newword);
 
-	setcolor(offset / 2,newword);
+	setcolor(offset>>1, newword);
 }
 
 WRITE_HANDLER( blockout_frontcolor_w )
@@ -96,8 +96,8 @@ static void updatepixels(int x,int y)
 			y > Machine->visible_area.max_y)
 		return;
 
-	front = READ_WORD(&blockout_videoram[y*512+x]);
-	back = READ_WORD(&blockout_videoram[0x20000 + y*512+x]);
+	front = READ_WORD(&blockout_videoram[(y<<9)+x]);
+	back = READ_WORD(&blockout_videoram[0x20000 + (y<<9)+x]);
 
 	if (front>>8) color = front>>8;
 	else color = (back>>8) + 256;
@@ -118,7 +118,7 @@ WRITE_HANDLER( blockout_videoram_w )
 	if (oldword != newword)
 	{
 		WRITE_WORD(&blockout_videoram[offset],newword);
-		updatepixels(offset % 512,(offset / 512) % 256);
+		updatepixels(offset % 512,(offset>>9) % 256);
 	}
 }
 
@@ -173,7 +173,7 @@ void blockout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				int d;
 
 
-				d = READ_WORD(&blockout_frontvideoram[y*128+(x/4)]);
+				d = READ_WORD(&blockout_frontvideoram[(y<<7)+(x>>2)]);
 
 				if (d)
 				{

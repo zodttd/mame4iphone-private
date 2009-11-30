@@ -1,3 +1,5 @@
+#include "../vidhrdw/powerins.cpp"
+
 /***************************************************************************
 
 						  -= Power Instinct =-
@@ -62,7 +64,7 @@ READ_HANDLER( powerins_input_r )
 		case 0x3e:	return OKIM6295_status_0_r(0);	// OKI Status
 
 		default:
-			logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
+			//logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset);
 			return 0;
 	}
 }

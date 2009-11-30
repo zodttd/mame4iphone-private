@@ -103,7 +103,8 @@ WRITE_HANDLER( powerins_vregs_w )
 			break;
 
 		default:
-			logerror("PC %06X - Register %02X <- %02X !\n", cpu_get_pc(), offset, data);
+			//logerror("PC %06X - Register %02X <- %02X !\n", cpu_get_pc(), offset, data);
+		    break;
 	}
 }
 
@@ -446,19 +447,6 @@ void powerins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_set_scrollx( tilemap_1, 0, -0x20);	// fixed offset
 	tilemap_set_scrolly( tilemap_1, 0,  0x00);
-
-#ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z))
-{
-	int msk = 0;
-
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
-//	if (keyboard_pressed(KEYCODE_E))	msk |= 4;
-	if (keyboard_pressed(KEYCODE_A))	msk |= 8;
-	if (msk != 0) layers_ctrl &= msk;
-}
-#endif
 
 	tilemap_update(ALL_TILEMAPS);
 

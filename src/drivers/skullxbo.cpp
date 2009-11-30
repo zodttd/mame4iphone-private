@@ -1,3 +1,5 @@
+#include "../vidhrdw/skullxbo.cpp"
+
 /***************************************************************************
 
 Skull & Crossbones Memory Map
@@ -151,7 +153,7 @@ static READ_HANDLER( special_port1_r )
 
 static WRITE_HANDLER( skullxbo_mobwr_w )
 {
-	logerror("MOBWR[%02X] = %04X\n", offset, data);
+	//logerror("MOBWR[%02X] = %04X\n", offset, data);
 }
 
 

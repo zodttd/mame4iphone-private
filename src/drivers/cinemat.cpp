@@ -1,3 +1,5 @@
+#include "../sndhrdw/cinemat.cpp"
+
 /***************************************************************************
 
 Cinematronics vector game handlers

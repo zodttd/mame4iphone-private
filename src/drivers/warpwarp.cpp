@@ -1,3 +1,6 @@
+#include "../vidhrdw/warpwarp.cpp"
+#include "../sndhrdw/warpwarp.cpp"
+
 /***************************************************************************
 
 Warp Warp memory map (preliminary)

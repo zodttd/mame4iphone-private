@@ -1,3 +1,5 @@
+#include "../vidhrdw/combatsc.cpp"
+
 /***************************************************************************
 
 "Combat School" (also known as "Boot Camp") - (Konami GX611)

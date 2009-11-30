@@ -1,3 +1,5 @@
+#include "../vidhrdw/liberatr.cpp"
+
 /***************************************************************************
 
 	Liberator Memory Map (for the main set, the other one is rearranged)

@@ -1,3 +1,5 @@
+#include "../vidhrdw/pingpong.cpp"
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 

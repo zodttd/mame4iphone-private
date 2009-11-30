@@ -13,9 +13,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpuintrf.h"
-#include "mamedbg.h"
 #include "adsp2100.h"
-
+#include "osdepend.h"
 
 /*###################################################################################################
 **	CONSTANTS
@@ -504,7 +503,7 @@ void adsp2100_reset(void *param)
 		break;
 
 		default:
-			logerror( "ADSP2100 core: Unknown chip type!. Defaulting to ADSP2100.\n" );
+			/*logerror( "ADSP2100 core: Unknown chip type!. Defaulting to ADSP2100.\n" );*/
 			adsp2100.pc = 4;
 			chip_type = CHIP_TYPE_ADSP2100;
 		break;
@@ -700,7 +699,6 @@ int adsp2100_execute(int cycles)
 
 		/* debugging */
 		adsp2100.ppc = adsp2100.pc;	/* copy PC to previous PC */
-		CALL_MAME_DEBUG;
 
 #if TRACK_HOTSPOTS
 		pcbucket[adsp2100.pc & 0x3fff]++;
@@ -1592,209 +1590,33 @@ void adsp2100_set_reg(int regnum, unsigned val)
     }
 }
 
-
-/*###################################################################################################
-**	DEBUGGER DEFINITIONS
-**#################################################################################################*/
-
-static UINT8 adsp2100_reg_layout[] =
-{
-	ADSP2100_PC,		ADSP2100_AX0,	ADSP2100_MX0,	-1,
-	ADSP2100_CNTR, 		ADSP2100_AX1,	ADSP2100_MX1,	-1,
-	ADSP2100_MSTAT, 	ADSP2100_AY0,	ADSP2100_MY0,	-1,
-	ADSP2100_SSTAT, 	ADSP2100_AY1,	ADSP2100_MY1,	-1,
-	ADSP2100_PX, 		ADSP2100_AR,	ADSP2100_MR0,	-1,
-	ADSP2100_PCSP, 		ADSP2100_AF,	ADSP2100_MR1,	-1,
-	ADSP2100_CNTRSP, 	ADSP2100_SI,	ADSP2100_MR2,	-1,
-	ADSP2100_STATSP, 	ADSP2100_SE,	ADSP2100_MF,	-1,
-	ADSP2100_LOOPSP, 	ADSP2100_SB,	100,			-1,
-	ADSP2100_IMASK,		ADSP2100_SR0,	100,			-1,
-	ADSP2100_ICNTL,		ADSP2100_SR1,	100,			-1,
-	ADSP2100_I0,		ADSP2100_L0,	ADSP2100_M0,	-1,
-	ADSP2100_I1,		ADSP2100_L1,	ADSP2100_M1,	-1,
-	ADSP2100_I2,		ADSP2100_L2,	ADSP2100_M2,	-1,
-	ADSP2100_I3,		ADSP2100_L3,	ADSP2100_M3,	-1,
-	ADSP2100_I4,		ADSP2100_L4,	ADSP2100_M4,	-1,
-	ADSP2100_I5,		ADSP2100_L5,	ADSP2100_M5,	-1,
-	ADSP2100_I6,		ADSP2100_L6,	ADSP2100_M6,	-1,
-	ADSP2100_I7,		ADSP2100_L7,	ADSP2100_M7,	0
-};
-
-static UINT8 adsp2100_win_layout[] =
-{
-	 0, 0,30,20,	/* register window (top rows) */
-	31, 0,48,14,	/* disassembler window (left colums) */
-	 0,21,30, 1,	/* memory #1 window (right, upper middle) */
-	31,15,48, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
 /*###################################################################################################
 **	DEBUGGER STRINGS
 **#################################################################################################*/
 
 const char *adsp2100_info( void *context, int regnum )
 {
-	static char buffer[16][47+1];
-	static int which = 0;
-	adsp2100_Regs *r = (adsp2100_Regs *)context;
-
-	which = ++which % 16;
-    buffer[which][0] = '\0';
-
-	if (!context)
-		r = &adsp2100;
-
     switch( regnum )
 	{
-		case CPU_INFO_REG+ADSP2100_PC:  	sprintf(buffer[which], "PC:  %04X", r->pc); break;
-
-		case CPU_INFO_REG+ADSP2100_AX0:		sprintf(buffer[which], "AX0: %04X", core->ax0.u); break;
-		case CPU_INFO_REG+ADSP2100_AX1:		sprintf(buffer[which], "AX1: %04X", core->ax1.u); break;
-		case CPU_INFO_REG+ADSP2100_AY0:		sprintf(buffer[which], "AY0: %04X", core->ay0.u); break;
-		case CPU_INFO_REG+ADSP2100_AY1:		sprintf(buffer[which], "AY1: %04X", core->ay1.u); break;
-		case CPU_INFO_REG+ADSP2100_AR:		sprintf(buffer[which], "AR:  %04X", core->ar.u); break;
-		case CPU_INFO_REG+ADSP2100_AF:		sprintf(buffer[which], "AF:  %04X", core->af.u); break;
-
-		case CPU_INFO_REG+ADSP2100_MX0: 	sprintf(buffer[which], "MX0: %04X", core->mx0.u); break;
-		case CPU_INFO_REG+ADSP2100_MX1: 	sprintf(buffer[which], "MX1: %04X", core->mx1.u); break;
-		case CPU_INFO_REG+ADSP2100_MY0: 	sprintf(buffer[which], "MY0: %04X", core->my0.u); break;
-		case CPU_INFO_REG+ADSP2100_MY1: 	sprintf(buffer[which], "MY1: %04X", core->my1.u); break;
-		case CPU_INFO_REG+ADSP2100_MR0: 	sprintf(buffer[which], "MR0: %04X", core->mr.mrx.mr0.u); break;
-		case CPU_INFO_REG+ADSP2100_MR1:		sprintf(buffer[which], "MR1: %04X", core->mr.mrx.mr1.u); break;
-		case CPU_INFO_REG+ADSP2100_MR2: 	sprintf(buffer[which], "MR2: %02X", core->mr.mrx.mr2.u & 0x00ff); break;
-		case CPU_INFO_REG+ADSP2100_MF:		sprintf(buffer[which], "MF:  %04X", core->mf.u); break;
-
-		case CPU_INFO_REG+ADSP2100_SI:		sprintf(buffer[which], "SI:  %04X", core->si.u); break;
-		case CPU_INFO_REG+ADSP2100_SE:		sprintf(buffer[which], "SE:  %02X  ", core->se.u & 0x00ff); break;
-		case CPU_INFO_REG+ADSP2100_SB:		sprintf(buffer[which], "SB:  %02X  ", core->sb.u & 0x001f); break;
-		case CPU_INFO_REG+ADSP2100_SR0: 	sprintf(buffer[which], "SR0: %04X", core->sr.srx.sr0.u); break;
-		case CPU_INFO_REG+ADSP2100_SR1:		sprintf(buffer[which], "SR1: %04X", core->sr.srx.sr1.u); break;
-
-		case CPU_INFO_REG+ADSP2100_I0:		sprintf(buffer[which], "I0:  %04X", adsp2100.i[0]); break;
-		case CPU_INFO_REG+ADSP2100_I1:		sprintf(buffer[which], "I1:  %04X", adsp2100.i[1]); break;
-		case CPU_INFO_REG+ADSP2100_I2:		sprintf(buffer[which], "I2:  %04X", adsp2100.i[2]); break;
-		case CPU_INFO_REG+ADSP2100_I3:		sprintf(buffer[which], "I3:  %04X", adsp2100.i[3]); break;
-		case CPU_INFO_REG+ADSP2100_I4:		sprintf(buffer[which], "I4:  %04X", adsp2100.i[4]); break;
-		case CPU_INFO_REG+ADSP2100_I5:		sprintf(buffer[which], "I5:  %04X", adsp2100.i[5]); break;
-		case CPU_INFO_REG+ADSP2100_I6:		sprintf(buffer[which], "I6:  %04X", adsp2100.i[6]); break;
-		case CPU_INFO_REG+ADSP2100_I7:		sprintf(buffer[which], "I7:  %04X", adsp2100.i[7]); break;
-
-		case CPU_INFO_REG+ADSP2100_L0:		sprintf(buffer[which], "L0:  %04X", adsp2100.l[0]); break;
-		case CPU_INFO_REG+ADSP2100_L1:		sprintf(buffer[which], "L1:  %04X", adsp2100.l[1]); break;
-		case CPU_INFO_REG+ADSP2100_L2:		sprintf(buffer[which], "L2:  %04X", adsp2100.l[2]); break;
-		case CPU_INFO_REG+ADSP2100_L3:		sprintf(buffer[which], "L3:  %04X", adsp2100.l[3]); break;
-		case CPU_INFO_REG+ADSP2100_L4:		sprintf(buffer[which], "L4:  %04X", adsp2100.l[4]); break;
-		case CPU_INFO_REG+ADSP2100_L5:		sprintf(buffer[which], "L5:  %04X", adsp2100.l[5]); break;
-		case CPU_INFO_REG+ADSP2100_L6:		sprintf(buffer[which], "L6:  %04X", adsp2100.l[6]); break;
-		case CPU_INFO_REG+ADSP2100_L7:		sprintf(buffer[which], "L7:  %04X", adsp2100.l[7]); break;
-
-		case CPU_INFO_REG+ADSP2100_M0:		sprintf(buffer[which], "M0:  %04X", adsp2100.m[0]); break;
-		case CPU_INFO_REG+ADSP2100_M1:		sprintf(buffer[which], "M1:  %04X", adsp2100.m[1]); break;
-		case CPU_INFO_REG+ADSP2100_M2:		sprintf(buffer[which], "M2:  %04X", adsp2100.m[2]); break;
-		case CPU_INFO_REG+ADSP2100_M3:		sprintf(buffer[which], "M3:  %04X", adsp2100.m[3]); break;
-		case CPU_INFO_REG+ADSP2100_M4:		sprintf(buffer[which], "M4:  %04X", adsp2100.m[4]); break;
-		case CPU_INFO_REG+ADSP2100_M5:		sprintf(buffer[which], "M5:  %04X", adsp2100.m[5]); break;
-		case CPU_INFO_REG+ADSP2100_M6:		sprintf(buffer[which], "M6:  %04X", adsp2100.m[6]); break;
-		case CPU_INFO_REG+ADSP2100_M7:		sprintf(buffer[which], "M7:  %04X", adsp2100.m[7]); break;
-
-		case CPU_INFO_REG+ADSP2100_PX:		sprintf(buffer[which], "PX:  %02X  ", adsp2100.px); break;
-		case CPU_INFO_REG+ADSP2100_CNTR:	sprintf(buffer[which], "CNTR:%04X", adsp2100.cntr); break;
-		case CPU_INFO_REG+ADSP2100_ASTAT: 	sprintf(buffer[which],"ASTA:%02X  ", adsp2100.astat); break;
-		case CPU_INFO_REG+ADSP2100_SSTAT: 	sprintf(buffer[which], "SSTA:%02X  ", adsp2100.sstat); break;
-		case CPU_INFO_REG+ADSP2100_MSTAT: 	sprintf(buffer[which], "MSTA:%02X  ", adsp2100.mstat); break;
-
-		case CPU_INFO_REG+ADSP2100_PCSP: 	sprintf(buffer[which], "PCSP:%02X  ", adsp2100.pc_sp); break;
-		case CPU_INFO_REG+ADSP2100_CNTRSP: 	sprintf(buffer[which], "CTSP:%01X   ", adsp2100.cntr_sp); break;
-		case CPU_INFO_REG+ADSP2100_STATSP: 	sprintf(buffer[which], "STSP:%01X   ", adsp2100.stat_sp); break;
-		case CPU_INFO_REG+ADSP2100_LOOPSP: 	sprintf(buffer[which], "LPSP:%01X   ", adsp2100.loop_sp); break;
-
-		case CPU_INFO_REG+ADSP2100_IMASK: 	sprintf(buffer[which], "IMSK:%02X  ", adsp2100.imask); break;
-		case CPU_INFO_REG+ADSP2100_ICNTL: 	sprintf(buffer[which], "ICTL:%02X  ", adsp2100.icntl); break;
-		case CPU_INFO_REG+ADSP2100_IRQSTATE0:sprintf(buffer[which], "IRQ0:%X   ", adsp2100.irq_state[0]); break;
-		case CPU_INFO_REG+ADSP2100_IRQSTATE1:sprintf(buffer[which], "IRQ1:%X   ", adsp2100.irq_state[1]); break;
-		case CPU_INFO_REG+ADSP2100_IRQSTATE2:sprintf(buffer[which], "IRQ2:%X   ", adsp2100.irq_state[2]); break;
-		case CPU_INFO_REG+ADSP2100_IRQSTATE3:sprintf(buffer[which], "IRQ3:%X   ", adsp2100.irq_state[3]); break;
-
-		case CPU_INFO_REG+ADSP2100_FLAGIN: 	sprintf(buffer[which], "FI:  %X   ", adsp2100.flagin); break;
-		case CPU_INFO_REG+ADSP2100_FLAGOUT: sprintf(buffer[which], "FO:  %X   ", adsp2100.flagout); break;
-#if SUPPORT_2101_EXTENSIONS
-		case CPU_INFO_REG+ADSP2100_FL0: 	sprintf(buffer[which], "FL0: %X   ", adsp2100.fl0); break;
-		case CPU_INFO_REG+ADSP2100_FL1: 	sprintf(buffer[which], "FL1: %X   ", adsp2100.fl1); break;
-		case CPU_INFO_REG+ADSP2100_FL2: 	sprintf(buffer[which], "FL2: %X   ", adsp2100.fl2); break;
-#endif
-
-		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->astat & 0x80 ? 'X':'.',
-				r->astat & 0x40 ? 'M':'.',
-				r->astat & 0x20 ? 'Q':'.',
-				r->astat & 0x10 ? 'S':'.',
-				r->astat & 0x08 ? 'C':'.',
-				r->astat & 0x04 ? 'V':'.',
-				r->astat & 0x02 ? 'N':'.',
-				r->astat & 0x01 ? 'Z':'.');
-			break;
 		case CPU_INFO_NAME: return "ADSP2100";
 		case CPU_INFO_FAMILY: return "ADSP2100";
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) Aaron Giles 1999";
-		case CPU_INFO_REG_LAYOUT: return (const char*)adsp2100_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)adsp2100_win_layout;
-		case CPU_INFO_REG+10000: return "         ";
     }
-	return buffer[which];
+	return "";
 }
 
 unsigned adsp2100_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	extern unsigned dasm2100(char *, unsigned);
-    return dasm2100(buffer, pc);
-#else
 	sprintf(buffer, "$%06X", RWORD_PGM(pc));
 	return 1;
-#endif
 }
 
 #if (HAS_ADSP2105)
 /**************************************************************************
  * ADSP2105 section
  **************************************************************************/
-
-static UINT8 adsp2105_reg_layout[] =
-{
-	ADSP2100_PC,		ADSP2100_AX0,	ADSP2100_MX0,	-1,
-	ADSP2100_CNTR, 		ADSP2100_AX1,	ADSP2100_MX1,	-1,
-	ADSP2100_MSTAT, 	ADSP2100_AY0,	ADSP2100_MY0,	-1,
-	ADSP2100_SSTAT, 	ADSP2100_AY1,	ADSP2100_MY1,	-1,
-	ADSP2100_PX, 		ADSP2100_AR,	ADSP2100_MR0,	-1,
-	ADSP2100_PCSP, 		ADSP2100_AF,	ADSP2100_MR1,	-1,
-	ADSP2100_CNTRSP, 	ADSP2100_SI,	ADSP2100_MR2,	-1,
-	ADSP2100_STATSP, 	ADSP2100_SE,	ADSP2100_MF,	-1,
-	ADSP2100_LOOPSP, 	ADSP2100_SB,	100,			-1,
-	ADSP2100_IMASK,		ADSP2100_SR0,	100,			-1,
-	ADSP2100_ICNTL,		ADSP2100_SR1,	100,			-1,
-	ADSP2100_I0,		ADSP2100_L0,	ADSP2100_M0,	-1,
-	ADSP2100_I1,		ADSP2100_L1,	ADSP2100_M1,	-1,
-	ADSP2100_I2,		ADSP2100_L2,	ADSP2100_M2,	-1,
-	ADSP2100_I3,		ADSP2100_L3,	ADSP2100_M3,	-1,
-	ADSP2100_I4,		ADSP2100_L4,	ADSP2100_M4,	-1,
-	ADSP2100_I5,		ADSP2100_L5,	ADSP2100_M5,	-1,
-	ADSP2100_I6,		ADSP2100_L6,	ADSP2100_M6,	-1,
-	ADSP2100_I7,		ADSP2100_L7,	ADSP2100_M7,	0
-};
-
-static UINT8 adsp2105_win_layout[] =
-{
-	 0, 0,30,20,	/* register window (top rows) */
-	31, 0,48,14,	/* disassembler window (left colums) */
-	 0,21,30, 1,	/* memory #1 window (right, upper middle) */
-	31,15,48, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 void adsp2105_reset(void *param)
 {
@@ -1828,21 +1650,14 @@ const char *adsp2105_info(void *context, int regnum)
     {
 		case CPU_INFO_NAME: return "ADSP2105";
 		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_REG_LAYOUT: return (const char*)adsp2105_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)adsp2105_win_layout;
 	}
 	return adsp2100_info(context,regnum);
 }
 
 unsigned adsp2105_dasm(char *buffer, unsigned pc)
 {
-#ifdef MAME_DEBUG
-	extern unsigned dasm2100(char *, unsigned);
-    return dasm2100(buffer, pc);
-#else
 	sprintf(buffer, "$%06X", RWORD_PGM(pc));
 	return 1;
-#endif
 }
 
 #if SUPPORT_2101_EXTENSIONS

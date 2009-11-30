@@ -1,3 +1,5 @@
+#include "../vidhrdw/labyrunr.cpp"
+
 /***************************************************************************
 
 Labyrinth Runner (GX771) (c) 1987 Konami

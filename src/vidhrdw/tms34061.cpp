@@ -111,9 +111,9 @@ INLINE WRITE_HANDLER( TMS34061_register_w )
 		break;
 	}
 
-	if (!status)
+	/*if (!status)
 		logerror("Unsupported TMS34061 write. Reg #%02X=%04X - PC: %04X\n",
-				reg, regs[reg], cpu_get_pc());
+				reg, regs[reg], cpu_get_pc());*/
 }
 
 static void TMS34061_intcallback(int param)
@@ -166,9 +166,9 @@ INLINE READ_HANDLER( TMS34061_register_r )
 		break;
 	}
 
-	if (!status)
+	/*if (!status)
 		logerror("Unsupported TMS34061 read.  Reg #%02X      - PC: %04X\n",
-				reg, cpu_get_pc());
+				reg, cpu_get_pc());*/
 
 	return ret;
 }
@@ -253,8 +253,9 @@ WRITE_HANDLER( TMS34061_w )
 		break;
 
 	default:
-		logerror("Unsupported TMS34061 function %d - PC: %04X\n",
-				func, cpu_get_pc());
+	    break;
+		/*logerror("Unsupported TMS34061 function %d - PC: %04X\n",
+				func, cpu_get_pc());*/
 	}
 }
 
@@ -284,8 +285,9 @@ READ_HANDLER( TMS34061_r )
 		break;
 
 	default:
-		logerror("Unsupported TMS34061 function %d - PC: %04X\n",
-				func, cpu_get_pc());
+		/*logerror("Unsupported TMS34061 function %d - PC: %04X\n",
+				func, cpu_get_pc());*/
+		break;
 	}
 
 	return ret;

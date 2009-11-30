@@ -1,3 +1,6 @@
+#include "../machine/docastle.cpp"
+#include "../vidhrdw/docastle.cpp"
+
 /***************************************************************************
 
 Mr. Do's Castle memory map (preliminary)

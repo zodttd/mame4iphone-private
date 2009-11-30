@@ -1,3 +1,6 @@
+#include "../vidhrdw/galaxian.cpp"
+#include "../sndhrdw/galaxian.cpp"
+
 /***************************************************************************
 
 Galaxian/Moon Cresta memory map.
@@ -220,14 +223,14 @@ static int kingball_sound;
 static WRITE_HANDLER( kingball_sound1_w )
 {
 	kingball_sound = (kingball_sound & ~0x01) | data;
-	logerror("kingball_sample latch: %02x (%02x)\n", kingball_sound, data);
+	//logerror("kingball_sample latch: %02x (%02x)\n", kingball_sound, data);
 }
 
 static WRITE_HANDLER( kingball_sound2_w )
 {
 	kingball_sound = (kingball_sound & ~0x02) | (data << 1);
 	soundlatch_w (0, kingball_sound | 0xf0);
-	logerror("kingball_sample play: %02x (%02x)\n", kingball_sound, data);
+	//logerror("kingball_sample play: %02x (%02x)\n", kingball_sound, data);
 }
 
 
@@ -259,7 +262,8 @@ static READ_HANDLER( jumpbug_protection_r )
 	case 0x0235:  return 0x02;
 	case 0x0311:  return 0x00;  /* not checked */
 	default:
-		logerror("Unknown protection read. Offset: %04X  PC=%04X\n",0xb000+offset,cpu_get_pc());
+		//logerror("Unknown protection read. Offset: %04X  PC=%04X\n",0xb000+offset,cpu_get_pc());
+		break;
 	}
 
 	return 0;
@@ -276,7 +280,8 @@ static READ_HANDLER( checkmaj_protection_r )
 	case 0x10f1:  return 0xaa;
 	case 0x1402:  return 0xaa;
 	default:
-		logerror("Unknown protection read. PC=%04X\n",cpu_get_pc());
+		//logerror("Unknown protection read. PC=%04X\n",cpu_get_pc());
+		break;
 	}
 
 	return 0;
